@@ -1,0 +1,32 @@
+SET TIME ZONE 'Asia/Ho_Chi_Minh';
+SET
+SELECT id, name, price_vnd
+FROM products
+WHERE price_vnd > 500000
+ORDER BY price_vnd DESC
+LIMIT 3;
+ id |       name       | price_vnd 
+----+------------------+-----------
+  4 | Màn hình 24 inch |   3200000
+  6 | Ổ cứng SSD 512GB |   1450000
+  1 | Bàn phím cơ      |   1250000
+(3 rows)
+
+SELECT id, name
+FROM products
+WHERE price_vnd > 500000
+LIMIT 3;
+ id |       name       
+----+------------------
+  1 | Bàn phím cơ
+  3 | Tai nghe
+  4 | Màn hình 24 inch
+(3 rows)
+
+SELECT NULL = NULL AS "null_equals_null",
+       NULL IS NULL AS "null_is_null";
+ null_equals_null | null_is_null 
+------------------+--------------
+                  | t
+(1 row)
+

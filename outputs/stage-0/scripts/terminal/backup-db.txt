@@ -1,0 +1,4 @@
+wrote /tmp/backups/donhang-schema.sql
+tables in the backup: 6
+
+the exit code of the last command was 0

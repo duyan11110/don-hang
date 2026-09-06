@@ -1,0 +1,13 @@
+the certificate the site presents:
+subject=
+issuer=CN=Caddy Local Authority - ECC Intermediate
+notBefore=...
+notAfter=...
+
+the names this certificate is valid for:
+X509v3 Subject Alternative Name: critical
+    DNS:donhang.local
+
+what the two sides agreed to use:
+    Protocol  : TLSv1.3
+    Cipher    : TLS_AES_128_GCM_SHA256

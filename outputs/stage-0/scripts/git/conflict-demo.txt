@@ -1,0 +1,35 @@
+Auto-merging total.sh
+CONFLICT (content): Merge conflict in total.sh
+Automatic merge failed; fix conflicts and then commit the result.
+
+what Git says about the working tree now:
+UU total.sh
+
+what it wrote into the file:
+#!/bin/sh
+# Round to millions so the invoice looks tidy.
+# Print the total price of everything in the price list.
+set -eu
+total=0
+while read -r name price; do
+    total=$((total + price))
+done < prices.txt
+<<<<<<< HEAD
+echo $(( (total / 1000000) * 1000000 ))
+||||||| 09c8526
+echo "$total"
+=======
+echo "$total đồng"
+>>>>>>> feature/currency
+
+abort puts everything back the way it was:
+## conflict-demo
+#!/bin/sh
+# Round to millions so the invoice looks tidy.
+# Print the total price of everything in the price list.
+set -eu
+total=0
+while read -r name price; do
+    total=$((total + price))
+done < prices.txt
+echo $(( (total / 1000000) * 1000000 ))

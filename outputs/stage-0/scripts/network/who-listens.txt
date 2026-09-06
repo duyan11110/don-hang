@@ -1,0 +1,11 @@
+localhost:8080 is open
+localhost:8443 is open
+localhost:2222 is open
+db:5432 is open
+localhost:9999 is closed
+
+the listening sockets of this box:
+tcp        0      0 0.0.0.0:2222            0.0.0.0:*               LISTEN      
+tcp        0      0 :::8080                 :::*                    LISTEN      
+tcp        0      0 :::2222                 :::*                    LISTEN      
+tcp        0      0 :::8443                 :::*                    LISTEN      

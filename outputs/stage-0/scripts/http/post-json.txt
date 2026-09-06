@@ -1,0 +1,16 @@
+the request and the answer:
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Location: /api/v1/orders/13
+Server: Caddy
+Date: ...
+Content-Length: 40
+
+{"id":13,"customer_id":1,"status":"new"}
+
+text becomes bytes through an encoding, and the two counts differ:
+7
+11
+
+the bytes UTF-8 uses for those seven characters:
+ c4 90 c3 a0 20 4e e1 ba b5 6e 67

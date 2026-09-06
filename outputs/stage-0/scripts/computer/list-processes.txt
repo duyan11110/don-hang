@@ -1,0 +1,7 @@
+the same program started twice is two processes:
+... sleep 30
+... sleep 30
+the first one ended with exit code 143
+
+a program that succeeds exits with 0
+a program that fails exits with 3

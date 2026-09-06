@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lab:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Start the lab
+        run: ./scripts/up.sh
+
+      - name: Build the samples
+        run: dotnet build DonHang.slnx --warnaserror
+
+      - name: Test the samples
+        run: dotnet test DonHang.slnx --no-build
+
+      - name: Run every lesson script and capture its output
+        run: ./scripts/capture-output.sh --all
+
+      - name: Fail if any captured output changed
+        run: git diff --exit-code -- outputs/
+
+      - name: Show the lab's logs when something failed
+        if: failure()
+        run: docker compose logs --tail 100
+
+      - name: Stop the lab
+        if: always()
+        run: ./scripts/down.sh

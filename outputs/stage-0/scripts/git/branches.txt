@@ -1,0 +1,33 @@
+the branches and where each one points:
+  feature/currency 2f97b1c Print the total in đồng
+  feature/shipping 59f8ec8 Charge no shipping over two million
+* main             57a2d53 [origin/main] Add a README
+
+the same commits, drawn as the graph they are:
+* 2f97b1c (origin/feature/currency, feature/currency) Print the total in đồng
+| * 59f8ec8 (origin/feature/shipping, feature/shipping) Charge no shipping over two million
+| * 1108382 Add shipping.sh
+|/  
+| * 57a2d53 (HEAD -> main, origin/main, origin/HEAD) Add a README
+| * c812dbd Explain the rounding
+| * b3472f6 Round the total down to millions
+|/  
+* 09c8526 Add a second product
+* d915e63 Add total.sh and a check for it
+* 9f3b296 Add the price list
+
+switching branches moves HEAD; it copies nothing:
+feature/shipping
+prices.txt
+shipping.sh
+test.sh
+total.sh
+main
+README.md
+prices.txt
+test.sh
+total.sh
+
+origin/main is this repository's copy of the server's main:
+57a2d53 Add a README
+57a2d53 Add a README

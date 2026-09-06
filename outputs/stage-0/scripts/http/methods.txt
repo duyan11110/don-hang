@@ -1,0 +1,13 @@
+GET    /api/v1/orders/1  -> 200
+POST   /api/v1/orders    -> 201
+PUT    /api/v1/orders/1  -> 200
+PATCH  /api/v1/orders/1  -> 200
+DELETE /api/v1/orders/1  -> 204
+
+POST creates, so it also says where the new thing lives:
+HTTP/1.1 201 Created
+Location: /api/v1/orders/13
+
+GET changes nothing, so asking twice gives the same thing twice:
+{"id":1,"customer_id":1,"status":"paid"}
+{"id":1,"customer_id":1,"status":"paid"}

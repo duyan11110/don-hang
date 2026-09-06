@@ -1,0 +1,53 @@
+1. what kind of thing is this?
+db:
+queries
+schema.sql
+seed.sql
+
+docs:
+clean-code
+craft
+git
+team
+
+samples:
+DonHang.Samples
+DonHang.Samples.Tests
+
+scripts:
+capture-output.sh
+computer
+craft
+debug
+dev-secrets.sh
+down.sh
+git
+http
+lab-run.sh
+network
+sql
+terminal
+up.sh
+
+www:
+cached.html
+index.html
+login.html
+
+2. where does execution start?
+samples/DonHang.Samples/Program.cs
+
+3. how much code is there?
+31
+
+4. from a word you saw on screen to the line that produced it:
+db/seed.sql:7:    (2, 'Chuột không dây',     450000),
+samples/DonHang.Samples/Samples/Data/CollectionsChoice.cs:13:            new(2, "Chuột không dây", 450_000),
+
+5. what the folders are named after:
+Clean
+Computer
+Data
+Debug
+Http
+Oop

@@ -1,0 +1,11 @@
+who is this process running as: root
+-rw-r--r-- root:root app.conf
+-rw------- root:root app.conf
+
+working directory: /tmp/demo
+a relative path is resolved from there:
+port=8080
+working directory: /
+cat: app.conf: No such file or directory
+the same relative path now finds nothing
+port=8080

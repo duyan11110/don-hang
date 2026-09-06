@@ -1,0 +1,26 @@
+the check fails at the newest commit:
+expected 1700000, got 1000000
+  (exit code 1)
+
+and passes four commits earlier:
+ok
+
+so ask Git to find the first bad one:
+running './test.sh'
+expected 1700000, got 1000000
+Bisecting: 0 revisions left to test after this (roughly 0 steps)
+[09c85269f0ee4cc7b6a0f856acca27d5aa3267bd] Add a second product
+running './test.sh'
+ok
+b3472f64d738ebe52e4441e8d15ca273d88d439a is the first bad commit
+commit b3472f64d738ebe52e4441e8d15ca273d88d439a
+Author: Mai Anh <mai.anh@example.com>
+Date: ...
+
+    Round the total down to millions
+
+ total.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+bisect found first bad commit
+Previous HEAD position was 09c8526 Add a second product
+Switched to branch 'main'

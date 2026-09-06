@@ -1,0 +1,7 @@
+two programs, two ports, both listening:
+tcp        0      0 0.0.0.0:9002            0.0.0.0:*               LISTEN      
+tcp        0      0 0.0.0.0:9001            0.0.0.0:*               LISTEN      
+
+one more program asking for port 2222, where the SSH server already is:
+nc: Address in use
+   nc gave up with exit code 1
