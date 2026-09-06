@@ -12,19 +12,27 @@ capture() {
   local out="outputs/$tag/${script%.sh}.txt"
   mkdir -p "$(dirname "$out")"
 
+  # scripts/terminal/ssh-into-lab.sh and scripts/debug/run-throws-deep.sh talk
+  # to the lab box from outside, so they run here; scripts/http/raw-request.sh
+  # has no line that sends it into the box, so this sends it.
+  local -a command
   case "$script" in
-    # These two talk to the lab box from outside, so they run here.
     scripts/terminal/ssh-into-lab.sh | scripts/debug/run-throws-deep.sh)
-      bash "$script" > "$out" 2>&1
-      ;;
+      command=(bash "$script") ;;
     *)
       if grep -q 'lab-run.sh' "$script"; then
-        bash "$script" > "$out" 2>&1
+        command=(bash "$script")
       else
-        scripts/lab-run.sh "$script" > "$out" 2>&1
+        command=(scripts/lab-run.sh "$script")
       fi
       ;;
   esac
+
+  if ! "${command[@]}" > "$out" 2>&1; then
+    echo "FAILED (exit $?): $script" >&2
+    sed 's/^/    /' "$out" | tail -n 30 >&2
+    return 1
+  fi
 
   perl - "$out" <<'MASK'
 my ($file) = @ARGV;
