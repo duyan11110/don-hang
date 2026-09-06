@@ -51,12 +51,11 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # The same tail as an annotation, so it is readable without opening
-          # the logs.
-          { tail -n 30 "$RUNNER_TEMP/ci.log" 2>/dev/null; docker compose ps 2>&1; } \
-            | sed 's/%/%25/g; s/\r//g' \
-            | awk '{ printf "%s%%0A", $0 }' \
-            | xargs -0 -I{} echo "::error title=ci failed::{}"
+          # The same tail as one annotation, so it is readable without opening
+          # the logs. Newlines have to be escaped for an annotation to keep them.
+          detail=$(tail -n 40 "$RUNNER_TEMP/ci.log" 2>/dev/null | sed 's/%/%25/g; s/\r//g')
+          detail=${detail//$'\n'/%0A}
+          echo "::error title=ci failed::${detail}"
 
       - name: Stop the lab
         if: always()

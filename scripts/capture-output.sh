@@ -28,9 +28,11 @@ capture() {
       ;;
   esac
 
-  if ! "${command[@]}" > "$out" 2>&1; then
-    echo "FAILED (exit $?): $script" >&2
-    sed 's/^/    /' "$out" | tail -n 30 >&2
+  local status=0
+  "${command[@]}" > "$out" 2>&1 || status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "FAILED (exit $status): $script" >&2
+    tail -n 30 "$out" | sed 's/^/    /' >&2
     return 1
   fi
 
