@@ -26,6 +26,10 @@ services:
       - lab-config:/config
     extra_hosts:
       - "donhang.local:127.0.0.1"
+    # Drop whatever search domain the host has, so that looking up "db" asks
+    # for "db" and not for "db.something.your-company.example".
+    dns_search:
+      - "."
     ports:
       # 2222 is this box's SSH server; 8080 and 8443 belong to the web service,
       # which shares this box's network so that localhost means the same thing
