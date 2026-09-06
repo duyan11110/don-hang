@@ -2,8 +2,8 @@ the database's name:
 Name:	db
 Address: 172.28.0.11
 
-this box's own name:
-Name:	donhang-lab
+this box's own name on the lab network:
+Name:	lab
 Address: 172.28.0.12
 
 a name nobody knows:

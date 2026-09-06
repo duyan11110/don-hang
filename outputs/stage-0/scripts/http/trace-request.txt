@@ -1,5 +1,5 @@
 1. turn the name into an address
-Name:	donhang-lab
+Name:	lab
 Address: 172.28.0.12
 
 2. open a TCP connection to the port

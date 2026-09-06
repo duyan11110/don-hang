@@ -5,7 +5,7 @@ set -euo pipefail
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 echo "1. turn the name into an address"
-nslookup donhang-lab | grep -A1 '^Name:'
+nslookup lab | grep -A1 '^Name:'
 
 echo
 echo "2. open a TCP connection to the port"

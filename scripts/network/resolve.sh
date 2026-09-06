@@ -8,8 +8,8 @@ echo "the database's name:"
 nslookup db | grep -A1 '^Name:'
 
 echo
-echo "this box's own name:"
-nslookup donhang-lab | grep -A1 '^Name:'
+echo "this box's own name on the lab network:"
+nslookup lab | grep -A1 '^Name:'
 
 echo
 echo "a name nobody knows:"
