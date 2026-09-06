@@ -27,6 +27,16 @@ jobs:
         shell: bash
         run: dotnet test DonHang.slnx --no-build 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
+      - name: TEMPORARY diagnosis of the lab's network
+        shell: bash
+        run: |
+          docker compose exec -T lab sh -c '
+            echo "--- resolv.conf"; cat /etc/resolv.conf
+            echo "--- hosts"; cat /etc/hosts
+            echo "--- nslookup lab"; nslookup lab || echo "exit $?"
+            echo "--- nslookup db"; nslookup db || echo "exit $?"
+          ' 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+
       - name: Run every lesson script and capture its output
         shell: bash
         run: ./scripts/capture-output.sh --all 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
