@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/DonHang.Samples.Tests/DonHang.Samples.Tests.csproj" />
+    <Project Path="samples/DonHang.Samples/DonHang.Samples.csproj" />
+  </Folder>
+</Solution>
