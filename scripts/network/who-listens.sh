@@ -16,4 +16,4 @@ done
 
 echo
 echo "the listening sockets of this box:"
-netstat -tln | grep -E ':(2222|8080|8443) '
+netstat -tln | grep -E ':(2222|8080|8443) ' | sort

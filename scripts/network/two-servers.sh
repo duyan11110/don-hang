@@ -11,7 +11,7 @@ second=$!
 sleep 1
 
 echo "two programs, two ports, both listening:"
-netstat -tln | grep -E ':900[12] '
+netstat -tln | grep -E ':900[12] ' | sort
 
 echo
 echo "one more program asking for port 2222, where the SSH server already is:"
