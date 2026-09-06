@@ -15,57 +15,27 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Make scripts executable
+        run: chmod +x ./scripts/*.sh
+
       - name: Start the lab
-        shell: bash
-        run: ./scripts/up.sh 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+        run: ./scripts/up.sh
 
       - name: Build the samples
-        shell: bash
-        run: dotnet build DonHang.slnx --warnaserror 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+        run: dotnet build DonHang.slnx --warnaserror
 
       - name: Test the samples
-        shell: bash
-        run: dotnet test DonHang.slnx --no-build 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
-
-      - name: TEMPORARY diagnosis of the lab's network
-        shell: bash
-        run: |
-          docker compose exec -T lab sh -c '
-            echo "--- resolv.conf"; cat /etc/resolv.conf
-            echo "--- hosts"; cat /etc/hosts
-            echo "--- nslookup lab"; nslookup lab || echo "exit $?"
-            echo "--- nslookup db"; nslookup db || echo "exit $?"
-          ' 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+        run: dotnet test DonHang.slnx --no-build
 
       - name: Run every lesson script and capture its output
-        shell: bash
-        run: ./scripts/capture-output.sh --all 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+        run: ./scripts/capture-output.sh --all
 
       - name: Fail if any captured output changed
-        shell: bash
-        run: git diff --exit-code -- outputs/ 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
+        run: git diff --exit-code -- outputs/
 
-      - name: Say what went wrong
+      - name: Show the lab's logs when something failed
         if: failure()
-        shell: bash
-        run: |
-          {
-            echo '### The last 200 lines of the run'
-            echo '```'
-            tail -n 200 "$RUNNER_TEMP/ci.log" 2>/dev/null || echo 'nothing was logged'
-            echo '```'
-            echo '### Containers'
-            echo '```'
-            docker compose ps 2>&1 || true
-            docker compose logs --tail 60 2>&1 || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          # The same tail as one annotation, so it is readable without opening
-          # the logs. Newlines have to be escaped for an annotation to keep them.
-          detail=$(tail -n 40 "$RUNNER_TEMP/ci.log" 2>/dev/null | sed 's/%/%25/g; s/\r//g')
-          detail=${detail//$'\n'/%0A}
-          echo "::error title=ci failed::${detail}"
+        run: docker compose logs --tail 100
 
       - name: Stop the lab
         if: always()
