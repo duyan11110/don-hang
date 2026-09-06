@@ -16,23 +16,40 @@ jobs:
           global-json-file: global.json
 
       - name: Start the lab
-        run: ./scripts/up.sh
+        shell: bash
+        run: ./scripts/up.sh 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
       - name: Build the samples
-        run: dotnet build DonHang.slnx --warnaserror
+        shell: bash
+        run: dotnet build DonHang.slnx --warnaserror 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
       - name: Test the samples
-        run: dotnet test DonHang.slnx --no-build
+        shell: bash
+        run: dotnet test DonHang.slnx --no-build 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
       - name: Run every lesson script and capture its output
-        run: ./scripts/capture-output.sh --all
+        shell: bash
+        run: ./scripts/capture-output.sh --all 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
       - name: Fail if any captured output changed
-        run: git diff --exit-code -- outputs/
+        shell: bash
+        run: git diff --exit-code -- outputs/ 2>&1 | tee -a "$RUNNER_TEMP/ci.log"
 
-      - name: Show the lab's logs when something failed
+      - name: Say what went wrong
         if: failure()
-        run: docker compose logs --tail 100
+        shell: bash
+        run: |
+          {
+            echo '### The last 200 lines of the run'
+            echo '```'
+            tail -n 200 "$RUNNER_TEMP/ci.log" 2>/dev/null || echo 'nothing was logged'
+            echo '```'
+            echo '### Containers'
+            echo '```'
+            docker compose ps 2>&1 || true
+            docker compose logs --tail 60 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stop the lab
         if: always()
