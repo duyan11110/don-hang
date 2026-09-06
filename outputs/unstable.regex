@@ -1,3 +1,10 @@
-^Date: .*$
-^Etag: .*$
-^Last-Modified: .*$
+# One Perl regular expression per line. Whatever a line matches is replaced by
+# "..." in every captured output, so that a re-run of the same script produces
+# the same file. \K keeps everything before it out of the match.
+^Date: \K.*$
+^Etag: \K.*$
+^Last-Modified: \K.*$
+^ *notBefore=\K.*$
+^ *notAfter=\K.*$
+^\K[0-9]+(?= +sleep )
+ in \K[^\n]*[/\\](?=[A-Za-z0-9_]+\.cs:line )

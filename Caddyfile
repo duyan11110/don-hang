@@ -1,0 +1,99 @@
+# Caddy serves the Đơn Hàng static site and answers a few fixed API paths, so
+# that the HTTP lessons have real status codes, cookies and cache headers to
+# read. There is no application behind these answers yet; that arrives at
+# stage-1.
+{
+	admin off
+	auto_https disable_redirects
+}
+
+# The lab site over plain HTTP.
+:8080 {
+	root * /srv/www
+
+	@postOrder {
+		method POST
+		path /api/v1/orders
+	}
+	@getOrder {
+		method GET
+		path /api/v1/orders/1
+	}
+	@replaceOrder {
+		method PUT PATCH
+		path /api/v1/orders/1
+	}
+	@deleteOrder {
+		method DELETE
+		path /api/v1/orders/1
+	}
+	@missingOrder path /api/v1/orders/999
+	@guest header Cookie *role=guest*
+	@signedIn header Cookie *sid=*
+
+	route {
+		# lesson: foundation.l1.http-methods
+		handle @postOrder {
+			header Content-Type "application/json; charset=utf-8"
+			header Location "/api/v1/orders/13"
+			respond `{"id":13,"customer_id":1,"status":"new"}` 201
+		}
+		handle @getOrder {
+			header Content-Type "application/json; charset=utf-8"
+			respond `{"id":1,"customer_id":1,"status":"paid"}` 200
+		}
+		handle @replaceOrder {
+			header Content-Type "application/json; charset=utf-8"
+			respond `{"id":1,"customer_id":1,"status":"shipped"}` 200
+		}
+		handle @deleteOrder {
+			respond "" 204
+		}
+		handle @missingOrder {
+			header Content-Type "application/json; charset=utf-8"
+			respond `{"error":"order not found"}` 404
+		}
+
+		# lesson: foundation.l1.cookies-and-state
+		handle /login.html {
+			header Set-Cookie "sid=dev-session-1; Path=/; HttpOnly; SameSite=Lax"
+			file_server
+		}
+		handle /admin {
+			route {
+				respond @guest "Forbidden: role=guest may not open /admin" 403
+				respond @signedIn "Welcome back. This is the admin page." 200
+				respond "Unauthorized: sign in at /login.html first" 401
+			}
+		}
+
+		# lesson: foundation.l1.http-caching
+		handle /cached.html {
+			header Cache-Control "max-age=60"
+			file_server
+		}
+
+		# lesson: foundation.l1.http-status-codes
+		handle /redirect {
+			redir * /index.html 302
+		}
+		handle /conflict {
+			respond "Conflict: this order was already paid" 409
+		}
+		handle /slow {
+			respond "Service Unavailable: the lab is pretending to be overloaded" 503
+		}
+
+		handle {
+			file_server
+		}
+	}
+}
+
+# The same site over HTTPS, with a certificate Caddy signs itself.
+# lesson: foundation.l1.tls-and-https
+donhang.local:8443 {
+	tls internal
+	root * /srv/www
+	file_server
+}

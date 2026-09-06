@@ -1,0 +1,37 @@
+2026-03-19 16:09:58 INFO Api started on port 8080
+2026-03-19 16:10:01 INFO Api GET /api/v1/products 200
+2026-03-19 16:10:02 INFO Api GET /api/v1/products 200
+2026-03-19 16:10:04 INFO OrderService placing order for customer 4
+2026-03-19 16:10:05 WARN PaymentClient slow response from the payment gateway
+2026-03-19 16:10:07 ERROR PaymentClient timeout while calling the payment gateway
+2026-03-19 16:10:07 INFO OrderService retrying payment for order 8
+2026-03-19 16:10:12 ERROR PaymentClient timeout while calling the payment gateway
+2026-03-19 16:10:12 INFO OrderService retrying payment for order 8
+2026-03-19 16:10:15 INFO PaymentClient payment accepted for order 8
+2026-03-19 16:10:15 INFO OrderService order 8 marked as paid
+2026-03-19 16:11:03 INFO Api GET /api/v1/orders/8 200
+2026-03-19 16:12:41 INFO Api GET /api/v1/orders/999 404
+2026-03-19 16:13:00 WARN Api unknown query parameter sortby ignored
+2026-03-19 16:14:22 INFO Api POST /api/v1/orders 201
+2026-03-19 16:15:09 ERROR NotificationService could not send email to ha.pham@example.com
+2026-03-19 16:15:10 INFO NotificationService falling back to sms for order 8
+2026-03-19 16:16:31 INFO Api GET /api/v1/products 200
+2026-03-19 16:18:02 WARN Db connection pool is 80 percent full
+2026-03-19 16:19:44 INFO Api GET /api/v1/customers/3 200
+2026-03-19 16:21:07 ERROR Db deadlock detected while updating orders
+2026-03-19 16:21:07 INFO Db transaction rolled back
+2026-03-19 16:22:15 INFO Api GET /api/v1/orders 200
+2026-03-19 16:24:38 INFO Api GET /api/v1/orders 200
+2026-03-19 16:26:52 WARN PaymentClient slow response from the payment gateway
+2026-03-19 16:27:01 ERROR PaymentClient timeout while calling the payment gateway
+2026-03-19 16:27:06 INFO PaymentClient payment accepted for order 10
+2026-03-19 16:29:13 INFO Api GET /api/v1/products 200
+2026-03-19 16:31:40 INFO Api DELETE /api/v1/orders/4 204
+2026-03-19 16:33:18 INFO OrderService order 4 cancelled
+2026-03-19 16:35:02 ERROR NotificationService could not send email to ha.pham@example.com
+2026-03-19 16:35:03 INFO NotificationService falling back to sms for order 4
+2026-03-19 16:38:27 INFO Api GET /api/v1/orders 200
+2026-03-19 16:41:55 WARN Db connection pool is 90 percent full
+2026-03-19 16:44:11 INFO Api GET /api/v1/products 200
+2026-03-19 16:47:39 INFO Api GET /api/v1/orders/1 200
+2026-03-19 16:50:04 INFO Api shutting down
