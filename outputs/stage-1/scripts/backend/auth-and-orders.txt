@@ -1,0 +1,13 @@
+products (no sign-in needed):
+[{"id":1,"name":"Bàn phím cơ","priceVnd":1250000},{"id":2,"name":"Chuột không dây","priceVnd":450000},{"id":3,"name":"Tai nghe","priceVnd":890000},{"id":4,"name":"Màn hình 24 inch","priceVnd"
+
+sign in as customer 1:
+  got a token: eyJhbGciOiJIUzI1NiIs...
+
+place an order with that token:
+{"id":...,"customerId":1,"status":"new","placedAt":"...","items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}
+
+read the order back:
+{"id":...,"customerId":1,"status":"new","placedAt":"...","items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}
+the same request without a token:
+401

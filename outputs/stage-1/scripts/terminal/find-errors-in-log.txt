@@ -1,0 +1,18 @@
+lines in the log:
+37
+
+how many are errors:
+6
+
+the first three, with line numbers:
+6:2026-03-19 16:10:07 ERROR PaymentClient timeout while calling the payment gateway
+8:2026-03-19 16:10:12 ERROR PaymentClient timeout while calling the payment gateway
+16:2026-03-19 16:15:09 ERROR NotificationService could not send email to ha.pham@example.com
+
+the last one:
+2026-03-19 16:35:02 ERROR NotificationService could not send email to ha.pham@example.com
+
+how often each message appears:
+      3 PaymentClient timeout while calling the payment gateway
+      2 NotificationService could not send email to ha.pham@example.com
+      1 Db deadlock detected while updating orders

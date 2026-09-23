@@ -1,0 +1,50 @@
+both edits are in the working tree:
+ README.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+answering y to the first hunk and n to the second:
+diff --git a/README.md b/README.md
+index 14f8246..5af399f 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Price list
+ 
+-A tiny script that adds up a price list.
++A tiny script that adds up a price list. Work in progress.
+ 
+ ## Files
+ 
+(1/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,P,?]? @@ -11,4 +11,4 @@ A tiny script that adds up a price list.
+ ## Running it
+ 
+ Run ./total.sh from this folder.
+-Prices are in đồng, written as whole numbers.
++Run ./test.sh from this folder to check the total.
+(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,P,?]? 
+
+what is staged:
+diff --git a/README.md b/README.md
+index 14f8246..b59c24e 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # Price list
+ 
+-A tiny script that adds up a price list.
++A tiny script that adds up a price list. Work in progress.
+ 
+ ## Files
+ 
+
+what is still only in the working tree:
+diff --git a/README.md b/README.md
+index b59c24e..5af399f 100644
+--- a/README.md
++++ b/README.md
+@@ -11,4 +11,4 @@ A tiny script that adds up a price list. Work in progress.
+ ## Running it
+ 
+ Run ./total.sh from this folder.
+-Prices are in đồng, written as whole numbers.
++Run ./test.sh from this folder to check the total.

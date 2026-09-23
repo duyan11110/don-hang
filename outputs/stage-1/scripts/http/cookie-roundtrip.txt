@@ -1,0 +1,14 @@
+1. asking for /admin with nothing to identify us:
+   401
+
+2. the login page answers with a Set-Cookie header:
+Set-Cookie: sid=dev-session-1; Path=/; HttpOnly; SameSite=Lax
+
+3. what the client stored (name and value only, no personal data):
+#HttpOnly_localhost FALSE / FALSE 0 sid dev-session-1
+
+4. the same request as step 1, now sending the cookie back:
+   200
+
+5. a different cookie value is a different answer:
+   403

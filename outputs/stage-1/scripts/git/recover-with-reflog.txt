@@ -1,0 +1,16 @@
+where the branch points now:
+57a2d53 Add a README
+
+after git reset --hard HEAD~2:
+b3472f6 Round the total down to millions
+
+reflog remembers every place HEAD has been:
+b3472f6 HEAD@{0}: reset: moving to HEAD~2
+57a2d53 HEAD@{1}: checkout: moving from main to reflog-demo
+57a2d53 HEAD@{2}: checkout: moving from feature/currency to main
+2f97b1c HEAD@{3}: commit: Print the total in đồng
+
+so the two commits are one command away:
+57a2d53 Add a README
+c812dbd Explain the rounding
+b3472f6 Round the total down to millions

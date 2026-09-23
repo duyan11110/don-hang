@@ -1,0 +1,26 @@
+every commit that touched one file:
+c812dbd Explain the rounding
+b3472f6 Round the total down to millions
+d915e63 Add total.sh and a check for it
+
+who last changed each line, and in which commit:
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 1) #!/bin/sh
+c812dbd1 (Mai Anh 2026-02-06 13:00:00 +0700 2) # Round to millions so the invoice looks tidy.
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 3) # Print the total price of everything in the price list.
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 4) set -eu
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 5) total=0
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 6) while read -r name price; do
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 7)     total=$((total + price))
+d915e639 (Mai Anh 2026-02-03 10:00:00 +0700 8) done < prices.txt
+b3472f64 (Mai Anh 2026-02-05 12:00:00 +0700 9) echo $(( (total / 1000000) * 1000000 ))
+
+why that line changed, in the commit's own words:
+b3472f6 2026-02-05
+
+Round the total down to millions
+
+revert adds a new commit that undoes an old one:
+e415afb Revert "Round the total down to millions"
+57a2d53 Add a README
+c812dbd Explain the rounding
+ok

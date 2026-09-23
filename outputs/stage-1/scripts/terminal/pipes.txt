@@ -1,0 +1,16 @@
+how many of each line:
+      3 a
+      2 b
+      1 c
+
+how many lines contain an a:
+3
+
+this line goes to standard output
+this line goes to standard error
+
+the command failed; its message went to errors.txt:
+ls: cannot access '/nowhere': No such file or directory
+
+first
+second

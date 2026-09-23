@@ -1,0 +1,18 @@
+200  /index.html
+302  /redirect
+404  /api/v1/orders/999
+401  /admin
+409  /conflict
+503  /slow
+404  /no-such-page
+
+a 3xx names where to go instead:
+HTTP/1.1 302 Found
+Location: /index.html
+
+401 asks who you are; 403 has already decided:
+  no cookie          401
+  cookie role=guest  403
+
+a 5xx says the server failed, not that you asked wrongly:
+HTTP/1.1 503 Service Unavailable
