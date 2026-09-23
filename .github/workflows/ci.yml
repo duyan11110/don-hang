@@ -15,20 +15,32 @@ jobs:
         with:
           global-json-file: global.json
 
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
       - name: Make scripts executable
         run: chmod +x ./scripts/*.sh
+
+      - name: Build the solution
+        run: dotnet build DonHang.slnx --warnaserror
+
+      - name: Test the solution
+        run: dotnet test DonHang.slnx --no-build
+
+      - name: Analyze and test DonHang.App
+        working-directory: DonHang.App
+        run: |
+          flutter analyze
+          flutter test
 
       - name: Start the lab
         run: ./scripts/up.sh
 
-      - name: Build the samples
-        run: dotnet build DonHang.slnx --warnaserror
-
-      - name: Test the samples
-        run: dotnet test DonHang.slnx --no-build
-
       - name: Run every lesson script and capture its output
         shell: bash
+        env:
+          TAG: stage-1
         run: ./scripts/capture-output.sh --all 2>&1 | tee "$RUNNER_TEMP/capture.log"
 
       - name: Fail if any captured output changed
