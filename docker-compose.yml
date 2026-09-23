@@ -78,6 +78,42 @@ services:
       timeout: 3s
       retries: 30
 
+  # lesson: devops.l1.compose-for-the-api
+  api:
+    build:
+      context: .
+      dockerfile: DonHang.Api/Dockerfile
+    image: donhang-api:stage-1
+    container_name: donhang-api
+    hostname: api
+    environment:
+      # lesson: devops.l1.config-and-env
+      ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.13
+
+  # lesson: frontend.l1.the-widget-tree
+  # Serves the Flutter web build (`flutter build web`, run by scripts/up.sh)
+  # as plain static files — no Dart runs inside this container.
+  app-web:
+    image: caddy:2.10.0
+    container_name: donhang-app-web
+    hostname: app-web
+    command: caddy file-server --root /srv/app --listen :8081
+    volumes:
+      - ./DonHang.App/build/web:/srv/app:ro
+    ports:
+      - "8081:8081"
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.14
+
 networks:
   donhang:
     name: donhang

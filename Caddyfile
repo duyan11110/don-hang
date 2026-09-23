@@ -1,7 +1,7 @@
-# Caddy serves the Đơn Hàng static site and answers a few fixed API paths, so
-# that the HTTP lessons have real status codes, cookies and cache headers to
-# read. There is no application behind these answers yet; that arrives at
-# stage-1.
+# Caddy serves the Đơn Hàng static site, reverse-proxies /api/v1/* to
+# DonHang.Api from stage-1 on, and still answers the fixed non-API paths
+# below with real status codes, cookies and cache headers for the HTTP
+# lessons that quote them.
 {
 	admin off
 	auto_https disable_redirects
@@ -11,47 +11,16 @@
 :8080 {
 	root * /srv/www
 
-	@postOrder {
-		method POST
-		path /api/v1/orders
-	}
-	@getOrder {
-		method GET
-		path /api/v1/orders/1
-	}
-	@replaceOrder {
-		method PUT PATCH
-		path /api/v1/orders/1
-	}
-	@deleteOrder {
-		method DELETE
-		path /api/v1/orders/1
-	}
-	@missingOrder path /api/v1/orders/999
 	@guest header Cookie *role=guest*
 	@signedIn header Cookie *sid=*
 
 	route {
-		# lesson: foundation.l1.http-methods
-		handle @postOrder {
-			header Content-Type "application/json; charset=utf-8"
-			header Location "/api/v1/orders/13"
-			respond `{"id":13,"customer_id":1,"status":"new"}` 201
-		}
-		handle @getOrder {
-			header Content-Type "application/json; charset=utf-8"
-			respond `{"id":1,"customer_id":1,"status":"paid"}` 200
-		}
-		handle @replaceOrder {
-			header Content-Type "application/json; charset=utf-8"
-			respond `{"id":1,"customer_id":1,"status":"shipped"}` 200
-		}
-		handle @deleteOrder {
-			respond "" 204
-		}
-		handle @missingOrder {
-			header Content-Type "application/json; charset=utf-8"
-			respond `{"error":"order not found"}` 404
+		# lesson: devops.l1.reverse-proxy-basics
+		# lesson: backend.l1.what-kestrel-does
+		# Caddy stays in front of Kestrel; DonHang.Api never faces the internet
+		# directly (decided in backend.l1.what-kestrel-does, kept through devops).
+		handle /api/v1/* {
+			reverse_proxy api:8080
 		}
 
 		# lesson: foundation.l1.cookies-and-state
@@ -92,8 +61,16 @@
 
 # The same site over HTTPS, with a certificate Caddy signs itself.
 # lesson: foundation.l1.tls-and-https
+# lesson: devops.l1.reverse-proxy-and-tls
+# TLS ends here; api only ever sees plain HTTP, on a network no other machine reaches.
 donhang.local:8443 {
 	tls internal
 	root * /srv/www
-	file_server
+
+	handle /api/v1/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		file_server
+	}
 }

@@ -13,6 +13,15 @@ ENV
   echo "created .env"
 fi
 
+# lesson: devops.l1.secrets-vs-config
+# lesson: devops.l1.the-jwt-secret-in-practice
+# The key DonHang.Api signs and checks JWTs with — random, so every learner's
+# lab has its own, and a token from one machine's api never verifies on another.
+if ! grep -q '^JWT_SIGNING_KEY=' .env 2>/dev/null; then
+  echo "JWT_SIGNING_KEY=$(openssl rand -base64 48)" >> .env
+  echo "added JWT_SIGNING_KEY to .env"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"

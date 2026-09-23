@@ -8,3 +8,5 @@
 ^ *notAfter=\K.*$
 ^\K[0-9]+(?= +sleep )
  in \K[^\n]*[/\\](?=[A-Za-z0-9_]+\.cs:line )
+"placedAt":"\K[^"]*(?=")
+"id":\K[0-9]+(?=,"customerId")
