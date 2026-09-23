@@ -1,4 +1,8 @@
 <Solution>
+  <Project Path="DonHang.Domain/DonHang.Domain.csproj" />
+  <Project Path="DonHang.Infrastructure/DonHang.Infrastructure.csproj" />
+  <Project Path="DonHang.Api/DonHang.Api.csproj" />
+  <Project Path="DonHang.Tests/DonHang.Tests.csproj" />
   <Folder Name="/samples/">
     <Project Path="samples/DonHang.Samples.Tests/DonHang.Samples.Tests.csproj" />
     <Project Path="samples/DonHang.Samples/DonHang.Samples.csproj" />

@@ -2,3 +2,11 @@
 secrets/
 samples/**/bin/
 samples/**/obj/
+DonHang.Domain/bin/
+DonHang.Domain/obj/
+DonHang.Infrastructure/bin/
+DonHang.Infrastructure/obj/
+DonHang.Api/bin/
+DonHang.Api/obj/
+DonHang.Tests/bin/
+DonHang.Tests/obj/

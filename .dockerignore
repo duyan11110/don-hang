@@ -1,0 +1,5 @@
+# Never send host build output (often Windows paths) into a Linux image.
+**/bin/
+**/obj/
+DonHang.App/build/
+DonHang.App/.dart_tool/
