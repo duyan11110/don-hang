@@ -45,6 +45,16 @@ public sealed class OrdersController(OrderService orderService, IOrderRepository
         return Ok(ToDto(order));
     }
 
+    // lesson: backend.l1.efcore-n-plus-one
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<List<OrderSummaryDto>>> List()
+    {
+        var customerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        var orders = await repository.ListByCustomerAsync(customerId);
+        return Ok(orders.Select(o => new OrderSummaryDto(o.Id, o.Status, o.Customer!.FullName)).ToList());
+    }
+
     private static OrderDto ToDto(Order order) => new(
         order.Id,
         order.CustomerId,

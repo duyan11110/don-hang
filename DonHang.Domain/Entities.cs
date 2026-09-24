@@ -29,6 +29,9 @@ public sealed class Order
     public DateTimeOffset PlacedAt { get; set; }
     public required string Status { get; set; }
     public List<OrderItem> Items { get; set; } = [];
+
+    // lesson: backend.l1.efcore-n-plus-one
+    public Customer? Customer { get; set; }
 }
 
 public sealed class OrderItem

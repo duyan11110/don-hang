@@ -5,6 +5,7 @@ namespace DonHang.Domain;
 public interface IOrderRepository
 {
     Task<Order?> FindAsync(int id);
+    Task<List<Order>> ListByCustomerAsync(int customerId);
     Task AddAsync(Order order);
     Task SaveChangesAsync();
 }

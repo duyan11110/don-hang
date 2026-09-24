@@ -15,3 +15,6 @@ public sealed record CreateOrderRequest(List<CreateOrderItemRequest> Items);
 public sealed record LoginRequest(string Email, string Password);
 
 public sealed record LoginResponse(string Token);
+
+// lesson: backend.l1.efcore-n-plus-one
+public sealed record OrderSummaryDto(int Id, string Status, string CustomerName);

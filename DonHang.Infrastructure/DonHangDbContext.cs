@@ -43,6 +43,7 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(o => o.PlacedAt).HasColumnName("placed_at");
             e.Property(o => o.Status).HasColumnName("status");
             e.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId);
+            e.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId);
         });
 
         modelBuilder.Entity<OrderItem>(e =>

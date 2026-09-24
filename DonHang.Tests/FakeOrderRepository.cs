@@ -13,6 +13,9 @@ public sealed class FakeOrderRepository : IOrderRepository
     public Task<Order?> FindAsync(int id) =>
         Task.FromResult(orders.GetValueOrDefault(id));
 
+    public Task<List<Order>> ListByCustomerAsync(int customerId) =>
+        Task.FromResult(orders.Values.Where(o => o.CustomerId == customerId).OrderBy(o => o.Id).ToList());
+
     public Task AddAsync(Order order)
     {
         order.Id = nextId++;
