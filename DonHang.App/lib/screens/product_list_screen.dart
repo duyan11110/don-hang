@@ -24,7 +24,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   // lesson: frontend.l1.setstate-and-rebuilding
-  void _reload() => setState(() => _products = widget.apiClient.fetchProducts());
+  void _reload() => setState(() { _products = widget.apiClient.fetchProducts(); });
 
   @override
   Widget build(BuildContext context) {
