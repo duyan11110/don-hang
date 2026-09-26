@@ -64,6 +64,7 @@ an EF Core migration history that starts truthfully from this tag's schema.
 | `DonHang.Tests/*` | test doubles, a fake repository, what a green suite does not prove |
 | `samples/DonHang.Samples/Samples/Design/*` | SOLID violations, contrasted with `Samples/Oop/*` |
 | `DonHang.App/lib/*` | the widget tree, state, calling an API with `package:http` |
+| `DonHang.App/lib/widgets/*` | LayoutBuilder list vs. grid, Semantics labels and 48-pixel tap targets (tested, not yet used by a screen) |
 | `Caddyfile`, `docker-compose.yml` | reverse proxy, Docker images and layers, volumes, networks, Compose |
 | `scripts/dev-secrets.sh` | secrets vs. config, where a JWT signing key lives |
 | `docs/team/kanban-board-example.md` | Kanban, alongside `docs/team/sprint-example.md`'s Scrum |
