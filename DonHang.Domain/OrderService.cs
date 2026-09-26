@@ -24,7 +24,7 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
 
     // lesson: management.l1.reviewing-for-tests
     // Deliberately missing a check: an order already `shipped` still gets
-    // cancelled here. `DonHang.Tests` covers `new`/`paid` but not `shipped` —
+    // cancelled here. `DonHang.Tests` covers `new` but not `shipped` —
     // the gap a reviewer is meant to catch, not a crash to catch by running it.
     public async Task<Order> CancelOrderAsync(int orderId)
     {
