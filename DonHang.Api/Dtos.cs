@@ -1,8 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace DonHang.Api;
 
 // lesson: backend.l1.dtos-and-serialization
 // The API answers in these shapes, never in the entity shapes from DonHang.Domain.
 public sealed record ProductDto(int Id, string Name, int PriceVnd);
+
+// lesson: backend.l2.cache-invalidation
+public sealed record UpdateProductPriceRequest([Range(0, int.MaxValue)] int PriceVnd);
 
 public sealed record OrderItemDto(int ProductId, int Quantity, int UnitPriceVnd);
 

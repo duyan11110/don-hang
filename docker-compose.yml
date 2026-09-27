@@ -90,6 +90,7 @@ services:
     environment:
       # lesson: devops.l1.config-and-env
       ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__Redis: "redis:6379,abortConnect=false"
       ASPNETCORE_ENVIRONMENT: "Development"
       # lesson: backend.l2.validating-provider-tokens
       # Tokens name http://localhost:8180/realms/donhang as their issuer, the
@@ -104,9 +105,30 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # Started first, not waited for: the api answers from PostgreSQL
+      # whenever Redis is not there.
+      redis:
+        condition: service_started
     networks:
       donhang:
         ipv4_address: 172.28.0.13
+
+  # lesson: backend.l2.redis-key-value-store
+  # A key-value store the api reaches as redis:6379 on the donhang network.
+  # No port is published: only the api and the lab box talk to it, and
+  # nothing in it is the only copy of a fact (PostgreSQL has them all).
+  redis:
+    image: redis:8.10.2-alpine
+    container_name: donhang-redis
+    hostname: redis
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.15
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
 
   # lesson: backend.l2.oauth2-roles
   # The authorization server: customers and staff type their passwords here,

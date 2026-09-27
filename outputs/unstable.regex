@@ -16,3 +16,4 @@ actual time=\K[0-9.]+\.\.[0-9.]+
 Executed DbCommand \(\K[0-9]+(?=ms\))
 [?&]code=\K[^&\s]+
 [?&]session_state=\K[^&\s]+
+seconds left on \S+: \K[0-9]+

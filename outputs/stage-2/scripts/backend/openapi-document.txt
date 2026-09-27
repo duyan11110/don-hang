@@ -28,6 +28,7 @@ every path and method it describes:
       get
     /api/v1/products/{id}
       get
+      patch
     /api/v2/orders
       post
     /api/v2/orders/{id}

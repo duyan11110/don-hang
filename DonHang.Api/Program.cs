@@ -15,7 +15,13 @@ builder.Services.AddProblemDetails();
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default is not set");
-builder.Services.AddDonHangInfrastructure(connectionString);
+
+// lesson: backend.l2.cache-aside
+// "redis:6379,abortConnect=false" in the lab: the api finds Redis by its
+// Compose service name, the same way it finds db.
+var redisConfiguration = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("ConnectionStrings:Redis is not set");
+builder.Services.AddDonHangInfrastructure(connectionString, redisConfiguration);
 builder.Services.AddScoped<OrderService>();
 
 // lesson: backend.l2.oauth2-roles

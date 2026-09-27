@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using DonHang.Domain;
 using DonHang.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,10 +45,26 @@ public sealed class ProductsController(DonHangDbContext db, IProductRepository p
     }
 
     // lesson: backend.l1.get-and-status-codes
+    // lesson: backend.l2.cache-aside
+    // `products` is the ProductCache registered in ServiceCollectionExtensions,
+    // so a repeat of this request within the TTL is answered from Redis.
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ProductDto>> Get(int id)
     {
         var product = await products.FindAsync(id);
+        if (product is null) return NotFound();
+        return Ok(new ProductDto(product.Id, product.Name, product.PriceVnd));
+    }
+
+    // lesson: backend.l2.cache-invalidation
+    // PATCH /api/v1/products/3 {"priceVnd": 950000}, staff only. The cache
+    // deletes product:3 after the new price is saved; this code does not
+    // know there is a cache at all.
+    [Authorize(Policy = "StaffOnly")]
+    [HttpPatch("{id:int}")]
+    public async Task<ActionResult<ProductDto>> UpdatePrice(int id, UpdateProductPriceRequest request)
+    {
+        var product = await products.UpdatePriceAsync(id, request.PriceVnd);
         if (product is null) return NotFound();
         return Ok(new ProductDto(product.Id, product.Name, product.PriceVnd));
     }
