@@ -1,0 +1,49 @@
+name: release
+
+# lesson: devops.l2.cutting-a-release
+# Runs when a version tag such as v1.0.0 is pushed. It builds nothing: the
+# images ci.yml pushed for the tagged commit get the version as a second
+# tag, and that version's section of CHANGELOG.md becomes the release notes.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write # create the GitHub release
+  packages: write # push the version tag to ghcr.io
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # Before anything is pushed: a version with no CHANGELOG.md section
+      # stops here.
+      - name: Read this version's notes from CHANGELOG.md
+        run: ./scripts/release-notes.sh "${GITHUB_REF_NAME#v}" > "$RUNNER_TEMP/notes.md"
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      # lesson: devops.l2.cutting-a-release
+      # Pull the images ci.yml pushed when this commit reached master. A commit
+      # that never went through master has no sha- images: docker pull fails,
+      # and so does the release. Tag v1.0.0 gives the images the tag 1.0.0.
+      - name: Promote the tested images to this version
+        run: |
+          commit=$(git rev-parse HEAD)
+          version="${GITHUB_REF_NAME#v}"
+          docker pull "ghcr.io/duyan11110/donhang-api:sha-$commit"
+          docker pull "ghcr.io/duyan11110/donhang-migrate:sha-$commit"
+          docker tag "ghcr.io/duyan11110/donhang-api:sha-$commit" "ghcr.io/duyan11110/donhang-api:$version"
+          docker tag "ghcr.io/duyan11110/donhang-migrate:sha-$commit" "ghcr.io/duyan11110/donhang-migrate:$version"
+          docker push "ghcr.io/duyan11110/donhang-api:$version"
+          docker push "ghcr.io/duyan11110/donhang-migrate:$version"
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
