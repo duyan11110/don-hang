@@ -1,0 +1,57 @@
+using DonHang.Domain;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Testcontainers.Redis;
+using Xunit;
+
+namespace DonHang.Tests.Integration;
+
+// lesson: design.l2.webapplicationfactory
+// Runs DonHang.Api's own Program.cs inside the test process, against a real
+// PostgreSQL (PostgresFixture, migrated before the app starts) and a real
+// Redis, both from the images docker-compose.yml uses. The app builds once,
+// on the first CreateClient(), after InitializeAsync has started both.
+public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    private readonly RedisContainer redis = new RedisBuilder("redis:8.10.2-alpine").Build();
+
+    public PostgresFixture Database { get; } = new();
+
+    public FakeEmailSender Emails { get; } = new();
+
+    public async Task InitializeAsync()
+    {
+        await Database.InitializeAsync();
+        await redis.StartAsync();
+    }
+
+    // lesson: design.l2.webapplicationfactory
+    // lesson: design.l2.testing-protected-endpoints
+    // UseSetting feeds the containers' connection strings to the app as
+    // configuration, where the lab passes them as environment variables.
+    // ConfigureTestServices runs after Program.cs's registrations: it swaps
+    // only the email sender, and makes TestAuthHandler the default scheme.
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseSetting("ConnectionStrings:Default", Database.ConnectionString);
+        builder.UseSetting("ConnectionStrings:Redis", redis.GetConnectionString());
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<IEmailSender>(Emails);
+            services.AddAuthentication(TestAuthHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
+        });
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await DisposeAsync();
+        await redis.DisposeAsync();
+        await Database.DisposeAsync();
+    }
+}
