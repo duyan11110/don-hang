@@ -1,0 +1,20 @@
+$ kubectl apply -f deploy/k8s/lessons/api-unready.yaml
+deployment.apps/api configured
+$ kubectl get pods -n donhang -l app=api --sort-by=.metadata.creationTimestamp
+NAME          READY   STATUS    RESTARTS   AGE
+api-...-...   1/1     Running   0          ...
+api-...-...   1/1     Running   0          ...
+api-...-...   0/1     Running   0          ...
+
+$ kubectl describe service api -n donhang | grep Endpoints
+Endpoints:   ...:8080,...:8080
+== GET http://api:8080/api/v1/products, from a temporary Pod in donhang
+answered 2xx
+
+$ kubectl rollout status deployment/api -n donhang --timeout=10s
+Waiting for deployment "api" rollout to finish: 1 out of 2 new replicas have been updated...
+error: timed out waiting for the condition
+
+$ kubectl apply -f deploy/k8s/api.yaml
+deployment.apps/api configured
+service/api unchanged

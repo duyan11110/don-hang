@@ -1,0 +1,11 @@
+$ kubectl get deployment api -n donhang -o jsonpath='{.spec.template.spec.containers[0].resources}'
+{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"250m","memory":"256Mi"}}
+
+$ kubectl apply -f deploy/k8s/lessons/oversized-pod.yaml
+pod/oversized created
+$ kubectl get pod oversized -n donhang -o wide
+NAME        READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+oversized   0/1     Pending   0          ...   <none>   <none>   <none>           <none>
+
+== why kube-scheduler placed it nowhere (its FailedScheduling event)
+0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 Insufficient cpu. no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.

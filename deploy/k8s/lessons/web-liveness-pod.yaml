@@ -1,0 +1,20 @@
+# lesson: k8s.l1.liveness-probes
+# Caddy with a liveness probe that can never pass: Caddy's welcome site has
+# no /healthz, so every probe gets 404. After 3 failures in a row (the
+# default failureThreshold) the kubelet kills the container and starts it
+# again, in the same Pod.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-liveness
+  namespace: donhang
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+      ports:
+        - containerPort: 80
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 80

@@ -1,0 +1,16 @@
+# lesson: k8s.l1.configmaps
+# The api's settings that are not secret, under the environment variable
+# names it already reads in docker-compose.yml. The hosts are the names of
+# Services in this namespace. The connection string to PostgreSQL holds a
+# password, so it is in the Secret api instead (scripts/k8s/secrets.sh).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api
+  namespace: donhang
+data:
+  ConnectionStrings__Redis: "redis:6379,abortConnect=false"
+  Smtp__Host: "mailpit"
+  Smtp__Port: "1025"
+  Keycloak__Authority: "http://localhost:8180/realms/donhang"
+  Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"

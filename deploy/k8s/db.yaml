@@ -1,0 +1,72 @@
+# lesson: k8s.l1.deploying-don-hang
+# PostgreSQL from the image Compose uses, one replica. Its data lives in an
+# emptyDir volume: it survives a restart of the container, but is deleted
+# with the Pod, and a replacement db Pod starts with an empty database.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: donhang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:17.6-alpine
+          env:
+            - name: POSTGRES_DB
+              value: donhang
+            - name: POSTGRES_USER
+              value: donhang
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db
+                  key: POSTGRES_PASSWORD
+            - name: TZ
+              value: Asia/Ho_Chi_Minh
+            - name: PGTZ
+              value: Asia/Ho_Chi_Minh
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              # Over TCP: while the image runs the init scripts, PostgreSQL
+              # listens only on its socket, and the migration must wait.
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "donhang", "-d", "donhang"]
+          # lesson: k8s.l1.configmap-files
+          # Each key of the ConfigMap db-init (built by scripts/k8s/deploy.sh
+          # from the files in db/) appears as a file in
+          # /docker-entrypoint-initdb.d, where the PostgreSQL image looks for
+          # scripts to run when its data directory is empty. The folder shows
+          # only those files.
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: db-init
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: donhang
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      targetPort: 5432

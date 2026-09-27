@@ -1,0 +1,39 @@
+# The fake mail server Compose runs: it accepts the api's emails on
+# mailpit:1025 and delivers none; its web page and API are on port 8025.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  namespace: donhang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mailpit
+  template:
+    metadata:
+      labels:
+        app: mailpit
+    spec:
+      containers:
+        - name: mailpit
+          image: axllent/mailpit:v1.31.3
+          ports:
+            - containerPort: 1025
+            - containerPort: 8025
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  namespace: donhang
+spec:
+  selector:
+    app: mailpit
+  ports:
+    - name: smtp
+      port: 1025
+      targetPort: 1025
+    - name: http
+      port: 8025
+      targetPort: 8025

@@ -1,0 +1,25 @@
+# lesson: k8s.l1.deploying-don-hang
+# Runs the migration bundle once against db, then stops: restartPolicy Never,
+# so a failure is not retried and the Pod ends Failed. Same tag as the api in
+# api.yaml. scripts/k8s/deploy.sh applies the api only after this Pod ends
+# Succeeded. It sits in its own folder so that `kubectl apply -f deploy/k8s/`
+# does not start it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrate
+  namespace: donhang
+spec:
+  restartPolicy: Never
+  containers:
+    - name: migrate
+      image: ghcr.io/duyan11110/donhang-migrate:1.0.0
+      # $(ConnectionStrings__Default) is replaced by that variable's value,
+      # read from the Secret api, before the bundle starts.
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: api
+              key: ConnectionStrings__Default

@@ -1,0 +1,18 @@
+$ kubectl apply -f deploy/k8s/lessons/web-liveness-pod.yaml
+pod/web-liveness created
+$ kubectl get pod web-liveness -n donhang
+NAME           READY   STATUS    RESTARTS      AGE
+web-liveness   1/1     Running   1 (... ago)   ...
+Still the same Pod (same uid): yes
+Still the same IP address: yes
+
+$ kubectl get pod web-liveness -n donhang -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}'
+CrashLoopBackOff
+
+== the Pod's events about the probe, each one once
+Killing: Container web failed liveness probe, will be restarted
+Unhealthy: Liveness probe failed: HTTP probe failed with statuscode: 404
+
+$ kubectl describe deployment api -n donhang | grep -E 'Liveness|Readiness'
+Liveness:    http-get http://:8080/health/live delay=0s timeout=1s period=10s #success=1 #failure=3
+Readiness:   http-get http://:8080/health/ready delay=0s timeout=1s period=10s #success=1 #failure=3

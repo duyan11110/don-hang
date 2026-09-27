@@ -1,0 +1,64 @@
+# Keycloak as Compose runs it: start-dev keeps its data inside the container
+# and imports the realm the first time it starts. The realm file comes from
+# the ConfigMap keycloak-realm (scripts/k8s/deploy.sh builds it from
+# keycloak/donhang-realm.json), the admin password from the Secret keycloak.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: donhang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.7.4
+          args: ["start-dev", "--import-realm"]
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: admin
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak
+                  key: KC_BOOTSTRAP_ADMIN_PASSWORD
+            # The same issuer as in Compose; the api fetches the keys from
+            # keycloak:8080 (Keycloak__MetadataAddress in the ConfigMap api).
+            - name: KC_HOSTNAME
+              value: "http://localhost:8180"
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+          volumeMounts:
+            - name: realm
+              mountPath: /opt/keycloak/data/import
+      volumes:
+        - name: realm
+          configMap:
+            name: keycloak-realm
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: donhang
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - port: 8080
+      targetPort: 8080

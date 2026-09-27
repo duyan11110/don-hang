@@ -1,0 +1,23 @@
+$ kubectl get configmap api -n donhang -o go-template='{{range $key, $value := .data}}{{$key}}={{$value}}{{"\n"}}{{end}}'
+ConnectionStrings__Redis=redis:6379,abortConnect=false
+Keycloak__Authority=http://localhost:8180/realms/donhang
+Keycloak__MetadataAddress=http://keycloak:8080/realms/donhang/.well-known/openid-configuration
+Smtp__Host=mailpit
+Smtp__Port=1025
+$ kubectl exec deployment/api -n donhang -- printenv Smtp__Host Smtp__Port
+mailpit
+1025
+
+$ kubectl apply -f - (api-configmap.yaml with Smtp__Port: "2525")
+configmap/api configured
+The api Deployment changed: no
+$ kubectl exec deployment/api -n donhang -- printenv Smtp__Port
+1025
+
+$ kubectl rollout restart deployment/api -n donhang
+deployment.apps/api restarted
+$ kubectl exec deployment/api -n donhang -- printenv Smtp__Port
+2525
+
+$ kubectl apply -f deploy/k8s/api-configmap.yaml
+configmap/api configured

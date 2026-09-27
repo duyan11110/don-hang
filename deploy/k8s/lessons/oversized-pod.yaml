@@ -1,0 +1,17 @@
+# lesson: k8s.l1.requests-and-limits
+# A Pod that asks for 100 CPU cores, more than any node of the kind cluster
+# has. kube-scheduler finds no node whose unreserved CPU covers it, so the
+# Pod stays Pending; nothing is pulled or started.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oversized
+  namespace: donhang
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+      resources:
+        requests:
+          cpu: "100"
+          memory: 64Mi

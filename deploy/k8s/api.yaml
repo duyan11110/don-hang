@@ -1,0 +1,78 @@
+# The api as Đơn Hàng runs it on the cluster: two replicas of the release
+# 1.0.0 image, its settings from the ConfigMap api and the Secret api, probes
+# that tell Kubernetes when it is alive and when it is ready, and the CPU and
+# memory each replica reserves and may use at most.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/duyan11110/donhang-api:1.0.0
+          ports:
+            - containerPort: 8080
+          # lesson: k8s.l1.configmaps
+          # lesson: k8s.l1.secrets
+          # Every key of the ConfigMap api becomes an environment variable;
+          # the connection string, which holds the password, comes from one
+          # key of the Secret api.
+          envFrom:
+            - configMapRef:
+                name: api
+          env:
+            - name: ConnectionStrings__Default
+              valueFrom:
+                secretKeyRef:
+                  name: api
+                  key: ConnectionStrings__Default
+          # lesson: k8s.l1.liveness-probes
+          # lesson: k8s.l1.readiness-probes
+          # Alive: the process still answers HTTP (/health/live checks nothing
+          # else, so a database outage restarts nothing). Ready: it can reach
+          # PostgreSQL (/health/ready); until then the Service api sends it
+          # no requests.
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          # lesson: k8s.l1.requests-and-limits
+          # The scheduler places each api Pod only on a node with a quarter of
+          # a core and 256 MiB not yet reserved. Above half a core the api is
+          # slowed down; above 512 MiB of memory it can be killed (OOMKilled).
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+# lesson: k8s.l1.deploying-don-hang
+# api:8080 inside the cluster, the same address the api had on the Compose
+# network. Nothing outside the cluster reaches it.
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080

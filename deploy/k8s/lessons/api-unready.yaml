@@ -1,0 +1,46 @@
+# lesson: k8s.l1.readiness-probes
+# deploy/k8s/api.yaml with one change: the connection string names a database
+# host that does not exist (db-missing). The new Pod's process runs and
+# /health/live passes, but /health/ready never does: the Pod is never ready,
+# never restarted, and the rolling update never finishes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/duyan11110/donhang-api:1.0.0
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api
+          env:
+            - name: ConnectionStrings__Default
+              value: "Host=db-missing;Database=donhang;Username=donhang"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
