@@ -11,6 +11,8 @@ cd "$(dirname "$0")/.."
 # prerequisite here, same as Docker Desktop).
 (cd DonHang.App && flutter build web >/dev/null)
 
+# --wait returns once every service is running and each one with a healthcheck
+# is healthy, the api included: it answers before any script runs.
 docker compose up -d --build --wait
 
 echo

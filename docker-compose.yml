@@ -141,6 +141,15 @@ services:
       # whenever Redis is not there.
       redis:
         condition: service_started
+    # Healthy once /health/ready answers, so `docker compose up --wait` (and
+    # scripts/up.sh) returns only when Caddy can reach the api, not before.
+    healthcheck:
+      # The image has no curl, and its sh is not bash; bash can still send
+      # one HTTP request.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q Healthy <&3"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
     networks:
       donhang:
         ipv4_address: 172.28.0.13
