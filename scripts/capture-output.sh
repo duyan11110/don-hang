@@ -41,6 +41,13 @@ capture() {
     return 1
   fi
 
+  # kubectl pads every table column to its widest value, so a masked Pod name
+  # or age would still shift the columns after it. In the output of
+  # scripts/k8s/, each run of two or more spaces between words becomes three.
+  case "$script" in
+    scripts/k8s/*) perl -pi -e 's/(?<=\S) {2,}(?=\S)/   /g' "$out" ;;
+  esac
+
   perl - "$out" <<'MASK'
 my ($file) = @ARGV;
 open my $rules, '<', 'outputs/unstable.regex' or die "unstable.regex: $!";
@@ -59,16 +66,69 @@ for my $line (@lines) {
 close $written;
 MASK
 
+  # Then line the columns up again, now that no value in them changes.
+  case "$script" in
+    scripts/k8s/*) perl - "$out" <<'ALIGN'
+my ($file) = @ARGV;
+open my $in, '<', $file or die "$file: $!";
+my @lines = map { chomp; $_ } <$in>;
+close $in;
+
+# A table is a run of lines with the same number of fields split by 3 spaces.
+my @out;
+my $i = 0;
+while ($i < @lines) {
+    my $n = () = split /   /, $lines[$i], -1;
+    my $j = $i;
+    $j++ while $j < @lines && $n > 1 && (() = split /   /, $lines[$j], -1) == $n;
+    $j = $i + 1 if $j == $i;
+    my @rows = map { [split /   /, $_, -1] } @lines[$i .. $j - 1];
+    my @width;
+    for my $row (@rows) {
+        for my $c (0 .. $#$row - 1) {
+            $width[$c] = length $row->[$c] if length $row->[$c] > ($width[$c] // 0);
+        }
+    }
+    for my $row (@rows) {
+        push @out, join '', (map { sprintf '%-*s   ', $width[$_], $row->[$_] } 0 .. $#$row - 1), $row->[-1];
+    }
+    $i = $j;
+}
+
+open my $written, '>', $file or die "$file: $!";
+print {$written} "$_\n" for @out;
+close $written;
+ALIGN
+      ;;
+  esac
+
   echo "captured $out"
 }
 
+# The scripts of the k8s track need the kind cluster, not the lab, and build
+# on each other, so --k8s runs them in the order of the lessons, on a new
+# cluster; it leaves the cluster running (scripts/k8s/cluster-down.sh).
+k8s_scripts=(
+  cluster-up get-nodes apply-web-pod namespaces control-plane
+  labels replicaset deployment service service-dns
+  deploy-api rolling-update rollback
+  configmap secrets deploy configmap-files smoke-test
+  health liveness readiness resources
+)
+
 if [ "${1:-}" = "--all" ]; then
-  # scripts/lib/ holds helpers other scripts source, not lessons.
-  for script in $(find scripts git-playground -name '*.sh' ! -path 'scripts/lib/*' \
+  # scripts/lib/ holds helpers other scripts source, not lessons; scripts/k8s/
+  # is captured by --k8s.
+  for script in $(find scripts git-playground -name '*.sh' ! -path 'scripts/lib/*' ! -path 'scripts/k8s/*' \
                     ! -name 'up.sh' ! -name 'down.sh' ! -name 'dev-secrets.sh' \
                     ! -name 'lab-run.sh' ! -name 'capture-output.sh' | sort); do
     capture "$script"
   done
+elif [ "${1:-}" = "--k8s" ]; then
+  scripts/k8s/cluster-down.sh >/dev/null
+  for name in "${k8s_scripts[@]}"; do
+    capture "scripts/k8s/$name.sh"
+  done
 else
-  capture "${1:?usage: scripts/capture-output.sh <path to a script> | --all}"
+  capture "${1:?usage: scripts/capture-output.sh <path to a script> | --all | --k8s}"
 fi
