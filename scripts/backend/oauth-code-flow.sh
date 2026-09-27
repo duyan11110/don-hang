@@ -48,8 +48,11 @@ echo "redirected to: $redirect"
 echo
 
 echo "== 2. the app exchanges that code and its code_verifier for tokens"
+# Keycloak lists the granted scopes in no fixed order; sorted, they read the
+# same on every run.
 exchange "$(code_in "$redirect")" "$verifier" \
-  | jq '{token_type, expires_in, scope, access_token: (.access_token[0:20] + "...")}'
+  | jq '{token_type, expires_in, scope: (.scope | split(" ") | sort | join(" ")),
+         access_token: (.access_token[0:20] + "...")}'
 echo
 
 echo "== 3. a code stolen on its way back, exchanged without the app's verifier"

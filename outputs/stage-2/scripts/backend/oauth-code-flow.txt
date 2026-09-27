@@ -5,7 +5,7 @@ redirected to: http://localhost:8081/auth/callback?session_state=...&iss=http%3A
 {
   "token_type": "Bearer",
   "expires_in": 300,
-  "scope": "openid profile email",
+  "scope": "email openid profile",
   "access_token": "eyJhbGciOiJSUzI1NiIs..."
 }
 

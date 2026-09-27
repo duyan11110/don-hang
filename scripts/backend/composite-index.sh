@@ -4,7 +4,9 @@ set -euo pipefail
 # donhang_perf is built on the host (it needs dotnet); the queries then run
 # inside the lab box.
 if [ ! -f /.dockerenv ]; then
-  "$(dirname "$0")/perf-db.sh" --if-missing
+  # Quietly: what perf-db.sh prints while it builds is not this script's
+  # output; it is shown only if the build fails.
+  built=$("$(dirname "$0")/perf-db.sh" --if-missing 2>&1) || { echo "$built" >&2; exit 1; }
   exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 fi
 
