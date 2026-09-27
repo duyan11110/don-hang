@@ -7,7 +7,7 @@ namespace DonHang.Api;
 public sealed record ProductDto(int Id, string Name, int PriceVnd);
 
 // lesson: backend.l2.cache-invalidation
-public sealed record UpdateProductPriceRequest([Range(0, int.MaxValue)] int PriceVnd);
+public sealed record UpdateProductPriceRequest([Range(1, int.MaxValue)] int PriceVnd);
 
 public sealed record OrderItemDto(int ProductId, int Quantity, int UnitPriceVnd);
 

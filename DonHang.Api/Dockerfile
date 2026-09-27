@@ -16,6 +16,24 @@ COPY DonHang.Infrastructure/ DonHang.Infrastructure/
 COPY DonHang.Api/ DonHang.Api/
 RUN dotnet publish DonHang.Api/DonHang.Api.csproj -c Release -o /app --no-restore
 
+# lesson: devops.l2.migrations-in-the-pipeline
+# `docker build --target migrate` stops here instead: an image holding only a
+# migration bundle, one executable that applies the migrations a database has
+# not recorded as applied yet. It is built from the same source as the api.
+FROM build AS bundle
+COPY .config/dotnet-tools.json .config/
+RUN dotnet tool restore \
+    && dotnet ef migrations bundle --project DonHang.Infrastructure --configuration Release --output /bundle/efbundle
+
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS migrate
+# The same Kerberos library as the api image below, for the same reason.
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /migrate
+COPY --from=bundle /bundle/efbundle .
+ENTRYPOINT ["./efbundle"]
+
+# The api's image: the default target, because it is the last stage.
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 # Npgsql probes for Kerberos/GSSAPI support at startup; without this library

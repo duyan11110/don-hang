@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build donhang_perf: the EF Core migrations applied to an empty database, then 200,000 orders.
-# Runs on the host: it needs dotnet (for the migrations) and docker (for the db container).
+# Runs on the host: it needs docker (for the db container and the migration bundle).
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 export MSYS_NO_PATHCONV=1
@@ -19,11 +19,11 @@ fi
 psql_in_db --dbname postgres --command "DROP DATABASE IF EXISTS donhang_perf" \
                              --command "CREATE DATABASE donhang_perf"
 
-# The schema comes from the same migrations as the api's database, not from db/schema.sql.
+# The schema comes from the same migration bundle as the api's database (the
+# migrate service), pointed at donhang_perf instead; not from db/schema.sql.
 password=$(grep '^POSTGRES_PASSWORD=' .env | cut -d= -f2-)
-dotnet tool restore >/dev/null
-dotnet ef database update --project DonHang.Infrastructure \
-  --connection "Host=localhost;Port=5432;Database=donhang_perf;Username=donhang;Password=$password" >/dev/null
+docker compose run --rm --no-deps migrate \
+  --connection "Host=db;Database=donhang_perf;Username=donhang;Password=$password" >/dev/null
 
 psql_in_db --dbname donhang_perf --file - < db/perf/fill.sql >/dev/null
 

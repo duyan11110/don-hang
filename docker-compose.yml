@@ -67,6 +67,7 @@ services:
     volumes:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
       - ./db/seed.sql:/docker-entrypoint-initdb.d/20-seed.sql:ro
+      - ./db/migrations-baseline.sql:/docker-entrypoint-initdb.d/30-migrations-baseline.sql:ro
       - db-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
@@ -79,12 +80,30 @@ services:
       timeout: 3s
       retries: 30
 
+  # lesson: devops.l2.migrations-in-the-pipeline
+  # Runs the migration bundle against db once, then exits. Exit code 0 means
+  # every migration is applied; anything else stops api from starting.
+  migrate:
+    build:
+      context: .
+      dockerfile: DonHang.Api/Dockerfile
+      target: migrate
+    image: donhang-migrate:stage-2
+    container_name: donhang-migrate
+    command: ["--connection", "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.17
+
   # lesson: devops.l1.compose-for-the-api
   api:
     build:
       context: .
       dockerfile: DonHang.Api/Dockerfile
-    image: donhang-api:stage-1
+    image: donhang-api:stage-2
     container_name: donhang-api
     hostname: api
     environment:
@@ -109,6 +128,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # lesson: devops.l2.migrations-in-the-pipeline
+      # Not before migrate has exited successfully: never on an old schema.
+      migrate:
+        condition: service_completed_successfully
       # Started first, not waited for: the api answers from PostgreSQL
       # whenever Redis is not there.
       redis:

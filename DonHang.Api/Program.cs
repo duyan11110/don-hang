@@ -6,7 +6,6 @@ using DonHang.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,17 +85,11 @@ builder.Services.AddHealthChecks()
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
+// lesson: devops.l2.migrations-in-the-pipeline
+// Until stage-1 the app applied pending migrations here, every time it
+// started. From stage-2 it does not: the migrate service runs the migration
+// bundle first, and Compose starts this app only once that has succeeded.
 var app = builder.Build();
-
-// lesson: backend.l1.migrations
-// Applies pending migrations on start, so a fresh `db` container ends up on
-// the same schema a developer gets from `dotnet ef database update`.
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<DonHangDbContext>();
-    MigrationBaseline.ApplyIfNeeded(context);
-    context.Database.Migrate();
-}
 
 // lesson: backend.l1.middleware-pipeline
 // Order matters: exceptions caught first, then every request logged, then
