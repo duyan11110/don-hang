@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  lab:
+  # lesson: devops.l2.quality-gate
+  # The checks every change must pass. `dotnet test` also runs the integration
+  # tests: Testcontainers starts PostgreSQL and Redis on the Docker engine the
+  # GitHub-hosted Ubuntu runner already has, so this job needs no lab.
+  test:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -15,12 +19,17 @@ jobs:
         with:
           global-json-file: global.json
 
-      - uses: subosito/flutter-action@v2
+      # lesson: devops.l2.dependency-cache
+      # The key changes exactly when a declared package changes. With no exact
+      # match, the newest cache whose key starts with the restore-keys prefix
+      # is restored, and dotnet restore downloads only what is still missing.
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
         with:
-          channel: stable
-
-      - name: Make scripts executable
-        run: chmod +x ./scripts/*.sh
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Build the solution
         run: dotnet build DonHang.slnx --warnaserror
@@ -28,24 +37,173 @@ jobs:
       - name: Test the solution
         run: dotnet test DonHang.slnx --no-build
 
-      - name: Analyze and test DonHang.App
+  app:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
         working-directory: DonHang.App
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.x
+
+      - name: Analyze DonHang.App
+        run: flutter analyze
+
+      - name: Test DonHang.App
+        run: flutter test
+
+  # lesson: devops.l2.building-images-in-ci
+  # Built once per run, from the Dockerfile the lab uses, under the names
+  # docker-compose.yml gives the migrate and api services. Later jobs run
+  # these exact images; none of them builds again.
+  image:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the api and migrate images
         run: |
-          flutter analyze
-          flutter test
+          docker build --file DonHang.Api/Dockerfile --tag donhang-api:stage-2 .
+          docker build --file DonHang.Api/Dockerfile --target migrate --tag donhang-migrate:stage-2 .
+
+      # lesson: devops.l2.workflow-artifacts
+      # This runner, and the images on it, are gone when the job ends. The
+      # images leave as one file, an artifact of this run, for later jobs.
+      - name: Save both images to one file
+        run: docker save --output images.tar donhang-api:stage-2 donhang-migrate:stage-2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: images
+          path: images.tar
+
+  # lesson: devops.l2.deployment-environments
+  # Every green push to master is delivered to staging: a throwaway copy of
+  # Đơn Hàng's services, started on this job's own runner from the images
+  # the image job built, checked with one request, then removed.
+  staging:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [test, image]
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+
+      - name: Load the images
+        run: docker load --input images.tar
+
+      # The lab box is the one image built here: Caddy (web) shares its
+      # network, and it holds tools, not Đơn Hàng's code.
+      - name: Create the fake dev secrets and build the lab box
+        run: |
+          ./scripts/dev-secrets.sh
+          docker compose build lab
+
+      # lesson: devops.l2.migrations-in-the-pipeline
+      # migrate runs the migration bundle and exits; api starts only after it
+      # exits successfully, so a failing migration makes `up` fail and stops
+      # this job before any api runs on that database. --no-build: api and
+      # migrate run the images just loaded.
+      - name: Start staging
+        run: docker compose up --detach --no-build --wait web api
+
+      - name: Ask for the products through Caddy
+        run: curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors http://localhost:8080/api/v1/products
+
+      - name: Show the logs if staging failed
+        if: failure()
+        run: docker compose logs --tail 100
+
+      - name: Remove staging
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  # lesson: devops.l2.pushing-images-from-ci
+  # Only master's green commits reach the registry. The job logs in with the
+  # GITHUB_TOKEN GitHub creates for this run, which may push packages only
+  # because `permissions:` says so. It pushes the images the tests passed
+  # with: loaded from the artifact, never rebuilt.
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [test, image]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+
+      - name: Load the images
+        run: docker load --input images.tar
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      # lesson: devops.l2.tagging-images-by-commit
+      # sha- and the full id of the commit that was pushed, 40 characters:
+      # every image in the registry leads back to the code that built it.
+      # docker tag only adds a name to the loaded image; it builds nothing.
+      # Never `latest`: a deployment always names the commit it runs.
+      - name: Tag the images with this commit and push them
+        run: |
+          api="ghcr.io/duyan11110/donhang-api:sha-$GITHUB_SHA"
+          migrate="ghcr.io/duyan11110/donhang-migrate:sha-$GITHUB_SHA"
+          docker tag donhang-api:stage-2 "$api"
+          docker tag donhang-migrate:stage-2 "$migrate"
+          docker push "$api"
+          docker push "$migrate"
+
+  # Runs every lesson script against the lab and fails when an output differs
+  # from the one committed under outputs/stage-2/.
+  lab:
+    runs-on: ubuntu-24.04
+    env:
+      TAG: stage-2
+      # The scripts in scripts/devops/ need Prometheus, Grafana, Loki and
+      # Alloy, which Compose starts only with the monitoring profile.
+      COMPOSE_PROFILES: monitoring
+    steps:
+      - uses: actions/checkout@v4
+
+      # Some scripts run on the runner itself and need dotnet or Flutter.
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.x
+
+      - name: Make scripts executable
+        run: chmod +x ./scripts/*.sh ./scripts/*/*.sh
 
       - name: Start the lab
         run: ./scripts/up.sh
 
       - name: Run every lesson script and capture its output
         shell: bash
-        env:
-          TAG: stage-1
         run: ./scripts/capture-output.sh --all 2>&1 | tee "$RUNNER_TEMP/capture.log"
 
       - name: Fail if any captured output changed
         shell: bash
-        run: git diff -- outputs/ | tee "$RUNNER_TEMP/drift.log"; git diff --exit-code -- outputs/
+        # --intent-to-add: an output with no committed copy yet counts too.
+        run: |
+          git add --intent-to-add outputs/
+          git diff -- outputs/ | tee "$RUNNER_TEMP/drift.log"
+          git diff --exit-code -- outputs/
 
       - name: Say what went wrong
         if: failure()
