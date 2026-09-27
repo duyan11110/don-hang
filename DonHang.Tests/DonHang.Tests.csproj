@@ -14,8 +14,23 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 
+  <!-- lesson: design.l2.testcontainers-postgresql -->
+  <!-- From stage-2 the integration tests in Integration/ start real PostgreSQL
+       and Redis containers (Testcontainers) and the whole api in this process
+       (Mvc.Testing). Running this project now needs Docker, not the lab. -->
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <!-- lesson: design.l2.testing-the-dependency-rule -->
+  <!-- The tests reference every layer; only DonHang.Domain's own .csproj
+       decides what the core is built against, and DependencyRuleTests checks it. -->
   <ItemGroup>
     <ProjectReference Include="..\DonHang.Domain\DonHang.Domain.csproj" />
+    <ProjectReference Include="..\DonHang.Infrastructure\DonHang.Infrastructure.csproj" />
+    <ProjectReference Include="..\DonHang.Api\DonHang.Api.csproj" />
   </ItemGroup>
 
 </Project>
