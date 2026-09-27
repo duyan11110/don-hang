@@ -46,7 +46,7 @@ login.html
 samples/DonHang.Samples/Program.cs
 
 3. how much code is there?
-38
+32
 
 4. from a word you saw on screen to the line that produced it:
 db/seed.sql:7:    (2, 'Chuột không dây',     450000),
