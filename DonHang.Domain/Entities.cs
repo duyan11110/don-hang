@@ -1,7 +1,8 @@
 namespace DonHang.Domain;
 
 // lesson: backend.l1.efcore-mapping
-// One class per table in db/schema.sql. No behaviour here beyond what a row is.
+// One class per table in db/schema.sql. No behaviour here beyond what a row is,
+// except Order, which owns the rules about its own status (from stage-2).
 public sealed class Customer
 {
     public int Id { get; set; }
@@ -22,16 +23,67 @@ public sealed class Product
 }
 
 // lesson: backend.l1.efcore-relationships-and-keys
+// lesson: design.l2.ef-core-and-private-setters
+// Only Id keeps a public setter: the database generates it on insert, and
+// FakeOrderRepository.AddAsync assigns it the same way. Everything else
+// changes only through the constructor and the methods below.
 public sealed class Order
 {
     public int Id { get; set; }
-    public int CustomerId { get; set; }
-    public DateTimeOffset PlacedAt { get; set; }
-    public required string Status { get; set; }
-    public List<OrderItem> Items { get; set; } = [];
+    public int CustomerId { get; private set; }
+    public DateTimeOffset PlacedAt { get; private set; }
+    public string Status { get; private set; }
+    public List<OrderItem> Items { get; private set; } = [];
 
     // lesson: backend.l1.efcore-n-plus-one
     public Customer? Customer { get; set; }
+
+    // lesson: design.l2.ef-core-and-private-setters
+    // For EF Core only. It cannot pass the Items navigation to the public
+    // constructor, so it creates the object with this one and then sets each
+    // mapped property from the row it loaded — the checks below do not run.
+    private Order()
+    {
+        Status = "";
+    }
+
+    // lesson: design.l2.valid-from-construction
+    public Order(int customerId, List<OrderItem> items, DateTimeOffset placedAt)
+    {
+        if (items.Count == 0) throw new ArgumentException("an order needs at least one item");
+        if (items.Any(item => item.Quantity < 1)) throw new ArgumentException("every item needs a quantity of at least 1");
+
+        CustomerId = customerId;
+        Items = items;
+        PlacedAt = placedAt;
+        Status = "new";
+    }
+
+    // lesson: design.l2.status-changes-through-methods
+    // One method per allowed change, each checking the status it starts from.
+    // No endpoint takes payments at stage-2; OrderTests uses this to get a paid order.
+    public void MarkPaid()
+    {
+        if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is cancelled");
+        if (Status != "new") throw new OrderStatusException(Id, "already-paid", $"order {Id} is already paid");
+        Status = "paid";
+    }
+
+    // lesson: design.l2.domain-model
+    public void Cancel()
+    {
+        if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is already cancelled");
+        if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
+        Status = "cancelled";
+    }
+
+    public void Ship()
+    {
+        if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is cancelled");
+        if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
+        if (Status != "paid") throw new OrderStatusException(Id, "not-paid", $"order {Id} is not paid yet");
+        Status = "shipped";
+    }
 }
 
 public sealed class OrderItem

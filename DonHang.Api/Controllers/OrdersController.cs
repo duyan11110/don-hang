@@ -35,13 +35,26 @@ public sealed class OrdersController(OrderService orderService, IOrderRepository
         return Ok(ToDto(order));
     }
 
-    // lesson: management.l1.reviewing-for-tests
-    // Deliberately missing a check: see OrderService.CancelOrderAsync.
+    // lesson: design.l2.domain-model
+    // Whether this order may be cancelled is Order.Cancel()'s decision; a
+    // refusal arrives here as OrderStatusException and leaves as a 409.
     [Authorize]
     [HttpPatch("{id:int}/cancel")]
     public async Task<ActionResult<OrderDto>> Cancel(int id)
     {
         var order = await orderService.CancelOrderAsync(id);
+        return Ok(ToDto(order));
+    }
+
+    // lesson: design.l2.status-changes-through-methods
+    // The endpoint decides who may ship (staff only, once the stage-2 auth
+    // work adds the StaffOnly policy); Order.Ship() decides whether this
+    // order can be shipped.
+    [Authorize]
+    [HttpPatch("{id:int}/ship")]
+    public async Task<ActionResult<OrderDto>> Ship(int id)
+    {
+        var order = await orderService.ShipOrderAsync(id);
         return Ok(ToDto(order));
     }
 
