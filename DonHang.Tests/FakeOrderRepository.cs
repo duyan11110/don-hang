@@ -13,8 +13,19 @@ public sealed class FakeOrderRepository : IOrderRepository
     public Task<Order?> FindAsync(int id) =>
         Task.FromResult(orders.GetValueOrDefault(id));
 
-    public Task<List<Order>> ListByCustomerAsync(int customerId) =>
-        Task.FromResult(orders.Values.Where(o => o.CustomerId == customerId).OrderBy(o => o.Id).ToList());
+    public Task<Order?> FindForReadingAsync(int id) =>
+        Task.FromResult(orders.GetValueOrDefault(id));
+
+    public Task<List<OrderSummary>> ListByCustomerAsync(int customerId, int afterId, int limit) =>
+        Task.FromResult(orders.Values
+            .Where(o => o.CustomerId == customerId && o.Id > afterId)
+            .OrderBy(o => o.Id)
+            .Take(limit)
+            .Select(o => new OrderSummary(o.Id, o.Status, $"customer {o.CustomerId}"))
+            .ToList());
+
+    public Task<Order?> FindByIdempotencyKeyAsync(string idempotencyKey) =>
+        Task.FromResult(orders.Values.FirstOrDefault(o => o.IdempotencyKey == idempotencyKey));
 
     // lesson: design.l2.ef-core-and-private-setters
     // Hands out ids the way the database does on insert — the reason Order.Id

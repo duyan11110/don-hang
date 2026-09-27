@@ -35,6 +35,19 @@ public sealed class OrderServiceTests
     }
 
     [Fact]
+    public async Task PlaceOrderAsync_SameIdempotencyKey_ReturnsTheFirstOrder()
+    {
+        var notifier = new FakeNotifier();
+        var service = new OrderService(new FakeOrderRepository(), notifier);
+
+        var first = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
+        var retry = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
+
+        Assert.Same(first, retry);
+        Assert.Single(notifier.Sent);
+    }
+
+    [Fact]
     public async Task CancelOrderAsync_NewOrder_SavesAndNotifies()
     {
         var repository = new FakeOrderRepository();

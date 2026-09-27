@@ -3,6 +3,7 @@ using System;
 using DonHang.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DonHang.Infrastructure.Migrations
 {
     [DbContext(typeof(DonHangDbContext))]
-    partial class DonHangDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927102959_ReplaceOrdersCustomerIdIndex")]
+    partial class ReplaceOrdersCustomerIdIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -103,10 +106,6 @@ namespace DonHang.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("customer_id");
 
-                    b.Property<string>("IdempotencyKey")
-                        .HasColumnType("text")
-                        .HasColumnName("idempotency_key");
-
                     b.Property<DateTimeOffset>("PlacedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("placed_at");
@@ -116,16 +115,7 @@ namespace DonHang.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique();
 
                     b.HasIndex("CustomerId", "Id");
 

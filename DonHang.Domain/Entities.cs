@@ -35,6 +35,16 @@ public sealed class Order
     public string Status { get; private set; }
     public List<OrderItem> Items { get; private set; } = [];
 
+    // lesson: backend.l2.idempotent-endpoints
+    // The client's Idempotency-Key, stored in the same row as the order it
+    // created; null when the client sent none. A unique index guards it.
+    public string? IdempotencyKey { get; init; }
+
+    // lesson: backend.l2.optimistic-concurrency
+    // Not a column Đơn Hàng adds: DonHangDbContext maps this to PostgreSQL's
+    // xmin system column, which changes every time the row is updated.
+    public uint Version { get; private set; }
+
     // lesson: backend.l1.efcore-n-plus-one
     public Customer? Customer { get; set; }
 

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using DonHang.Domain;
@@ -11,26 +12,35 @@ namespace DonHang.Api.Controllers;
 [Route("api/v1/orders")]
 public sealed class OrdersController(OrderService orderService, IOrderRepository repository) : ControllerBase
 {
+    private const int MaxPageSize = 100;
+
     // lesson: backend.l1.rest-for-writes
     // Requires a signed-in customer; customer_id comes from the token's `sub`
     // claim, never from the request body (frontend.l1.creating-an-order).
+    // lesson: backend.l2.idempotent-endpoints
+    // The optional Idempotency-Key header is created by the client once per
+    // order it means to place; a retry sends the same value again.
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<OrderDto>> Create(CreateOrderRequest request)
+    public async Task<ActionResult<OrderDto>> Create(
+        CreateOrderRequest request,
+        [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey)
     {
         var customerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
         var items = request.Items
             .Select(i => new OrderItem { ProductId = i.ProductId, Quantity = i.Quantity, UnitPriceVnd = i.UnitPriceVnd })
             .ToList();
 
-        var order = await orderService.PlaceOrderAsync(customerId, items);
+        var order = await orderService.PlaceOrderAsync(customerId, items, idempotencyKey);
         return CreatedAtAction(nameof(Get), new { id = order.Id }, ToDto(order));
     }
 
+    // lesson: backend.l2.no-tracking-queries
+    // Only reads the order to build the response, so it loads it untracked.
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderDto>> Get(int id)
     {
-        var order = await repository.FindAsync(id);
+        var order = await repository.FindForReadingAsync(id);
         if (order is null) return NotFound();
         return Ok(ToDto(order));
     }
@@ -59,13 +69,19 @@ public sealed class OrdersController(OrderService orderService, IOrderRepository
     }
 
     // lesson: backend.l1.efcore-n-plus-one
+    // lesson: backend.l2.cursor-pagination
+    // GET /api/v1/orders?after=120&limit=20: the signed-in customer's orders
+    // with an id greater than `after`, sorted by id. The client sends the last
+    // id it received as the next `after`.
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<List<OrderSummaryDto>>> List()
+    public async Task<ActionResult<List<OrderSummaryDto>>> List(
+        [FromQuery, Range(0, int.MaxValue)] int after = 0,
+        [FromQuery, Range(1, MaxPageSize)] int limit = 20)
     {
         var customerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-        var orders = await repository.ListByCustomerAsync(customerId);
-        return Ok(orders.Select(o => new OrderSummaryDto(o.Id, o.Status, o.Customer!.FullName)).ToList());
+        var orders = await repository.ListByCustomerAsync(customerId, after, limit);
+        return Ok(orders.Select(o => new OrderSummaryDto(o.Id, o.Status, o.CustomerName)).ToList());
     }
 
     private static OrderDto ToDto(Order order) => new(

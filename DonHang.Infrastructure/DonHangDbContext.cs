@@ -44,6 +44,24 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(o => o.Status).HasColumnName("status");
             e.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId);
             e.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId);
+
+            // lesson: backend.l2.composite-indexes
+            // Sorted by customer, then by id: one customer's page after a cursor
+            // is a single range of this index. It starts with customer_id, so it
+            // also serves every query IX_orders_customer_id did, and replaces it.
+            e.HasIndex(o => new { o.CustomerId, o.Id });
+
+            // lesson: backend.l2.idempotent-endpoints
+            // Unique, so two requests with the same key cannot both insert an
+            // order; PostgreSQL allows any number of rows where the key is null.
+            e.Property(o => o.IdempotencyKey).HasColumnName("idempotency_key");
+            e.HasIndex(o => o.IdempotencyKey).IsUnique();
+
+            // lesson: backend.l2.optimistic-concurrency
+            // IsRowVersion() on a uint makes the Npgsql provider map Version to
+            // PostgreSQL's xmin column. EF Core then adds "AND xmin = <value it
+            // read>" to the WHERE of every UPDATE of an order.
+            e.Property(o => o.Version).IsRowVersion();
         });
 
         modelBuilder.Entity<OrderItem>(e =>
