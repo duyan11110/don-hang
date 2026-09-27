@@ -165,8 +165,73 @@ jobs:
           docker push "$api"
           docker push "$migrate"
 
+  # The Kubernetes manifests under deploy/k8s/ (lessons/ and migrate/ too)
+  # must be valid objects of the Kubernetes version the course teaches, with
+  # no unknown field. kind-config.yaml configures kind, not Kubernetes.
+  manifests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate the Kubernetes manifests with kubeconform
+        run: |
+          docker run --rm --volume "$PWD/deploy/k8s:/k8s:ro" ghcr.io/yannh/kubeconform:v0.8.0             -strict -summary -kubernetes-version 1.34.0             -ignore-filename-pattern 'kind-config[.]yaml' /k8s
+
+  # Runs the scripts of the k8s track, in the order of the lessons, on a kind
+  # cluster created on this runner, and fails when an output differs from the
+  # one committed under outputs/stage-2/scripts/k8s/. The cluster pulls the
+  # api and migrate images from GitHub Container Registry, by the tags in the
+  # manifests (a sha- tag and 1.0.0), as a learner's cluster does.
+  k8s:
+    needs: manifests
+    runs-on: ubuntu-24.04
+    env:
+      TAG: stage-2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kind and kubectl
+        run: |
+          curl -fsSL --output kind https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+          curl -fsSL --output kubectl https://dl.k8s.io/release/v1.34.3/bin/linux/amd64/kubectl
+          sudo install kind kubectl /usr/local/bin/
+          kind version
+          kubectl version --client
+
+      - name: Make scripts executable
+        run: chmod +x ./scripts/*.sh ./scripts/*/*.sh
+
+      # scripts/k8s/deploy.sh builds the Secrets from .env.
+      - name: Create the fake dev secrets
+        run: ./scripts/dev-secrets.sh
+
+      - name: Run every k8s script and capture its output
+        shell: bash
+        run: ./scripts/capture-output.sh --k8s 2>&1 | tee "$RUNNER_TEMP/capture.log"
+
+      - name: Fail if any captured output changed
+        shell: bash
+        run: |
+          git add --intent-to-add outputs/
+          git diff -- outputs/ | tee "$RUNNER_TEMP/drift.log"
+          git diff --exit-code -- outputs/
+
+      - name: Say what went wrong
+        if: failure()
+        shell: bash
+        run: |
+          detail=$(tail -n 40 "$RUNNER_TEMP"/*.log 2>/dev/null | sed 's/%/%25/g; s/\r//g')
+          echo "::error title=k8s failed::${detail//$'\n'/%0A}"
+          kubectl get pods --all-namespaces || true
+          kubectl get events -n donhang || true
+
+      - name: Delete the cluster
+        if: always()
+        run: ./scripts/k8s/cluster-down.sh
+
   # Runs every lesson script against the lab and fails when an output differs
-  # from the one committed under outputs/stage-2/.
+  # from the one committed under outputs/stage-2/. The k8s track's scripts
+  # run in the k8s job above instead.
   lab:
     runs-on: ubuntu-24.04
     env:
