@@ -1,0 +1,28 @@
+before rebasing:
+* 59f8ec8 (HEAD -> rebase-demo, origin/feature/shipping, feature/shipping) Charge no shipping over two million
+* 1108382 Add shipping.sh
+| * 57a2d53 (origin/main, origin/HEAD, main) Add a README
+| * c812dbd Explain the rounding
+| * b3472f6 Round the total down to millions
+|/  
+* 09c8526 Add a second product
+* d915e63 Add total.sh and a check for it
+* 9f3b296 Add the price list
+
+the ids of the two commits on this branch:
+59f8ec8 Charge no shipping over two million
+1108382 Add shipping.sh
+
+after rebasing, the same changes have different ids:
+415ff6b Charge no shipping over two million
+826899a Add shipping.sh
+
+the history is now a straight line:
+* 415ff6b Charge no shipping over two million
+* 826899a Add shipping.sh
+* 57a2d53 Add a README
+* c812dbd Explain the rounding
+* b3472f6 Round the total down to millions
+* 09c8526 Add a second product
+* d915e63 Add total.sh and a check for it
+* 9f3b296 Add the price list

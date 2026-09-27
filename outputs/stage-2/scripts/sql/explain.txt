@@ -1,0 +1,38 @@
+SET max_parallel_workers_per_gather = 0;
+SET
+CREATE TEMPORARY TABLE order_log AS
+SELECT g AS id,
+       (g % 5) + 1 AS customer_id,
+       timestamptz '2026-01-01 00:00:00+07' + (g * interval '1 minute') AS placed_at
+FROM generate_series(1, 200000) AS g;
+SELECT 200000
+ANALYZE order_log;
+ANALYZE
+EXPLAIN (COSTS OFF)
+SELECT * FROM order_log WHERE placed_at = '2026-01-02 03:04:00+07';
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Seq Scan on order_log
+   Filter: (placed_at = '2026-01-02 03:04:00+07'::timestamp with time zone)
+(2 rows)
+
+CREATE INDEX order_log_placed_at_idx ON order_log (placed_at);
+CREATE INDEX
+ANALYZE order_log;
+ANALYZE
+EXPLAIN (COSTS OFF)
+SELECT * FROM order_log WHERE placed_at = '2026-01-02 03:04:00+07';
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Index Scan using order_log_placed_at_idx on order_log
+   Index Cond: (placed_at = '2026-01-02 03:04:00+07'::timestamp with time zone)
+(2 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT * FROM order_log WHERE date(placed_at) = '2026-01-02';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on order_log
+   Filter: (date(placed_at) = '2026-01-02'::date)
+(2 rows)
+

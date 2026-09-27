@@ -1,0 +1,25 @@
+the two commands to run before anything else:
+## main...origin/main
+* 57a2d53 Add a README
+* c812dbd Explain the rounding
+* b3472f6 Round the total down to millions
+* 09c8526 Add a second product
+* d915e63 Add total.sh and a check for it
+* 9f3b296 Add the price list
+
+what changed in the newest commit:
+57a2d53 Add a README
+ README.md | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+the commit object itself:
+tree e33dfc0fd24dcdf16ead4ac0ad48b630eccd32ed
+parent c812dbd1cc33d3b7b673ab3665b9e032375e5f99
+author Mai Anh <mai.anh@example.com> 1770447600 +0700
+committer Mai Anh <mai.anh@example.com> 1770447600 +0700
+
+Add a README
+
+the three places a change passes through:
+ M prices.txt
+M  prices.txt
