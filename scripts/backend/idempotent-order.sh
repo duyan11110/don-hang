@@ -5,15 +5,13 @@ set -euo pipefail
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 base=http://localhost:8080/api/v1
+source "$(dirname "$0")/../lib/keycloak.sh"
 count_orders() {
   psql --host db --username donhang --dbname donhang --no-psqlrc --tuples-only --no-align \
        --command "SELECT count(*) FROM orders WHERE customer_id = 1"
 }
 
-token=$(curl -sS -X POST "$base/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"anh.tran@example.com","password":"donhang-dev-password"}' \
-  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+token=$(keycloak_access_token anh.tran@example.com)
 
 # lesson: backend.l2.idempotent-endpoints
 # The client makes one key per order it means to place, and reuses it on every retry.

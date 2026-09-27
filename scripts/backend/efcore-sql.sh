@@ -5,10 +5,8 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 base=http://localhost:8080/api/v1
-token=$(curl -sS -X POST "$base/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"dung.le@example.com","password":"donhang-dev-password"}' \
-  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+source "$(dirname "$0")/../lib/keycloak.sh"
+token=$(keycloak_access_token dung.le@example.com)
 
 echo "GET /api/v1/orders?after=5&limit=20 as customer 3:"
 curl -sS "$base/orders?after=5&limit=20" -H "Authorization: Bearer $token"

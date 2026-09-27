@@ -14,3 +14,5 @@ actual time=\K[0-9.]+\.\.[0-9.]+
 ^ *Planning Time: \K[0-9.]+(?= ms$)
 ^ *Execution Time: \K[0-9.]+(?= ms$)
 Executed DbCommand \(\K[0-9]+(?=ms\))
+[?&]code=\K[^&\s]+
+[?&]session_state=\K[^&\s]+

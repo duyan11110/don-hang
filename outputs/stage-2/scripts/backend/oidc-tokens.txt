@@ -1,0 +1,30 @@
+== fields of Keycloak's token response, scope "profile email" (plain OAuth 2.0):
+["access_token","expires_in","not-before-policy","refresh_expires_in","refresh_token","scope","session_state","token_type"]
+== the same, scope "openid profile email" (OpenID Connect):
+["access_token","expires_in","id_token","not-before-policy","refresh_expires_in","refresh_token","scope","session_state","token_type"]
+
+== ID token, the claims the app reads:
+{
+  "iss": "http://localhost:8180/realms/donhang",
+  "aud": "donhang-app",
+  "sub": "92f6ba26-729c-4d61-854b-c04c9f2db11a",
+  "typ": "ID",
+  "name": "Minh Anh Trần",
+  "email": "anh.tran@example.com"
+}
+== access token, the claims the api reads:
+{
+  "iss": "http://localhost:8180/realms/donhang",
+  "aud": "donhang-api",
+  "sub": "92f6ba26-729c-4d61-854b-c04c9f2db11a",
+  "typ": "Bearer",
+  "azp": "donhang-app",
+  "roles": [
+    "customer"
+  ]
+}
+
+== GET /api/v1/orders/1 with the ID token:
+  -> 401
+== GET /api/v1/orders/1 with the access token:
+  -> 200

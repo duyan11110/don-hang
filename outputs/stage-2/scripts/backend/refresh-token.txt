@@ -1,0 +1,21 @@
+== log in as customer 1
+{
+  "expires_in": 300,
+  "refresh_expires_in": 1800
+}
+access token: exp - iat = 300 seconds
+
+== GET /api/v1/orders/1 with the access token, then with the refresh token
+  -> 200
+  -> 401
+
+== renew: grant_type=refresh_token
+a new access token, different from the first: yes
+  -> 200
+
+== log out at Keycloak
+  -> 204
+== renew again after logging out
+{"error":"invalid_grant","error_description":"Session not active"}
+== the access token from before the logout, at the api (it has not reached its exp)
+  -> 200

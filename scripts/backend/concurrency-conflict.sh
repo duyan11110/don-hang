@@ -5,6 +5,7 @@ set -euo pipefail
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 base=http://localhost:8080/api/v1
+source "$(dirname "$0")/../lib/keycloak.sh"
 reset_order_5() {
   psql --host db --username donhang --dbname donhang --no-psqlrc --quiet \
        --command "UPDATE orders SET status = 'paid' WHERE id = 5"
@@ -12,10 +13,7 @@ reset_order_5() {
 reset_order_5
 
 # Order 5 belongs to customer 3.
-token=$(curl -sS -X POST "$base/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"dung.le@example.com","password":"donhang-dev-password"}' \
-  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+token=$(keycloak_access_token dung.le@example.com)
 
 ship=$(mktemp)
 trap 'rm -f "$ship"' EXIT

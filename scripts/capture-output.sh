@@ -60,7 +60,8 @@ MASK
 }
 
 if [ "${1:-}" = "--all" ]; then
-  for script in $(find scripts git-playground -name '*.sh' \
+  # scripts/lib/ holds helpers other scripts source, not lessons.
+  for script in $(find scripts git-playground -name '*.sh' ! -path 'scripts/lib/*' \
                     ! -name 'up.sh' ! -name 'down.sh' ! -name 'dev-secrets.sh' \
                     ! -name 'lab-run.sh' ! -name 'capture-output.sh' | sort); do
     capture "$script"

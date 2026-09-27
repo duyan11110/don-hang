@@ -15,8 +15,6 @@ the start of the document:
   ],
 
 every path and method it describes:
-    /api/v1/auth/login
-      post
     /api/v1/orders
       post
       get

@@ -6,17 +6,15 @@ set -euo pipefail
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 base=http://localhost:8080/api/v1
+source "$(dirname "$0")/../lib/keycloak.sh"
 
 echo "products (no sign-in needed):"
 curl -sS "$base/products" | head -c 200
 echo
 echo
 
-echo "sign in as customer 1:"
-token=$(curl -sS -X POST "$base/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"anh.tran@example.com","password":"donhang-dev-password"}' \
-  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+echo "sign in as customer 1, at Keycloak (scripts/lib/keycloak.sh):"
+token=$(keycloak_access_token anh.tran@example.com)
 echo "  got a token: ${token:0:20}..."
 echo
 
@@ -30,7 +28,7 @@ order_id=$(echo "$order" | sed -E 's/.*"id":([0-9]+).*/\1/')
 echo
 
 echo "read the order back:"
-curl -sS "$base/orders/$order_id"
+curl -sS "$base/orders/$order_id" -H "Authorization: Bearer $token"
 echo
 
 echo "the same request without a token:"
