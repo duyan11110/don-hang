@@ -19,6 +19,9 @@ capture() {
   case "$script" in
     scripts/terminal/ssh-into-lab.sh | scripts/debug/run-throws-deep.sh)
       command=(bash "$script") ;;
+    scripts/release-notes.sh)
+      # It takes the version to print; devops.l2.cutting-a-release shows 1.0.0.
+      command=(bash "$script" 1.0.0) ;;
     *)
       # A script that says it runs on the host (it needs docker or dotnet
       # itself) is run here, like one that sends itself into the box.
