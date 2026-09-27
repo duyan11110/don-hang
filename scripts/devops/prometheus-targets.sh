@@ -28,7 +28,9 @@ echo
 
 echo "== the same query after docker compose stop api (and one more scrape)"
 docker compose stop api 2>/dev/null
-trap 'docker compose start api 2>/dev/null' EXIT
+# Started again, and waited for until Prometheus scrapes it: the next
+# script may send it requests at once.
+trap 'docker compose start api 2>/dev/null && wait_for_up 1' EXIT
 wait_for_up 0
 echo "  $(up_value)"
 prometheus targets | jq -r '.data.activeTargets[] | "  health=\(.health)"'
