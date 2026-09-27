@@ -185,6 +185,9 @@ jobs:
   k8s:
     needs: manifests
     runs-on: ubuntu-24.04
+    # A Pod stuck on an image it cannot pull makes a rollout wait forever;
+    # the whole track takes well under this.
+    timeout-minutes: 60
     env:
       TAG: stage-2
     steps:
