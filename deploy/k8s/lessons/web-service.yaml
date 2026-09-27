@@ -1,0 +1,15 @@
+# lesson: k8s.l1.services
+# One stable address for every Pod labelled app: web. No type is given, so it
+# is a ClusterIP Service, reachable only from inside the cluster. A connection
+# to port 80 of the Service goes to port 80 (targetPort) of one of the Pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: donhang
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80

@@ -1,0 +1,24 @@
+# lesson: k8s.l1.replicasets
+# Keep 3 Pods labelled app: web running. The selector says which Pods count;
+# the template is what each new Pod is created from, and its labels must
+# match the selector.
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: web
+  namespace: donhang
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: caddy:2.10.0
+          ports:
+            - containerPort: 80

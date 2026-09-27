@@ -1,0 +1,23 @@
+# lesson: k8s.l1.deployments
+# The same three Caddy Pods as web-replicaset.yaml, declared as a Deployment:
+# it creates the ReplicaSet, and the ReplicaSet creates the Pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: donhang
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: caddy:2.10.0
+          ports:
+            - containerPort: 80

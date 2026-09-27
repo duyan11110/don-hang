@@ -1,0 +1,35 @@
+# lesson: k8s.l1.rollbacks
+# api-deployment-1.0.0.yaml with a tag that was never pushed: no commit has
+# this id. A node cannot pull it, so the new Pod never starts.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/duyan11110/donhang-api:sha-0000000000000000000000000000000000000000
+          ports:
+            - containerPort: 8080
+          # Only settings that are not secret, enough for the api to start.
+          # The connection string has no password, so every request that
+          # needs PostgreSQL fails; k8s/config-and-probes supplies the rest.
+          env:
+            - name: ConnectionStrings__Default
+              value: "Host=db;Database=donhang;Username=donhang"
+            - name: ConnectionStrings__Redis
+              value: "redis:6379,abortConnect=false"
+            - name: Keycloak__Authority
+              value: "http://localhost:8180/realms/donhang"
+            - name: Keycloak__MetadataAddress
+              value: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"

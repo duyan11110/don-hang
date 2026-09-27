@@ -1,0 +1,38 @@
+# lesson: k8s.l1.deploying-an-image-tag
+# lesson: k8s.l1.rolling-updates
+# Two replicas of the api image CI pushed for commit bb18424 (the sha- tag
+# names that commit). The node pulls it from GitHub Container Registry;
+# nothing is built here. No imagePullPolicy: with a tag that is not latest
+# it defaults to IfNotPresent.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5
+          ports:
+            - containerPort: 8080
+          # Only settings that are not secret, enough for the api to start.
+          # The connection string has no password, so every request that
+          # needs PostgreSQL fails; k8s/config-and-probes supplies the rest.
+          env:
+            - name: ConnectionStrings__Default
+              value: "Host=db;Database=donhang;Username=donhang"
+            - name: ConnectionStrings__Redis
+              value: "redis:6379,abortConnect=false"
+            - name: Keycloak__Authority
+              value: "http://localhost:8180/realms/donhang"
+            - name: Keycloak__MetadataAddress
+              value: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"

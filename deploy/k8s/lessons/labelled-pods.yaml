@@ -1,0 +1,41 @@
+# lesson: k8s.l1.labels
+# Three Pods running the same image. Each has its own name; the labels under
+# metadata.labels are what a selector looks at. Two Pods share app: web.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-stable
+  namespace: donhang
+  labels:
+    app: web
+    track: stable
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-test
+  namespace: donhang
+  labels:
+    app: web
+    track: test
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: proxy
+  namespace: donhang
+  labels:
+    app: proxy
+    track: stable
+spec:
+  containers:
+    - name: proxy
+      image: caddy:2.10.0
