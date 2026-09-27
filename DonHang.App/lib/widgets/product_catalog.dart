@@ -11,7 +11,12 @@ class ProductCatalog extends StatelessWidget {
 
   final List<Product> products;
 
-  const ProductCatalog({super.key, required this.products});
+  // lesson: frontend.l2.futureprovider-and-asyncvalue
+  // From stage-2 ProductListScreen shows its data through this widget and
+  // says what a tap does; the catalog itself only lays the tiles out.
+  final ValueChanged<Product>? onProductTap;
+
+  const ProductCatalog({super.key, required this.products, this.onProductTap});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +25,7 @@ class ProductCatalog extends StatelessWidget {
         if (constraints.maxWidth < wideLayoutMinWidth) {
           return ListView.builder(
             itemCount: products.length,
-            itemBuilder: (context, index) => ProductTile(product: products[index]),
+            itemBuilder: (context, index) => _tile(products[index]),
           );
         }
         final columns = (constraints.maxWidth / columnWidth).floor();
@@ -30,9 +35,14 @@ class ProductCatalog extends StatelessWidget {
             mainAxisExtent: 72,
           ),
           itemCount: products.length,
-          itemBuilder: (context, index) => ProductTile(product: products[index]),
+          itemBuilder: (context, index) => _tile(products[index]),
         );
       },
     );
+  }
+
+  Widget _tile(Product product) {
+    final onTap = onProductTap;
+    return ProductTile(product: product, onTap: onTap == null ? null : () => onTap(product));
   }
 }

@@ -1,0 +1,9 @@
+# lesson: frontend.l2.localizing-with-arb
+# gen-l10n reads every app_<language>.arb in arb-dir and writes one
+# AppLocalizations class. app_en.arb is the template: the file that declares
+# every key, which each other language must translate.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+# AppLocalizations.of(context) returns a value, never null, so screens need no `!`.
+nullable-getter: false

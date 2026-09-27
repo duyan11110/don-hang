@@ -1,0 +1,53 @@
+{
+  "@@locale": "en",
+  "appTitle": "Đơn Hàng",
+  "@appTitle": { "description": "The app's name, in the title bar and the browser tab." },
+  "signIn": "Sign in",
+  "signOut": "Sign out",
+  "signInWithKeycloak": "Sign in with Keycloak",
+  "signInExplanation": "You sign in on Keycloak's page, then come back here.",
+  "signingIn": "Signing you in…",
+  "signInFailed": "Sign-in did not finish.",
+  "tryAgain": "Try again",
+  "reload": "Reload",
+  "productsLoadError": "Could not load products.",
+  "noProducts": "No products yet.",
+  "productLoadError": "Could not load this product.",
+  "productPrice": "{price} VND",
+  "@productPrice": {
+    "description": "A product's price in Vietnamese dong.",
+    "placeholders": {
+      "price": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "productSemanticsLabel": "{name}, {price} dong",
+  "@productSemanticsLabel": {
+    "description": "What a screen reader says for one product: its name, then its price.",
+    "placeholders": {
+      "name": { "type": "String" },
+      "price": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "placeOrder": "Place an order",
+  "productLabel": "Product",
+  "productRequired": "Choose a product.",
+  "quantityLabel": "Quantity",
+  "quantityInvalid": "Enter a whole number, 1 or more.",
+  "submitOrder": "Place order",
+  "orderFailed": "The order could not be sent. Check your connection and try again.",
+  "orderTitle": "Order {id}",
+  "@orderTitle": {
+    "description": "Title of one order's screen; id is the order number, shown as is.",
+    "placeholders": {
+      "id": { "type": "int" }
+    }
+  },
+  "orderStatus": "Status: {status}",
+  "@orderStatus": {
+    "description": "The order's status as the API sends it, such as pending.",
+    "placeholders": {
+      "status": { "type": "String" }
+    }
+  },
+  "orderLoadError": "Could not load this order."
+}

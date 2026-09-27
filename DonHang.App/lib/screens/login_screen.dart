@@ -1,65 +1,33 @@
 import 'package:flutter/material.dart';
-import '../api_client.dart';
-import 'create_order_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// lesson: frontend.l1.logging-in-from-the-app
-// The token stays in memory for this session only (depth_notes: no
-// flutter_secure_storage in GĐ1 — a deliberate simplification).
-class LoginScreen extends StatefulWidget {
-  final ApiClient apiClient;
+import '../auth/auth_controller.dart';
+import '../l10n/app_localizations.dart';
 
-  const LoginScreen({super.key, required this.apiClient});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'anh.tran@example.com');
-  final _passwordController = TextEditingController(text: 'donhang-dev-password');
-  String? _error;
-  bool _loading = false;
-
-  Future<void> _submit() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      await widget.apiClient.login(_emailController.text, _passwordController.text);
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => CreateOrderScreen(apiClient: widget.apiClient)),
-      );
-    } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
+// From stage-2 there is no password here: the button leaves for Keycloak's
+// sign-in page, and the customer comes back through /auth/callback.
+class LoginScreen extends ConsumerWidget {
+  const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
-            ElevatedButton(
-              onPressed: _loading ? null : _submit,
-              child: _loading ? const CircularProgressIndicator() : const Text('Sign in'),
-            ),
-          ],
+      appBar: AppBar(title: Text(l10n.signIn)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(l10n.signInExplanation, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => ref.read(authProvider.notifier).signIn(),
+                child: Text(l10n.signInWithKeycloak),
+              ),
+            ],
+          ),
         ),
       ),
     );

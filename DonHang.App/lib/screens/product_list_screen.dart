@@ -1,71 +1,65 @@
 import 'package:flutter/material.dart';
-import '../api_client.dart';
-import '../models.dart';
-import 'login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-// lesson: frontend.l1.futurebuilder-loading-error-empty
-// lesson: frontend.l1.stateless-vs-stateful
-class ProductListScreen extends StatefulWidget {
-  final ApiClient apiClient;
+import '../auth/auth_controller.dart';
+import '../l10n/app_localizations.dart';
+import '../providers.dart';
+import '../widgets/product_catalog.dart';
 
-  const ProductListScreen({super.key, required this.apiClient});
-
-  @override
-  State<ProductListScreen> createState() => _ProductListScreenState();
-}
-
-class _ProductListScreenState extends State<ProductListScreen> {
-  late Future<List<Product>> _products;
+// lesson: frontend.l2.riverpod-providers
+// lesson: frontend.l2.futureprovider-and-asyncvalue
+// lesson: frontend.l2.overriding-providers-in-tests
+// No State class and no constructor parameters: everything it shows comes
+// from providers, and AsyncValue.when gives one builder per case.
+class ProductListScreen extends ConsumerWidget {
+  const ProductListScreen({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    _products = widget.apiClient.fetchProducts();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final products = ref.watch(productsProvider);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.appTitle), actions: _actions(context, ref)),
+      body: products.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(child: Text(l10n.productsLoadError)),
+        data: (items) => items.isEmpty
+            ? Center(child: Text(l10n.noProducts))
+            : ProductCatalog(
+                products: items,
+                onProductTap: (product) => context.go('/products/${product.id}'),
+              ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: l10n.reload,
+        onPressed: () => ref.invalidate(productsProvider),
+        child: const Icon(Icons.refresh),
+      ),
+    );
   }
 
-  // lesson: frontend.l1.setstate-and-rebuilding
-  void _reload() => setState(() { _products = widget.apiClient.fetchProducts(); });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Đơn Hàng'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.login),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => LoginScreen(apiClient: widget.apiClient)),
-            ),
-          ),
-        ],
+  // lesson: frontend.l2.notifier-for-app-state
+  // lesson: frontend.l2.routes-with-go-router
+  // Watching authProvider rebuilds this screen when the token changes, so the
+  // button switches between sign-in and sign-out. onPressed only reads.
+  List<Widget> _actions(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final signedIn = ref.watch(authProvider) != null;
+    return [
+      IconButton(
+        icon: const Icon(Icons.add_shopping_cart),
+        tooltip: l10n.placeOrder,
+        onPressed: () => context.go('/orders/new'),
       ),
-      body: FutureBuilder<List<Product>>(
-        future: _products,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Could not load products: ${snapshot.error}'));
-          }
-          final products = snapshot.data ?? [];
-          if (products.isEmpty) {
-            return const Center(child: Text('No products yet.'));
-          }
-          return ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return ListTile(
-                title: Text(product.name),
-                trailing: Text('${product.priceVnd} đ'),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(onPressed: _reload, child: const Icon(Icons.refresh)),
-    );
+      if (signedIn)
+        IconButton(
+          icon: const Icon(Icons.logout),
+          tooltip: l10n.signOut,
+          onPressed: () => ref.read(authProvider.notifier).signOut(),
+        )
+      else
+        IconButton(icon: const Icon(Icons.login), tooltip: l10n.signIn, onPressed: () => context.go('/login')),
+    ];
   }
 }

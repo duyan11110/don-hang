@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:donhang_app/l10n/app_localizations.dart';
 import 'package:donhang_app/models.dart';
 import 'package:donhang_app/widgets/product_catalog.dart';
 import 'package:donhang_app/widgets/product_tile.dart';
@@ -13,7 +14,12 @@ void main() {
     Product(id: 2, name: 'Chuột không dây', priceVnd: 450000),
   ];
 
+  // From stage-2 the tiles read their text from AppLocalizations, so the
+  // test app provides it, in Vietnamese.
   Widget catalogWithWidth(double width) => MaterialApp(
+        locale: const Locale('vi'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Center(
             child: SizedBox(width: width, height: 400, child: ProductCatalog(products: products)),
@@ -40,6 +46,6 @@ void main() {
     await tester.pumpWidget(catalogWithWidth(360));
 
     expect(tester.getSize(find.byType(ProductTile).first).height, greaterThanOrEqualTo(48));
-    expect(find.bySemanticsLabel('Bàn phím cơ, 1250000 đồng'), findsOneWidget);
+    expect(find.bySemanticsLabel('Bàn phím cơ, 1.250.000 đồng'), findsOneWidget);
   });
 }
