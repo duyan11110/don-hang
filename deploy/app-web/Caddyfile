@@ -1,0 +1,16 @@
+# app-web: serves the built DonHang.App (flutter build web) on :8081.
+# From stage-2 it needs more than a plain file server, so it has this file.
+{
+	admin off
+}
+
+:8081 {
+	root * /srv/app
+
+	# The app uses path URLs such as /products/3 or /auth/callback?code=...
+	# (usePathUrlStrategy in lib/main.dart). No such file exists: a path that
+	# is not a real file gets index.html, the app starts, and its router reads
+	# the path from the address bar to pick the screen.
+	try_files {path} /index.html
+	file_server
+}

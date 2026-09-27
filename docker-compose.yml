@@ -214,8 +214,10 @@ services:
     image: caddy:2.10.0
     container_name: donhang-app-web
     hostname: app-web
-    command: caddy file-server --root /srv/app --listen :8081
+    # From stage-2 a Caddyfile of its own: every path that is not a file
+    # answers with index.html, so /products/3 can be opened directly.
     volumes:
+      - ./deploy/app-web/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./DonHang.App/build/web:/srv/app:ro
     ports:
       - "8081:8081"
