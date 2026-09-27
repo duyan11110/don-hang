@@ -22,6 +22,14 @@
 		handle /api/v1/* {
 			reverse_proxy api:8080
 		}
+		# From stage-2: the second API version and the OpenAPI document that
+		# describes both (backend.l2.api-versioning, backend.l2.openapi-contract).
+		handle /api/v2/* {
+			reverse_proxy api:8080
+		}
+		handle /openapi/* {
+			reverse_proxy api:8080
+		}
 
 		# lesson: foundation.l1.cookies-and-state
 		handle /login.html {
