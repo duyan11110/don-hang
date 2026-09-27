@@ -23,8 +23,9 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(c => c.FullName).HasColumnName("full_name");
             e.Property(c => c.Email).HasColumnName("email");
             e.Property(c => c.City).HasColumnName("city");
-            e.Property(c => c.PasswordHash).HasColumnName("password_hash");
+            e.Property(c => c.IdentitySubject).HasColumnName("identity_subject");
             e.HasIndex(c => c.Email).IsUnique();
+            e.HasIndex(c => c.IdentitySubject).IsUnique();
         });
 
         modelBuilder.Entity<Product>(e =>

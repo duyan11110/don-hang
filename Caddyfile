@@ -82,3 +82,10 @@ donhang.local:8443 {
 		file_server
 	}
 }
+
+# lesson: backend.l2.oauth2-roles
+# From stage-2: Keycloak, at the one address that browsers on this machine
+# and scripts in the lab box both reach as http://localhost:8180.
+:8180 {
+	reverse_proxy keycloak:8080
+}

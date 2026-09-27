@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using DonHang.Domain;
 using Microsoft.AspNetCore.Authorization;
@@ -12,7 +11,11 @@ namespace DonHang.Api.Controllers.V2;
 // no business rule exists twice.
 [ApiController]
 [Route("api/v2/orders")]
-public sealed class OrdersV2Controller(OrderService orderService, IOrderRepository repository) : ControllerBase
+public sealed class OrdersV2Controller(
+    OrderService orderService,
+    IOrderRepository repository,
+    ICustomerRepository customers,
+    IAuthorizationService authorization) : ControllerBase
 {
     [Authorize]
     [HttpPost]
@@ -20,20 +23,29 @@ public sealed class OrdersV2Controller(OrderService orderService, IOrderReposito
         CreateOrderV2Request request,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey)
     {
-        var customerId = int.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        var subject = User.FindFirstValue("sub");
+        var customer = subject is null ? null : await customers.FindByIdentitySubjectAsync(subject);
+        if (customer is null) return Forbid();
+
         var items = request.Lines
             .Select(l => new OrderItem { ProductId = l.ProductId, Quantity = l.Quantity, UnitPriceVnd = l.UnitPriceVnd })
             .ToList();
 
-        var order = await orderService.PlaceOrderAsync(customerId, items, idempotencyKey);
+        var order = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
         return CreatedAtAction(nameof(Get), new { id = order.Id }, ToDto(order));
     }
 
+    // The same OrderOwner check as GET /api/v1/orders/{id}.
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderV2Dto>> Get(int id)
     {
         var order = await repository.FindForReadingAsync(id);
         if (order is null) return NotFound();
+
+        var allowed = await authorization.AuthorizeAsync(User, order, "OrderOwner");
+        if (!allowed.Succeeded) return Forbid();
+
         return Ok(ToDto(order));
     }
 

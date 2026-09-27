@@ -1,12 +1,11 @@
-using System.Text;
-using DonHang.Api;
+using DonHang.Api.Authorization;
 using DonHang.Api.Middleware;
 using DonHang.Domain;
 using DonHang.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,30 +17,41 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default is not set");
 builder.Services.AddDonHangInfrastructure(connectionString);
 builder.Services.AddScoped<OrderService>();
-builder.Services.AddSingleton<JwtTokenService>();
 
-// lesson: backend.l1.validating-a-jwt
-var signingKey = builder.Configuration["Jwt:SigningKey"]
-    ?? throw new InvalidOperationException("Jwt:SigningKey is not set");
+// lesson: backend.l2.oauth2-roles
+// lesson: backend.l2.openid-connect-id-token
+// lesson: backend.l2.validating-provider-tokens
+// Keycloak issues the tokens; the api only checks them. AddJwtBearer reads
+// Keycloak's metadata and public keys once, then checks each token's
+// signature, issuer, audience and expiry itself, without calling Keycloak.
+var authority = builder.Configuration["Keycloak:Authority"]
+    ?? throw new InvalidOperationException("Keycloak:Authority is not set");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // Keep claim types exactly as issued ("sub", not the ClaimTypes.NameIdentifier
-        // URI ASP.NET Core maps them to by default) so OrdersController reads the
-        // same JwtRegisteredClaimNames.Sub that JwtTokenService wrote.
+        options.Authority = authority;
+        options.MetadataAddress = builder.Configuration["Keycloak:MetadataAddress"]
+            ?? $"{authority}/.well-known/openid-configuration";
+        // Access tokens for this api carry "donhang-api" in `aud`; an ID token
+        // carries the app's client id there instead, so it is rejected.
+        options.Audience = "donhang-api";
+        options.RequireHttpsMetadata = false; // the lab reaches Keycloak over plain HTTP
+        // Keep claim names as Keycloak wrote them ("sub", "roles"), and read
+        // the caller's roles from the flat "roles" claim the realm adds.
         options.MapInboundClaims = false;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-            ValidateLifetime = true,
-        };
+        options.TokenValidationParameters.RoleClaimType = "roles";
     });
-builder.Services.AddAuthorization();
+
+// lesson: backend.l2.role-based-access
+// lesson: backend.l2.resource-based-authorization
+// Neither policy names an authentication scheme: they ask about the caller,
+// not about how the caller signed in.
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("StaffOnly", policy => policy.RequireRole("staff"));
+    options.AddPolicy("OrderOwner", policy => policy.AddRequirements(new OrderOwnerRequirement()));
+});
+builder.Services.AddScoped<IAuthorizationHandler, OrderOwnerHandler>();
 
 // lesson: backend.l2.openapi-contract
 // Builds an OpenAPI document from the controllers and DTOs while the app

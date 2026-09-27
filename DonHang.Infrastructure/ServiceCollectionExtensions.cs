@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<DonHangDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IOrderRepository, EfOrderRepository>();
         services.AddScoped<IProductRepository, EfProductRepository>();
+        services.AddScoped<ICustomerRepository, EfCustomerRepository>();
         services.AddScoped<INotifier, LoggingNotifier>();
         return services;
     }

@@ -33,10 +33,11 @@ services:
     ports:
       # 2222 is this box's SSH server; 8080 and 8443 belong to the web service,
       # which shares this box's network so that localhost means the same thing
-      # in every lesson.
+      # in every lesson. 8180 is Keycloak, which the web service proxies.
       - "2222:2222"
       - "8080:8080"
       - "8443:8443"
+      - "8180:8180"
     networks:
       donhang:
         ipv4_address: 172.28.0.12
@@ -89,8 +90,13 @@ services:
     environment:
       # lesson: devops.l1.config-and-env
       ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
-      Jwt__SigningKey: "${JWT_SIGNING_KEY}"
       ASPNETCORE_ENVIRONMENT: "Development"
+      # lesson: backend.l2.validating-provider-tokens
+      # Tokens name http://localhost:8180/realms/donhang as their issuer, the
+      # one address browsers and the lab box use. Inside this container
+      # localhost is the api itself, so the keys are fetched from keycloak:8080.
+      Keycloak__Authority: "http://localhost:8180/realms/donhang"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"
       # lesson: backend.l2.efcore-generated-sql
       # appsettings.json keeps Microsoft.EntityFrameworkCore at Warning; the lab
       # raises only the category that logs each SQL command EF Core sends.
@@ -101,6 +107,37 @@ services:
     networks:
       donhang:
         ipv4_address: 172.28.0.13
+
+  # lesson: backend.l2.oauth2-roles
+  # The authorization server: customers and staff type their passwords here,
+  # never into DonHang.App or DonHang.Api. start-dev keeps its data inside the
+  # container and imports the realm file below the first time it starts.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.4
+    container_name: donhang-keycloak
+    hostname: keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
+      KC_BOOTSTRAP_ADMIN_PASSWORD: "${KEYCLOAK_ADMIN_PASSWORD}"
+      # Every URL Keycloak hands out, and the issuer in every token, uses
+      # this one address, however the request reached it.
+      KC_HOSTNAME: "http://localhost:8180"
+      # ...except the endpoints a server calls directly (keys, token): asked
+      # as keycloak:8080 by the api, Keycloak answers with keycloak:8080 URLs.
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./keycloak/donhang-realm.json:/opt/keycloak/data/import/donhang-realm.json:ro
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.20
+    healthcheck:
+      # The image has no curl; bash can still send one HTTP request.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
 
   # lesson: frontend.l1.the-widget-tree
   # Serves the Flutter web build (`flutter build web`, run by scripts/up.sh)

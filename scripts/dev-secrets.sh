@@ -13,13 +13,12 @@ ENV
   echo "created .env"
 fi
 
-# lesson: devops.l1.secrets-vs-config
-# lesson: devops.l1.the-jwt-secret-in-practice
-# The key DonHang.Api signs and checks JWTs with — random, so every learner's
-# lab has its own, and a token from one machine's api never verifies on another.
-if ! grep -q '^JWT_SIGNING_KEY=' .env 2>/dev/null; then
-  echo "JWT_SIGNING_KEY=$(openssl rand -base64 48)" >> .env
-  echo "added JWT_SIGNING_KEY to .env"
+# The password of Keycloak's admin user (console at http://localhost:8180/admin)
+# — random, so every learner's lab has its own. From stage-2 the api signs
+# nothing, so there is no JWT signing key any more: Keycloak holds its own keys.
+if ! grep -q '^KEYCLOAK_ADMIN_PASSWORD=' .env 2>/dev/null; then
+  echo "KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 16)" >> .env
+  echo "added KEYCLOAK_ADMIN_PASSWORD to .env"
 fi
 
 if [ ! -f secrets/lab_key ]; then

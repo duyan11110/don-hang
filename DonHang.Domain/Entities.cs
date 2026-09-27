@@ -10,9 +10,9 @@ public sealed class Customer
     public required string Email { get; set; }
     public required string City { get; set; }
 
-    // lesson: backend.l1.hashing-passwords
-    // Null until the customer sets a password; added by the AddPasswordHashToCustomers migration.
-    public string? PasswordHash { get; set; }
+    // lesson: backend.l2.validating-provider-tokens
+    // Keycloak's id for this customer (the `sub` of their tokens); null until they have an account there.
+    public string? IdentitySubject { get; set; }
 }
 
 public sealed class Product
