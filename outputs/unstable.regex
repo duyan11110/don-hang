@@ -17,3 +17,6 @@ Executed DbCommand \(\K[0-9]+(?=ms\))
 [?&]code=\K[^&\s]+
 [?&]session_state=\K[^&\s]+
 seconds left on \S+: \K[0-9]+
+while locking tuple \K\([0-9]+,[0-9]+\)
+^subject: Order \K[0-9]+
+^Notification \K[0-9]+(?= failed)

@@ -91,6 +91,10 @@ services:
       # lesson: devops.l1.config-and-env
       ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
       ConnectionStrings__Redis: "redis:6379,abortConnect=false"
+      # lesson: backend.l2.database-job-queue
+      # Where NotificationSender's emails go: the mailpit service below.
+      Smtp__Host: "mailpit"
+      Smtp__Port: "1025"
       ASPNETCORE_ENVIRONMENT: "Development"
       # lesson: backend.l2.validating-provider-tokens
       # Tokens name http://localhost:8180/realms/donhang as their issuer, the
@@ -129,6 +133,20 @@ services:
       interval: 3s
       timeout: 3s
       retries: 30
+
+  # lesson: backend.l2.database-job-queue
+  # A fake mail server: it accepts every email the api sends over SMTP
+  # (mailpit:1025) and delivers none. Its web page and HTTP API, on port
+  # 8025, show what arrived: http://localhost:8025 from this machine.
+  mailpit:
+    image: axllent/mailpit:v1.31.3
+    container_name: donhang-mailpit
+    hostname: mailpit
+    ports:
+      - "8025:8025"
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.16
 
   # lesson: backend.l2.oauth2-roles
   # The authorization server: customers and staff type their passwords here,

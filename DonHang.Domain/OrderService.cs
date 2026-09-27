@@ -23,22 +23,27 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
 
         var order = new Order(customerId, items, DateTimeOffset.UtcNow) { IdempotencyKey = idempotencyKey };
         await repository.AddAsync(order);
+
+        // lesson: backend.l2.database-job-queue
+        // The notifier only adds a pending email job next to the order; this one
+        // SaveChangesAsync then writes both in one transaction, or neither.
+        notifier.Send(order, "order placed");
         await repository.SaveChangesAsync();
-        notifier.Send(order.Id, "order placed");
         return order;
     }
 
     // lesson: design.l2.domain-model
-    // Find, let the order decide, save, notify. An order that is already
+    // Find, let the order decide, notify, save. An order that is already
     // cancelled or shipped makes order.Cancel() throw OrderStatusException.
+    // The notification is saved with the order, by the same SaveChangesAsync.
     public async Task<Order> CancelOrderAsync(int orderId)
     {
         var order = await repository.FindAsync(orderId)
             ?? throw new KeyNotFoundException($"order {orderId} not found");
 
         order.Cancel();
+        notifier.Send(order, "order cancelled");
         await repository.SaveChangesAsync();
-        notifier.Send(order.Id, "order cancelled");
         return order;
     }
 
@@ -49,8 +54,8 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
             ?? throw new KeyNotFoundException($"order {orderId} not found");
 
         order.Ship();
+        notifier.Send(order, "order shipped");
         await repository.SaveChangesAsync();
-        notifier.Send(order.Id, "order shipped");
         return order;
     }
 }

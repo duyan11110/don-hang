@@ -7,5 +7,5 @@ public sealed class FakeNotifier : INotifier
 {
     public List<(int OrderId, string Subject)> Sent { get; } = [];
 
-    public void Send(int orderId, string subject) => Sent.Add((orderId, subject));
+    public void Send(Order order, string subject) => Sent.Add((order.Id, subject));
 }

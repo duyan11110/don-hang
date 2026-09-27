@@ -1,4 +1,5 @@
 using DonHang.Api.Authorization;
+using DonHang.Api.Jobs;
 using DonHang.Api.Middleware;
 using DonHang.Domain;
 using DonHang.Infrastructure;
@@ -21,8 +22,14 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 // Compose service name, the same way it finds db.
 var redisConfiguration = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException("ConnectionStrings:Redis is not set");
-builder.Services.AddDonHangInfrastructure(connectionString, redisConfiguration);
+var smtp = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>() ?? new SmtpSettings();
+builder.Services.AddDonHangInfrastructure(connectionString, redisConfiguration, smtp);
 builder.Services.AddScoped<OrderService>();
+
+// lesson: backend.l2.hosted-services
+// The host starts NotificationSender when the app starts and stops it when
+// the app stops; it runs in this same process, beside the requests.
+builder.Services.AddHostedService<NotificationSender>();
 
 // lesson: backend.l2.oauth2-roles
 // lesson: backend.l2.openid-connect-id-token

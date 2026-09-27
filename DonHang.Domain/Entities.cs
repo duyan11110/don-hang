@@ -113,11 +113,19 @@ public sealed class Payment
     public required string Method { get; set; }
 }
 
+// lesson: backend.l2.database-job-queue
+// From stage-2 each row is also a job: an email waiting to be sent (pending),
+// sent, or given up on after too many failed attempts (failed).
 public sealed class Notification
 {
     public int Id { get; set; }
     public int OrderId { get; set; }
+    public Order? Order { get; set; }
     public required string Channel { get; set; }
-    public DateTimeOffset SentAt { get; set; }
     public required string Subject { get; set; }
+    public required string Status { get; set; }
+    public int Attempts { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset NextAttemptAt { get; set; }
+    public DateTimeOffset? SentAt { get; set; }
 }

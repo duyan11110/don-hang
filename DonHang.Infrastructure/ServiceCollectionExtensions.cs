@@ -12,12 +12,18 @@ namespace DonHang.Infrastructure;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddDonHangInfrastructure(
-        this IServiceCollection services, string connectionString, string redisConfiguration)
+        this IServiceCollection services, string connectionString, string redisConfiguration, SmtpSettings smtp)
     {
         services.AddDbContext<DonHangDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IOrderRepository, EfOrderRepository>();
         services.AddScoped<ICustomerRepository, EfCustomerRepository>();
-        services.AddScoped<INotifier, LoggingNotifier>();
+
+        // lesson: backend.l2.database-job-queue
+        // From stage-2 a notification is a pending row in the order's DbContext;
+        // NotificationQueue is how NotificationSender reads those rows back.
+        services.AddScoped<INotifier, QueuedNotifier>();
+        services.AddScoped<NotificationQueue>();
+        services.AddSingleton<IEmailSender>(new MailKitEmailSender(smtp));
 
         // lesson: backend.l2.cache-aside
         // One ConnectionMultiplexer for the whole app: it is built to be shared

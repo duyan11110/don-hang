@@ -93,6 +93,15 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(n => n.Channel).HasColumnName("channel");
             e.Property(n => n.SentAt).HasColumnName("sent_at");
             e.Property(n => n.Subject).HasColumnName("subject");
+            e.HasOne(n => n.Order).WithMany().HasForeignKey(n => n.OrderId);
+
+            // lesson: backend.l2.database-job-queue
+            // The columns that make this table Đơn Hàng's job queue.
+            e.Property(n => n.Status).HasColumnName("status");
+            e.Property(n => n.Attempts).HasColumnName("attempts");
+            e.Property(n => n.CreatedAt).HasColumnName("created_at");
+            e.Property(n => n.NextAttemptAt).HasColumnName("next_attempt_at");
+            e.ToTable(t => t.HasCheckConstraint("notifications_status_check", "status IN ('pending', 'sent', 'failed')"));
         });
     }
 }
