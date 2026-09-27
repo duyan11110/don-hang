@@ -1,0 +1,15 @@
+# lesson: k8s.l1.pods
+# lesson: k8s.l1.manifests-and-kubectl-apply
+# One Pod, one container: Caddy, the image the web service in
+# docker-compose.yml uses, serving its built-in welcome page on port 80.
+# There is no namespace field, so it goes to the current context's namespace.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+      ports:
+        - containerPort: 80

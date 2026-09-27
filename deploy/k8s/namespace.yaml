@@ -1,0 +1,7 @@
+# lesson: k8s.l1.namespaces
+# Every object of Đơn Hàng's own lives in this namespace; each manifest under
+# deploy/k8s/ says so in its metadata.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: donhang
