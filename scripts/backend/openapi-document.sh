@@ -17,4 +17,4 @@ echo
 
 # Each path is a key four spaces in; each method under it is a key six spaces in.
 echo "every path and method it describes:"
-grep -E '^    "/|^      "(get|post|put|patch|delete)"' "$document" | tr -d '":{' | sed 's/ *$//'
+grep -E '^    "/|^      "(get|post|put|patch|delete)"' "$document" | sed -E 's/"//g; s/: *[{].*$//'
