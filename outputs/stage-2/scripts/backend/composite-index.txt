@@ -1,0 +1,43 @@
+SET max_parallel_workers_per_gather = 0;
+SET
+SET jit = off;
+SET
+EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF)
+SELECT o.id, o.customer_id, o.status
+FROM orders AS o
+WHERE o.customer_id = 7 AND o.id > 120000
+ORDER BY o.id
+LIMIT 20;
+QUERY PLAN
+Limit (actual rows=20 loops=1)
+  ->  Index Scan using "IX_orders_customer_id_id" on orders o (actual rows=20 loops=1)
+        Index Cond: ((customer_id = 7) AND (id > 120000))
+EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF)
+SELECT count(*) FROM orders WHERE customer_id = 7;
+QUERY PLAN
+Aggregate (actual rows=1 loops=1)
+  ->  Index Only Scan using "IX_orders_customer_id_id" on orders (actual rows=2000 loops=1)
+        Index Cond: (customer_id = 7)
+        Heap Fetches: 0
+BEGIN;
+BEGIN
+DROP INDEX "IX_orders_customer_id_id";
+DROP INDEX
+CREATE INDEX "IX_orders_customer_id" ON orders (customer_id);
+CREATE INDEX
+ANALYZE orders;
+ANALYZE
+EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF, SUMMARY OFF)
+SELECT o.id, o.customer_id, o.status
+FROM orders AS o
+WHERE o.customer_id = 7 AND o.id > 120000
+ORDER BY o.id
+LIMIT 20;
+QUERY PLAN
+Limit (actual rows=20 loops=1)
+  ->  Index Scan using "PK_orders" on orders o (actual rows=20 loops=1)
+        Index Cond: (id > 120000)
+        Filter: (customer_id = 7)
+        Rows Removed by Filter: 1966
+ROLLBACK;
+ROLLBACK

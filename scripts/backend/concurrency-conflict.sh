@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# While a psql session ships order 5, cancel it through the api: the xmin check turns the lost update into a 409.
+set -euo pipefail
+# Everything below runs inside the lab box; this line puts it there.
+[ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
+
+base=http://localhost:8080/api/v1
+reset_order_5() {
+  psql --host db --username donhang --dbname donhang --no-psqlrc --quiet \
+       --command "UPDATE orders SET status = 'paid' WHERE id = 5"
+}
+reset_order_5
+
+# Order 5 belongs to customer 3.
+token=$(curl -sS -X POST "$base/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"dung.le@example.com","password":"donhang-dev-password"}' \
+  | sed -E 's/.*"token":"([^"]+)".*/\1/')
+
+ship=$(mktemp)
+trap 'rm -f "$ship"' EXIT
+
+# lesson: backend.l2.optimistic-concurrency
+# The ship session changes order 5 and holds its row lock for 2 seconds. The
+# api reads order 5 meanwhile (still paid, old xmin), Order.Cancel() allows
+# it, and EF Core's UPDATE ... WHERE id = 5 AND xmin = <old value> waits for
+# the lock. Once ship commits, xmin has changed: the UPDATE matches no row.
+psql --host db --username donhang --dbname donhang --no-psqlrc --echo-queries \
+     --set ON_ERROR_STOP=on > "$ship" 2>&1 <<'SQL' &
+BEGIN;
+UPDATE orders SET status = 'shipped' WHERE id = 5;
+\! sleep 2
+COMMIT;
+SQL
+sleep 0.5
+
+echo "== PATCH /api/v1/orders/5/cancel, sent while the ship session holds the row"
+curl -sS -w '\n  -> %{http_code}\n' -X PATCH "$base/orders/5/cancel" -H "Authorization: Bearer $token"
+wait
+
+echo "== ship session"; cat "$ship"
+echo "== order 5 afterwards"
+psql --host db --username donhang --dbname donhang --no-psqlrc \
+     --command "SELECT id, status FROM orders WHERE id = 5"
+reset_order_5

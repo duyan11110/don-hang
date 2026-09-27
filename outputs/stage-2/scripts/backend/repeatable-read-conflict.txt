@@ -1,0 +1,47 @@
+== ship session (started first)
+BEGIN;
+BEGIN
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ read committed
+(1 row)
+
+SELECT status FROM orders WHERE id = 5;
+ status 
+--------
+ paid
+(1 row)
+
+UPDATE orders SET status = 'shipped' WHERE id = 5;
+UPDATE 1
+COMMIT;
+COMMIT
+== cancel session (started 0.5 s later)
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+BEGIN
+SHOW transaction_isolation;
+ transaction_isolation 
+-----------------------
+ repeatable read
+(1 row)
+
+SELECT status FROM orders WHERE id = 5;
+ status 
+--------
+ paid
+(1 row)
+
+-- this UPDATE waits for the row lock the ship session holds, then fails
+UPDATE orders SET status = 'cancelled' WHERE id = 5;
+ERROR:  could not serialize access due to concurrent update
+SQLSTATE: 40001
+ROLLBACK;
+ROLLBACK
+== order 5 afterwards
+SELECT id, status FROM orders WHERE id = 5
+ id | status  
+----+---------
+  5 | shipped
+(1 row)
+

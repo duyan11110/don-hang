@@ -20,7 +20,9 @@ capture() {
     scripts/terminal/ssh-into-lab.sh | scripts/debug/run-throws-deep.sh)
       command=(bash "$script") ;;
     *)
-      if grep -q 'lab-run.sh' "$script"; then
+      # A script that says it runs on the host (it needs docker or dotnet
+      # itself) is run here, like one that sends itself into the box.
+      if grep -q -e 'lab-run.sh' -e '^# Runs on the host' "$script"; then
         command=(bash "$script")
       else
         command=(scripts/lab-run.sh "$script")

@@ -91,6 +91,10 @@ services:
       ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
       Jwt__SigningKey: "${JWT_SIGNING_KEY}"
       ASPNETCORE_ENVIRONMENT: "Development"
+      # lesson: backend.l2.efcore-generated-sql
+      # appsettings.json keeps Microsoft.EntityFrameworkCore at Warning; the lab
+      # raises only the category that logs each SQL command EF Core sends.
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: "Information"
     depends_on:
       db:
         condition: service_healthy

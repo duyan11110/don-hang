@@ -1,0 +1,3 @@
+migrations applied: 6
+customers: 20
+orders: 200000

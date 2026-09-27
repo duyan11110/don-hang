@@ -20,14 +20,16 @@ token=$(curl -sS -X POST "$base/auth/login" \
 key=$(cat /proc/sys/kernel/random/uuid)
 before=$(count_orders)
 
+ids=()
 for attempt in first retry; do
   echo "$attempt request, Idempotency-Key: <the same key>"
-  curl -sS -w '\n  -> %{http_code}\n' -X POST "$base/orders" \
-    -H 'Content-Type: application/json' \
-    -H "Authorization: Bearer $token" \
-    -H "Idempotency-Key: $key" \
-    -d '{"items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}'
+  response=$(curl -sS -w '
+  -> %{http_code}' -X POST "$base/orders"     -H 'Content-Type: application/json'     -H "Authorization: Bearer $token"     -H "Idempotency-Key: $key"     -d '{"items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}')
+  echo "$response"
+  ids+=("$(echo "$response" | sed -nE 's/.*"id":([0-9]+).*//p')")
 done
 echo
 
+if [ "${ids[0]}" = "${ids[1]}" ]; then same=yes; else same=no; fi
+echo "both responses carry the same order id: $same"
 echo "orders customer 1 gained from the two requests: $(( $(count_orders) - before ))"
