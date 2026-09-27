@@ -1,0 +1,11 @@
+# lesson: devops.l2.prometheus-scraping
+# Every scrape_interval, Prometheus sends GET /metrics to each target below
+# and stores the numbers it gets back with the time of the scrape. One job,
+# api: the api's name and port on the donhang network.
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: api
+    static_configs:
+      - targets: ["api:8080"]

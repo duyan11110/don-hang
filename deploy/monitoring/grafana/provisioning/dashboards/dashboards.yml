@@ -1,0 +1,12 @@
+# lesson: devops.l2.grafana-dashboards
+# Load every dashboard file in /var/lib/grafana/dashboards (the repository's
+# deploy/monitoring/grafana/dashboards, mounted read-only) when Grafana starts.
+apiVersion: 1
+
+providers:
+  - name: donhang
+    folder: Đơn Hàng
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

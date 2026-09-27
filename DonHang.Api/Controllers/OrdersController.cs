@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using DonHang.Api.Monitoring;
 using DonHang.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,12 @@ public sealed class OrdersController(
             .Select(i => new OrderItem { ProductId = i.ProductId, Quantity = i.Quantity, UnitPriceVnd = i.UnitPriceVnd })
             .ToList();
 
-        var order = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+
+        // lesson: devops.l2.counters-and-rate
+        // Counted only when an order was really created: a retry that repeats
+        // an Idempotency-Key gets the earlier order back and adds nothing.
+        if (created) OrderMetrics.OrdersPlaced.Inc();
         return CreatedAtAction(nameof(Get), new { id = order.Id }, ToDto(order));
     }
 

@@ -2,15 +2,15 @@ GET /api/v1/orders?after=5&limit=20 as customer 3:
 [{"id":6,"status":"new","customerName":"Lê Quốc Dũng"},{"id":7,"status":"shipped","customerName":"Lê Quốc Dũng"}]
 
 what EF Core logged for it:
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (...ms) [Parameters=[@customerId='?' (DbType = Int32), @afterId='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-      SELECT o0.id, o0.status, c.full_name
-      FROM (
-          SELECT o.id, o.customer_id, o.status
-          FROM orders AS o
-          WHERE o.customer_id = @customerId AND o.id > @afterId
-          ORDER BY o.id
-          LIMIT @p
-      ) AS o0
-      INNER JOIN customers AS c ON o0.customer_id = c.id
-      ORDER BY o0.id
+Information: Microsoft.EntityFrameworkCore.Database.Command[20101]
+Executed DbCommand (...ms) [Parameters=[@customerId='?' (DbType = Int32), @afterId='?' (DbType = Int32), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+SELECT o0.id, o0.status, c.full_name
+FROM (
+    SELECT o.id, o.customer_id, o.status
+    FROM orders AS o
+    WHERE o.customer_id = @customerId AND o.id > @afterId
+    ORDER BY o.id
+    LIMIT @p
+) AS o0
+INNER JOIN customers AS c ON o0.customer_id = c.id
+ORDER BY o0.id

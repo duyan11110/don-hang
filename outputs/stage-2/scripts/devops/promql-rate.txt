@@ -1,0 +1,13 @@
+== POST /api/v1/orders twice, with one new Idempotency-Key
+  -> 201
+  -> 201
+donhang_orders_placed_total went up by: 1
+
+== PromQL, sent to prometheus:9090
+promql> http_requests_received_total{code=~"4..", method="GET", endpoint="api/v1/products/{id:int}"}
+  {"action":"Get","code":"404","controller":"Products","endpoint":"api/v1/products/{id:int}","instance":"api:8080","job":"api","method":"GET"} => ...
+promql> sum by (code) (rate(http_requests_received_total{method="GET", endpoint="api/v1/products/{id:int}"}[5m]))
+  {"code":"200"} => ...
+  {"code":"404"} => ...
+promql> rate(donhang_orders_placed_total[5m])
+  {"instance":"api:8080","job":"api"} => ...

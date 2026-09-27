@@ -1,0 +1,34 @@
+// lesson: devops.l2.centralized-logs
+// Find the containers of this Compose project through the Docker socket...
+discovery.docker "donhang" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=donhang"]
+  }
+}
+
+// ...label each container's stream with its Compose service: {service="api"}...
+discovery.relabel "compose_service" {
+  targets = []
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+}
+
+// ...read what each one writes to its output, line by line...
+loki.source.docker "donhang" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.donhang.targets
+  relabel_rules = discovery.relabel.compose_service.rules
+  forward_to    = [loki.write.loki.receiver]
+}
+
+// ...and send every line to Loki.
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

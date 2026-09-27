@@ -9,16 +9,17 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
     // lesson: design.l2.valid-from-construction
     // lesson: backend.l2.idempotent-endpoints
     // A retry that repeats an Idempotency-Key gets back the order that key
-    // created. The key is saved in the order's own row, by the same INSERT,
-    // so the unique index on it stops two concurrent retries creating two.
-    public async Task<Order> PlaceOrderAsync(int customerId, List<OrderItem> items, string? idempotencyKey = null)
+    // created, with Created = false. The key is saved in the order's own row,
+    // by the same INSERT, so the unique index on it stops two concurrent
+    // retries creating two.
+    public async Task<(Order Order, bool Created)> PlaceOrderAsync(int customerId, List<OrderItem> items, string? idempotencyKey = null)
     {
         if (idempotencyKey is not null)
         {
             var earlier = await repository.FindByIdempotencyKeyAsync(idempotencyKey);
             if (earlier is not null && earlier.CustomerId != customerId)
                 throw new ArgumentException("this Idempotency-Key was already used by another customer");
-            if (earlier is not null) return earlier;
+            if (earlier is not null) return (earlier, Created: false);
         }
 
         var order = new Order(customerId, items, DateTimeOffset.UtcNow) { IdempotencyKey = idempotencyKey };
@@ -29,7 +30,7 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
         // SaveChangesAsync then writes both in one transaction, or neither.
         notifier.Send(order, "order placed");
         await repository.SaveChangesAsync();
-        return order;
+        return (order, Created: true);
     }
 
     // lesson: design.l2.domain-model

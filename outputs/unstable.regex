@@ -20,3 +20,7 @@ seconds left on \S+: \K[0-9]+
 while locking tuple \K\([0-9]+,[0-9]+\)
 ^subject: Order \K[0-9]+
 ^Notification \K[0-9]+(?= failed)
+^(?:http|donhang)_\w+(?:\{.*\})? \K\S+$
+ => \K\S+$
+"ElapsedMs": ?\K[0-9]+
+responded [0-9]+ in \K[0-9]+(?=ms)

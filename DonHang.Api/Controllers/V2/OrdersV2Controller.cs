@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using DonHang.Api.Monitoring;
 using DonHang.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,8 @@ public sealed class OrdersV2Controller(
             .Select(l => new OrderItem { ProductId = l.ProductId, Quantity = l.Quantity, UnitPriceVnd = l.UnitPriceVnd })
             .ToList();
 
-        var order = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+        if (created) OrderMetrics.OrdersPlaced.Inc();
         return CreatedAtAction(nameof(Get), new { id = order.Id }, ToDto(order));
     }
 

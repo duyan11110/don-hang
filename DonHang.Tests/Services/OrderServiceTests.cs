@@ -17,8 +17,9 @@ public sealed class OrderServiceTests
         var repository = new FakeOrderRepository();
         var service = new OrderService(repository, new FakeNotifier());
 
-        var order = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
+        var (order, created) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
 
+        Assert.True(created);
         Assert.Same(order, await repository.FindAsync(order.Id));
     }
 
@@ -28,7 +29,7 @@ public sealed class OrderServiceTests
         var notifier = new FakeNotifier();
         var service = new OrderService(new FakeOrderRepository(), notifier);
 
-        var order = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
+        var (order, _) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
 
         var sent = Assert.Single(notifier.Sent);
         Assert.Equal(order.Id, sent.OrderId);
@@ -43,7 +44,8 @@ public sealed class OrderServiceTests
         var first = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
         var retry = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
 
-        Assert.Same(first, retry);
+        Assert.Same(first.Order, retry.Order);
+        Assert.False(retry.Created);
         Assert.Single(notifier.Sent);
     }
 

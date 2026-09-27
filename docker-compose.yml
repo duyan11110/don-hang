@@ -125,6 +125,11 @@ services:
       # appsettings.json keeps Microsoft.EntityFrameworkCore at Warning; the lab
       # raises only the category that logs each SQL command EF Core sends.
       Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: "Information"
+      # lesson: devops.l2.json-logs
+      # The console logger writes each log event as one JSON object per line.
+      # Only this setting changed, no log call in the code; without it the
+      # same build prints the usual readable lines (as `dotnet run` does).
+      Logging__Console__FormatterName: "json"
     depends_on:
       db:
         condition: service_healthy
@@ -218,6 +223,78 @@ services:
       donhang:
         ipv4_address: 172.28.0.14
 
+  # lesson: devops.l2.prometheus-scraping
+  # The monitoring services carry `profiles: [monitoring]`: a plain
+  # `docker compose up` leaves them out, and
+  #   docker compose --profile monitoring up -d
+  # starts them too. Prometheus scrapes api:8080/metrics (see its config).
+  prometheus:
+    image: prom/prometheus:v3.5.5
+    container_name: donhang-prometheus
+    hostname: prometheus
+    profiles: [monitoring]
+    volumes:
+      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.21
+
+  # lesson: devops.l2.grafana-dashboards
+  # Draws what it asks Prometheus and Loki for; stores no metrics itself. Its
+  # data sources and the dashboard are files under deploy/monitoring/grafana.
+  # Sign in at http://localhost:3000 as admin, GRAFANA_ADMIN_PASSWORD in .env.
+  grafana:
+    image: grafana/grafana:12.4.11
+    container_name: donhang-grafana
+    hostname: grafana
+    profiles: [monitoring]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD}"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./deploy/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.22
+
+  # lesson: devops.l2.centralized-logs
+  # Loki stores the log lines of every container; no port is published, you
+  # query it from Grafana. Alloy reads each container's output through the
+  # Docker socket (read-only) and sends every line to Loki.
+  loki:
+    image: grafana/loki:3.5.12
+    container_name: donhang-loki
+    hostname: loki
+    profiles: [monitoring]
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./deploy/monitoring/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.23
+
+  alloy:
+    image: grafana/alloy:v1.20.0
+    container_name: donhang-alloy
+    hostname: alloy
+    profiles: [monitoring]
+    command: ["run", "/etc/alloy/config.alloy", "--storage.path=/var/lib/alloy/data"]
+    volumes:
+      - ./deploy/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.24
+
 networks:
   donhang:
     name: donhang
@@ -232,3 +309,4 @@ volumes:
   caddy-data:
   caddy-config:
   lab-config:
+  loki-data:

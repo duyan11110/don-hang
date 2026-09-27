@@ -18,8 +18,8 @@ echo
 # it took, its parameters (their values hidden as '?'), then the SQL itself.
 echo "what EF Core logged for it:"
 sleep 1 # let the api's logger write the entry out first
-docker compose logs --no-log-prefix --tail 60 api | awk '
-  /^info: Microsoft.EntityFrameworkCore.Database.Command/ { entry = $0; inside = 1; next }
-  inside && /^      / { entry = entry "\n" $0; next }
-  inside { inside = 0; if (entry ~ /FROM orders/) last = entry }
-  END { print last }'
+# From stage-2 the api logs one JSON object per line (devops.l2.json-logs);
+# jq, from the lab box, prints the entry's level, category and message.
+docker compose logs --no-log-prefix --since 1m api \
+  | grep '"Category":"Microsoft.EntityFrameworkCore.Database.Command"' | grep 'FROM orders' | tail -n 1 \
+  | docker compose exec -T lab jq -r '"\(.LogLevel): \(.Category)[\(.EventId)]\n\(.Message)"'

@@ -6,6 +6,7 @@ using DonHang.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,16 +92,30 @@ builder.Services.AddCors(options =>
 // bundle first, and Compose starts this app only once that has succeeded.
 var app = builder.Build();
 
+// lesson: devops.l2.metrics-endpoint
+// Measures every request: how many, with which status code, how long. First
+// in the pipeline, so a request that throws is still counted, with the 500
+// that ExceptionHandlingMiddleware below turns it into.
+app.UseHttpMetrics();
+
 // lesson: backend.l1.middleware-pipeline
-// Order matters: exceptions caught first, then every request logged, then
-// the terminal middleware (auth, routing) that decides how to answer it.
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+// Order matters: every request logged, then exceptions caught, then the
+// terminal middleware (auth, routing) that decides how to answer it. From
+// stage-2 the logging comes first, so that a request that threw is logged
+// too, with the 500 that ExceptionHandlingMiddleware turned it into.
 app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapOpenApi();
+
+// lesson: devops.l2.metrics-endpoint
+// GET /metrics answers with the current value of every metric, as text,
+// whenever something asks; the api sends its metrics nowhere by itself.
+// Caddy does not forward /metrics: only the donhang network reaches it, at api:8080.
+app.MapMetrics();
 
 // lesson: k8s.l1.health-endpoints
 // /health/live runs no check at all: it answers Healthy while the process can

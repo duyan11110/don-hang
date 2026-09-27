@@ -21,6 +21,13 @@ if ! grep -q '^KEYCLOAK_ADMIN_PASSWORD=' .env 2>/dev/null; then
   echo "added KEYCLOAK_ADMIN_PASSWORD to .env"
 fi
 
+# The password of Grafana's admin user (http://localhost:3000, monitoring
+# profile) — random too, like Keycloak's.
+if ! grep -q '^GRAFANA_ADMIN_PASSWORD=' .env 2>/dev/null; then
+  echo "GRAFANA_ADMIN_PASSWORD=$(openssl rand -hex 16)" >> .env
+  echo "added GRAFANA_ADMIN_PASSWORD to .env"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"
