@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
 
@@ -15,6 +16,9 @@ class ProductTile extends StatelessWidget {
 
   const ProductTile({super.key, required this.product, this.onTap});
 
+  // lesson: frontend.l3.semantic-tokens
+  // From stage-3 the sizes are tokens: the tap target and the padding every
+  // tile shares, not two numbers that could drift apart from other places.
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -25,9 +29,9 @@ class ProductTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
+          constraints: const BoxConstraints(minHeight: Sizes.minTapTarget),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: Insets.tile,
             child: Row(
               children: [
                 Expanded(child: Text(product.name)),

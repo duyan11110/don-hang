@@ -98,4 +98,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orderLoadError => 'Could not load this order.';
+
+  @override
+  String get savedListBanner =>
+      'Showing the saved list: the API did not answer, so it may be out of date.';
+
+  @override
+  String get queuedOrdersTitle => 'Waiting orders';
+
+  @override
+  String get queueEmpty => 'No orders are waiting.';
+
+  @override
+  String get sendNow => 'Send now';
+
+  @override
+  String queuedWaiting(String description) {
+    return 'Waiting to be sent: $description';
+  }
+
+  @override
+  String queuedSent(int id, String description) {
+    return 'Placed as order $id: $description';
+  }
+
+  @override
+  String queuedPriceChanged(int id, int seen, int charged) {
+    final intl.NumberFormat seenNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String seenString = seenNumberFormat.format(seen);
+    final intl.NumberFormat chargedNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String chargedString = chargedNumberFormat.format(charged);
+
+    return 'Placed as order $id, but the price changed: you saw $seenString VND, the order costs $chargedString VND.';
+  }
+
+  @override
+  String queuedRejected(String description, String problem) {
+    return 'Not placed: $description. $problem';
+  }
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get openOrder => 'Open';
+
+  @override
+  String get syncNotSent =>
+      'Not sent yet: the API did not take them. They wait here until the next try.';
+
+  @override
+  String get syncRateLimited =>
+      'The API asked the app to wait before sending more orders.';
+
+  @override
+  String syncRateLimitedUntil(DateTime time) {
+    final intl.DateFormat timeDateFormat = intl.DateFormat.Hm(localeName);
+    final String timeString = timeDateFormat.format(time);
+
+    return 'The API asked the app to wait: the next try is after $timeString.';
+  }
+
+  @override
+  String get syncSignInNeeded => 'Sign in again to send these orders.';
 }

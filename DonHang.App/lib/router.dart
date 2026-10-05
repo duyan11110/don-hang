@@ -9,6 +9,7 @@ import 'screens/login_screen.dart';
 import 'screens/order_detail_screen.dart';
 import 'screens/product_detail_screen.dart';
 import 'screens/product_list_screen.dart';
+import 'screens/queued_orders_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // lesson: frontend.l2.route-guards
@@ -39,7 +40,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 // lesson: frontend.l2.deep-links
 // Every screen of the app, each with its path. The children of `/` are
 // built on top of the product list, so their back arrow leads to it.
-// `orders/new` comes before `orders/:id`, or `new` would be read as an id.
+// `orders/new` comes before `orders/:id`, or `new` would be read as an id;
+// from stage-3 so does `orders/queued`, the orders waiting on this device.
 final List<RouteBase> _routes = [
   GoRoute(
     path: '/',
@@ -50,6 +52,7 @@ final List<RouteBase> _routes = [
         builder: (context, state) => ProductDetailScreen(id: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(path: 'orders/new', builder: (context, state) => const CreateOrderScreen()),
+      GoRoute(path: 'orders/queued', builder: (context, state) => const QueuedOrdersScreen()),
       GoRoute(
         path: 'orders/:id',
         builder: (context, state) => OrderDetailScreen(id: int.parse(state.pathParameters['id']!)),

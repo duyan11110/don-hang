@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../design/components/loading_view.dart';
+import '../design/components/message_view.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../providers.dart';
 
@@ -20,10 +23,10 @@ class OrderDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.orderTitle(id))),
       body: order.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text(l10n.orderLoadError)),
+        loading: () => const LoadingView(),
+        error: (error, stackTrace) => MessageView(message: l10n.orderLoadError),
         data: (order) => Padding(
-          padding: const EdgeInsets.all(16),
+          padding: Insets.screen,
           child: Text(l10n.orderStatus(order.status)),
         ),
       ),

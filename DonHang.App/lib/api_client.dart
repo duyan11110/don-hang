@@ -16,7 +16,10 @@ class ApiClient {
   // token, whose only copy is in authProvider (see apiClientProvider).
   final String? Function() readToken;
 
-  ApiClient({required this.readToken});
+  // From stage-3 a test can hand in a fake http.Client (package:http/testing.dart).
+  final http.Client _http;
+
+  ApiClient({required this.readToken, http.Client? httpClient}) : _http = httpClient ?? http.Client();
 
   Map<String, String> get _headers {
     final token = readToken();
@@ -27,7 +30,7 @@ class ApiClient {
   }
 
   Future<List<Product>> fetchProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/products'));
+    final response = await _http.get(Uri.parse('$baseUrl/products'));
     if (response.statusCode != 200) {
       throw Exception('failed to load products (${response.statusCode})');
     }
@@ -36,7 +39,7 @@ class ApiClient {
   }
 
   Future<Product> fetchProduct(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/products/$id'));
+    final response = await _http.get(Uri.parse('$baseUrl/products/$id'));
     if (response.statusCode != 200) {
       throw Exception('failed to load product $id (${response.statusCode})');
     }
@@ -44,7 +47,7 @@ class ApiClient {
   }
 
   Future<OrderResult> fetchOrder(int id) async {
-    final response = await http.get(Uri.parse('$baseUrl/orders/$id'), headers: _headers);
+    final response = await _http.get(Uri.parse('$baseUrl/orders/$id'), headers: _headers);
     if (response.statusCode != 200) {
       throw Exception('failed to load order $id (${response.statusCode})');
     }
@@ -55,17 +58,33 @@ class ApiClient {
   // lesson: frontend.l2.server-errors-in-forms
   // Anything but 201 comes back as an ApiProblem built from the body, so a
   // screen can show the server's own explanation, not just a status code.
-  Future<OrderResult> createOrder(List<OrderItemRequest> items) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/orders'),
-      headers: _headers,
-      body: jsonEncode({'items': items.map((item) => item.toJson()).toList()}),
-    );
-    if (response.statusCode != 201) {
-      throw ApiProblem.fromResponse(response);
+  // lesson: frontend.l3.offline-order-queue
+  // From stage-3 every order carries an Idempotency-Key, and "no answer from
+  // the API" is its own exception: no response at all, or a 502, 503 or 504,
+  // which only says the proxy in front of the API could not reach it.
+  Future<OrderResult> createOrder(List<OrderItemRequest> items, {required String idempotencyKey}) async {
+    final http.Response response;
+    try {
+      response = await _http.post(
+        Uri.parse('$baseUrl/orders'),
+        headers: {..._headers, 'Idempotency-Key': idempotencyKey},
+        body: jsonEncode({'items': items.map((item) => item.toJson()).toList()}),
+      );
+    } on http.ClientException {
+      throw ApiUnreachable();
     }
+    if (const [502, 503, 504].contains(response.statusCode)) throw ApiUnreachable();
+    if (response.statusCode != 201) throw ApiProblem.fromResponse(response);
     return OrderResult.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
+}
+
+// lesson: frontend.l3.offline-order-queue
+// The request may or may not have reached the API; nobody answered. Only
+// this puts an order in the offline queue: a 400 or 409 is an answer.
+class ApiUnreachable implements Exception {
+  @override
+  String toString() => 'ApiUnreachable';
 }
 
 // lesson: frontend.l2.server-errors-in-forms
@@ -77,8 +96,11 @@ class ApiProblem implements Exception {
   final String type;
   final String title;
   final String detail;
+  // From stage-3: how long a 429 asks the client to wait (Retry-After, in
+  // seconds), or null when the response does not say.
+  final Duration? retryAfter;
 
-  ApiProblem({required this.status, required this.type, required this.title, required this.detail});
+  ApiProblem({required this.status, required this.type, required this.title, required this.detail, this.retryAfter});
 
   factory ApiProblem.fromResponse(http.Response response) {
     final body = _jsonObjectOrEmpty(response.body);
@@ -88,7 +110,13 @@ class ApiProblem implements Exception {
       type: body['type'] as String? ?? 'about:blank',
       title: body['title'] as String? ?? 'HTTP ${response.statusCode}',
       detail: body['detail'] as String? ?? body['title'] as String? ?? 'HTTP ${response.statusCode}',
+      retryAfter: _seconds(response.headers['retry-after']),
     );
+  }
+
+  static Duration? _seconds(String? header) {
+    final seconds = int.tryParse(header ?? '');
+    return seconds == null ? null : Duration(seconds: seconds);
   }
 
   static Map<String, dynamic> _jsonObjectOrEmpty(String body) {

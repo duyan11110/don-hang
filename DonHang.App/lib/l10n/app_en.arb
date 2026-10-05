@@ -49,5 +49,54 @@
       "status": { "type": "String" }
     }
   },
-  "orderLoadError": "Could not load this order."
+  "orderLoadError": "Could not load this order.",
+  "savedListBanner": "Showing the saved list: the API did not answer, so it may be out of date.",
+  "@savedListBanner": { "description": "Above the product list when it is the copy saved on this device and loading a fresh one failed." },
+  "queuedOrdersTitle": "Waiting orders",
+  "@queuedOrdersTitle": { "description": "Title of the screen listing orders placed while the API could not be reached." },
+  "queueEmpty": "No orders are waiting.",
+  "sendNow": "Send now",
+  "@sendNow": { "description": "Button that sends the waiting orders at once." },
+  "queuedWaiting": "Waiting to be sent: {description}",
+  "@queuedWaiting": {
+    "description": "An order kept on this device; it has no order number yet.",
+    "placeholders": {
+      "description": { "type": "String" }
+    }
+  },
+  "queuedSent": "Placed as order {id}: {description}",
+  "@queuedSent": {
+    "placeholders": {
+      "id": { "type": "int" },
+      "description": { "type": "String" }
+    }
+  },
+  "queuedPriceChanged": "Placed as order {id}, but the price changed: you saw {seen} VND, the order costs {charged} VND.",
+  "@queuedPriceChanged": {
+    "description": "A waiting order was sent and the API charged the current price, not the saved one.",
+    "placeholders": {
+      "id": { "type": "int" },
+      "seen": { "type": "int", "format": "decimalPattern" },
+      "charged": { "type": "int", "format": "decimalPattern" }
+    }
+  },
+  "queuedRejected": "Not placed: {description}. {problem}",
+  "@queuedRejected": {
+    "description": "The API refused a waiting order; problem is the API's own detail.",
+    "placeholders": {
+      "description": { "type": "String" },
+      "problem": { "type": "String" }
+    }
+  },
+  "remove": "Remove",
+  "openOrder": "Open",
+  "syncNotSent": "Not sent yet: the API did not take them. They wait here until the next try.",
+  "syncRateLimited": "The API asked the app to wait before sending more orders.",
+  "syncRateLimitedUntil": "The API asked the app to wait: the next try is after {time}.",
+  "@syncRateLimitedUntil": {
+    "placeholders": {
+      "time": { "type": "DateTime", "format": "Hm" }
+    }
+  },
+  "syncSignInNeeded": "Sign in again to send these orders."
 }

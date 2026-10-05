@@ -23,5 +23,19 @@
   "orderFailed": "Chưa gửi được đơn. Hãy kiểm tra kết nối rồi thử lại.",
   "orderTitle": "Đơn {id}",
   "orderStatus": "Trạng thái: {status}",
-  "orderLoadError": "Không tải được đơn hàng này."
+  "orderLoadError": "Không tải được đơn hàng này.",
+  "savedListBanner": "Đang hiện danh sách đã lưu: API không trả lời nên có thể đã cũ.",
+  "queuedOrdersTitle": "Đơn đang chờ",
+  "queueEmpty": "Không có đơn nào đang chờ.",
+  "sendNow": "Gửi ngay",
+  "queuedWaiting": "Đang chờ gửi: {description}",
+  "queuedSent": "Đã đặt thành đơn {id}: {description}",
+  "queuedPriceChanged": "Đã đặt thành đơn {id}, nhưng giá đã đổi: bạn thấy {seen} đ, đơn có giá {charged} đ.",
+  "queuedRejected": "Chưa đặt được: {description}. {problem}",
+  "remove": "Xóa",
+  "openOrder": "Mở",
+  "syncNotSent": "Chưa gửi được: API chưa nhận. Các đơn chờ ở đây tới lần thử sau.",
+  "syncRateLimited": "API yêu cầu app chờ rồi mới gửi thêm đơn.",
+  "syncRateLimitedUntil": "API yêu cầu app chờ: lần thử sau là sau {time}.",
+  "syncSignInNeeded": "Hãy đăng nhập lại để gửi các đơn này."
 }

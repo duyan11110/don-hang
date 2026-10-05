@@ -1,0 +1,7 @@
+# lesson: frontend.l3.golden-tests
+# Tags used by DonHang.App's tests. `golden` marks the tests that compare
+# images; they run on the Linux CI runner only. On Windows or macOS:
+#   flutter test --exclude-tags golden
+tags:
+  golden:
+    description: Compares widgets with images made on ubuntu-24.04.

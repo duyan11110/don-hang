@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../auth/auth_controller.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 
 // The other end of the sign-in that LoginScreen starts.
@@ -49,7 +50,7 @@ class _AuthCallbackScreenState extends ConsumerState<AuthCallbackScreen> {
                   Text(l10n.signInFailed),
                   TextButton(onPressed: () => context.go('/login'), child: Text(l10n.tryAgain)),
                 ]
-              : [const CircularProgressIndicator(), const SizedBox(height: 16), Text(l10n.signingIn)],
+              : [const CircularProgressIndicator(), const SizedBox(height: Space.lg), Text(l10n.signingIn)],
         ),
       ),
     );

@@ -5,16 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:donhang_app/main.dart';
-import 'package:donhang_app/models.dart';
 import 'package:donhang_app/providers.dart';
 
 void main() {
   // The whole app, router included, opens on the product list at `/`. The
   // product list never arrives here, so the screen stays in its loading state.
   testWidgets('opens on the product list screen, loading', (WidgetTester tester) async {
-    final neverLoads = Completer<List<Product>>();
+    final neverLoads = StreamController<LoadedProducts>();
     await tester.pumpWidget(ProviderScope(
-      overrides: [productsProvider.overrideWith((ref) => neverLoads.future)],
+      overrides: [productsProvider.overrideWith((ref) => neverLoads.stream)],
       child: const DonHangApp(),
     ));
     await tester.pump();

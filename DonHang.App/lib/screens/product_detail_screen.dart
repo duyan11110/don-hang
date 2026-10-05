@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../design/components/loading_view.dart';
+import '../design/components/message_view.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../providers.dart';
 
@@ -20,16 +23,16 @@ class ProductDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(product.value?.name ?? '')),
       body: product.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text(l10n.productLoadError)),
+        loading: () => const LoadingView(),
+        error: (error, stackTrace) => MessageView(message: l10n.productLoadError),
         data: (product) => Padding(
-          padding: const EdgeInsets.all(16),
+          padding: Insets.screen,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(product.name, style: Theme.of(context).textTheme.headlineSmall),
               Text(l10n.productPrice(product.priceVnd)),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               FilledButton(onPressed: () => context.go('/orders/new'), child: Text(l10n.placeOrder)),
             ],
           ),

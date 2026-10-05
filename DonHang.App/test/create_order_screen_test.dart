@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:donhang_app/api_client.dart';
+import 'package:donhang_app/design/brand.dart';
+import 'package:donhang_app/design/theme.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
 import 'package:donhang_app/models.dart';
 import 'package:donhang_app/providers.dart';
@@ -15,7 +17,7 @@ class RejectingApiClient extends ApiClient {
   RejectingApiClient() : super(readToken: () => null);
 
   @override
-  Future<OrderResult> createOrder(List<OrderItemRequest> items) async {
+  Future<OrderResult> createOrder(List<OrderItemRequest> items, {required String idempotencyKey}) async {
     throw ApiProblem(
       status: 400,
       type: 'about:blank',
@@ -31,10 +33,13 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         apiClientProvider.overrideWithValue(RejectingApiClient()),
-        productsProvider.overrideWith((ref) async => [Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]),
+        productsProvider.overrideWithValue(AsyncValue.data(LoadedProducts([Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]))),
       ],
-      child: const MaterialApp(
-        locale: Locale('en'),
+      // From stage-3 the server's error is a StatusBanner, whose colors
+      // come from the app's theme, so the test app uses that theme too.
+      child: MaterialApp(
+        theme: buildTheme(donHangBrand, Brightness.light),
+        locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: CreateOrderScreen(),
@@ -59,10 +64,13 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         apiClientProvider.overrideWithValue(RejectingApiClient()),
-        productsProvider.overrideWith((ref) async => [Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]),
+        productsProvider.overrideWithValue(AsyncValue.data(LoadedProducts([Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]))),
       ],
-      child: const MaterialApp(
-        locale: Locale('en'),
+      // From stage-3 the server's error is a StatusBanner, whose colors
+      // come from the app's theme, so the test app uses that theme too.
+      child: MaterialApp(
+        theme: buildTheme(donHangBrand, Brightness.light),
+        locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: CreateOrderScreen(),

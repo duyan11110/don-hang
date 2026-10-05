@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_controller.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 
 // From stage-2 there is no password here: the button leaves for Keycloak's
@@ -16,12 +17,12 @@ class LoginScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(l10n.signIn)),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: Insets.screen,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(l10n.signInExplanation, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               FilledButton(
                 onPressed: () => ref.read(authProvider.notifier).signIn(),
                 child: Text(l10n.signInWithKeycloak),

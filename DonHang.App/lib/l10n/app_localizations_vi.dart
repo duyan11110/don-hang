@@ -98,4 +98,69 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get orderLoadError => 'Không tải được đơn hàng này.';
+
+  @override
+  String get savedListBanner =>
+      'Đang hiện danh sách đã lưu: API không trả lời nên có thể đã cũ.';
+
+  @override
+  String get queuedOrdersTitle => 'Đơn đang chờ';
+
+  @override
+  String get queueEmpty => 'Không có đơn nào đang chờ.';
+
+  @override
+  String get sendNow => 'Gửi ngay';
+
+  @override
+  String queuedWaiting(String description) {
+    return 'Đang chờ gửi: $description';
+  }
+
+  @override
+  String queuedSent(int id, String description) {
+    return 'Đã đặt thành đơn $id: $description';
+  }
+
+  @override
+  String queuedPriceChanged(int id, int seen, int charged) {
+    final intl.NumberFormat seenNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String seenString = seenNumberFormat.format(seen);
+    final intl.NumberFormat chargedNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String chargedString = chargedNumberFormat.format(charged);
+
+    return 'Đã đặt thành đơn $id, nhưng giá đã đổi: bạn thấy $seenString đ, đơn có giá $chargedString đ.';
+  }
+
+  @override
+  String queuedRejected(String description, String problem) {
+    return 'Chưa đặt được: $description. $problem';
+  }
+
+  @override
+  String get remove => 'Xóa';
+
+  @override
+  String get openOrder => 'Mở';
+
+  @override
+  String get syncNotSent =>
+      'Chưa gửi được: API chưa nhận. Các đơn chờ ở đây tới lần thử sau.';
+
+  @override
+  String get syncRateLimited => 'API yêu cầu app chờ rồi mới gửi thêm đơn.';
+
+  @override
+  String syncRateLimitedUntil(DateTime time) {
+    final intl.DateFormat timeDateFormat = intl.DateFormat.Hm(localeName);
+    final String timeString = timeDateFormat.format(time);
+
+    return 'API yêu cầu app chờ: lần thử sau là sau $timeString.';
+  }
+
+  @override
+  String get syncSignInNeeded => 'Hãy đăng nhập lại để gửi các đơn này.';
 }

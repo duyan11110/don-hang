@@ -48,4 +48,24 @@ void main() {
     expect(tester.getSize(find.byType(ProductTile).first).height, greaterThanOrEqualTo(48));
     expect(find.bySemanticsLabel('Bàn phím cơ, 1.250.000 đồng'), findsOneWidget);
   });
+
+  // lesson: frontend.l3.lazy-lists
+  // 10 000 products in memory, but ListView.builder builds tiles only for
+  // the 400 pixels on screen and a little beyond: the first products have a
+  // tile, the last one has none, and far fewer than 10 000 tiles exist.
+  testWidgets('a long list builds only the tiles near the screen', (tester) async {
+    final many = [for (var id = 1; id <= 10000; id++) Product(id: id, name: 'Product $id', priceVnd: 1000)];
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('vi'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: Center(child: SizedBox(width: 360, height: 400, child: ProductCatalog(products: many))),
+      ),
+    ));
+
+    expect(find.text('Product 1'), findsOneWidget);
+    expect(find.text('Product 10000'), findsNothing);
+    expect(tester.widgetList(find.byType(ProductTile)).length, lessThan(30));
+  });
 }

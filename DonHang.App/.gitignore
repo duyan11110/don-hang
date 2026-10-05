@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Golden tests write the images that did not match here (frontend.l3.golden-tests).
+**/failures/

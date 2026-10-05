@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../design/tokens.dart';
 import '../models.dart';
 import 'product_tile.dart';
 
@@ -18,6 +19,10 @@ class ProductCatalog extends StatelessWidget {
 
   const ProductCatalog({super.key, required this.products, this.onProductTap});
 
+  // lesson: frontend.l3.lazy-lists
+  // Both builders get an itemCount and an itemBuilder, and call the builder
+  // only for the tiles in or near the visible area, more as the user
+  // scrolls: how many tiles exist depends on the space, not on the list.
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -32,7 +37,7 @@ class ProductCatalog extends StatelessWidget {
         return GridView.builder(
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: 72,
+            mainAxisExtent: Sizes.gridRow,
           ),
           itemCount: products.length,
           itemBuilder: (context, index) => _tile(products[index]),

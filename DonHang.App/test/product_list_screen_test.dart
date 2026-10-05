@@ -10,7 +10,7 @@ import 'package:donhang_app/screens/product_list_screen.dart';
 // lesson: frontend.l2.overriding-providers-in-tests
 // The screen as the app builds it, but productsProvider holds a fixed value
 // instead of calling the API: no server, no HTTP request.
-Widget screenWith(AsyncValue<List<Product>> products) => ProviderScope(
+Widget screenWith(AsyncValue<LoadedProducts> products) => ProviderScope(
       overrides: [productsProvider.overrideWithValue(products)],
       child: const MaterialApp(
         locale: Locale('en'),
@@ -24,17 +24,17 @@ void main() {
   // lesson: frontend.l2.overriding-providers-in-tests
   // One test per state; each override lives only in its own ProviderScope.
   testWidgets('shows the products the provider holds', (tester) async {
-    await tester.pumpWidget(screenWith(AsyncValue.data([
+    await tester.pumpWidget(screenWith(AsyncValue.data(LoadedProducts([
       Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000),
       Product(id: 2, name: 'Chuột không dây', priceVnd: 450000),
-    ])));
+    ]))));
 
     expect(find.text('Bàn phím cơ'), findsOneWidget);
     expect(find.text('Chuột không dây'), findsOneWidget);
   });
 
   testWidgets('says so when there are no products', (tester) async {
-    await tester.pumpWidget(screenWith(const AsyncValue.data([])));
+    await tester.pumpWidget(screenWith(const AsyncValue.data(LoadedProducts([]))));
 
     expect(find.text('No products yet.'), findsOneWidget);
   });

@@ -3,8 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api_client.dart';
+import '../auth/auth_controller.dart';
+import '../auth/token_subject.dart';
+import '../design/components/loading_view.dart';
+import '../design/components/message_view.dart';
+import '../design/components/status_banner.dart';
+import '../design/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart';
+import '../offline/order_queue.dart';
 import '../providers.dart';
 
 // One product and one quantity per order: a cart with several lines is
@@ -45,19 +52,24 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
   // validate() runs every validator first; only a valid form is sent. When
   // the API still says no, its `detail` is shown and every field keeps what
   // the customer entered, so one value can be fixed and the order sent again.
+  // lesson: frontend.l3.offline-order-queue
+  // From stage-3 the key is made here, once per order the customer means to
+  // place, and no answer from the API puts the order in the offline queue.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _sending = true;
       _serverError = null;
     });
+    final product = _product!;
+    final quantity = int.parse(_quantityController.text);
+    final items = [OrderItemRequest(productId: product.id, quantity: quantity, unitPriceVnd: product.priceVnd)];
+    final idempotencyKey = newIdempotencyKey();
     try {
-      final product = _product!;
-      final quantity = int.parse(_quantityController.text);
-      final order = await ref.read(apiClientProvider).createOrder([
-        OrderItemRequest(productId: product.id, quantity: quantity, unitPriceVnd: product.priceVnd),
-      ]);
+      final order = await ref.read(apiClientProvider).createOrder(items, idempotencyKey: idempotencyKey);
       if (mounted) context.go('/orders/${order.id}');
+    } on ApiUnreachable {
+      _queue('$quantity × ${product.name}', items, idempotencyKey);
     } on ApiProblem catch (problem) {
       if (mounted) setState(() => _serverError = problem.detail);
     } on Exception {
@@ -67,6 +79,27 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
     }
   }
 
+  // lesson: frontend.l3.offline-order-queue
+  // The order waits on the device with the key it was just sent with: if
+  // that attempt did reach the API, the next one gets the same order back.
+  // It is not placed yet, so the customer sees it among the waiting orders.
+  void _queue(String description, List<OrderItemRequest> items, String idempotencyKey) {
+    final token = ref.read(authProvider);
+    final subject = token == null ? null : tokenSubject(token);
+    if (!mounted) return;
+    if (subject == null) {
+      setState(() => _serverError = AppLocalizations.of(context).orderFailed);
+      return;
+    }
+    ref.read(orderQueueProvider.notifier).add(QueuedOrder(
+          idempotencyKey: idempotencyKey,
+          subject: subject,
+          description: description,
+          items: items,
+        ));
+    context.go('/orders/queued');
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -74,21 +107,25 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.placeOrder)),
       body: products.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text(l10n.productsLoadError)),
-        data: (items) => _form(context, items),
+        loading: () => const LoadingView(),
+        error: (error, stackTrace) => MessageView(message: l10n.productsLoadError),
+        data: (loaded) => _form(context, loaded.items),
       ),
     );
   }
 
   // lesson: frontend.l2.form-validation
   // lesson: frontend.l2.server-errors-in-forms
+  // lesson: frontend.l3.semantic-tokens
+  // lesson: frontend.l3.component-library
+  // From stage-3 spacing comes from tokens and the server's error is a
+  // StatusBanner in the error tone, like every other status in the app.
   Widget _form(BuildContext context, List<Product> products) {
     final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: Insets.screen,
         children: [
           DropdownButtonFormField<Product>(
             initialValue: _product,
@@ -103,10 +140,9 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
             keyboardType: TextInputType.number,
             validator: _checkQuantity,
           ),
-          const SizedBox(height: 16),
-          if (_serverError != null)
-            Text(_serverError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          const SizedBox(height: 8),
+          const SizedBox(height: Space.lg),
+          if (_serverError != null) StatusBanner(message: _serverError!, tone: StatusTone.error),
+          const SizedBox(height: Space.sm),
           FilledButton(onPressed: _sending ? null : _submit, child: Text(l10n.submitOrder)),
         ],
       ),

@@ -241,6 +241,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load this order.'**
   String get orderLoadError;
+
+  /// Above the product list when it is the copy saved on this device and loading a fresh one failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the saved list: the API did not answer, so it may be out of date.'**
+  String get savedListBanner;
+
+  /// Title of the screen listing orders placed while the API could not be reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting orders'**
+  String get queuedOrdersTitle;
+
+  /// No description provided for @queueEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders are waiting.'**
+  String get queueEmpty;
+
+  /// Button that sends the waiting orders at once.
+  ///
+  /// In en, this message translates to:
+  /// **'Send now'**
+  String get sendNow;
+
+  /// An order kept on this device; it has no order number yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to be sent: {description}'**
+  String queuedWaiting(String description);
+
+  /// No description provided for @queuedSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Placed as order {id}: {description}'**
+  String queuedSent(int id, String description);
+
+  /// A waiting order was sent and the API charged the current price, not the saved one.
+  ///
+  /// In en, this message translates to:
+  /// **'Placed as order {id}, but the price changed: you saw {seen} VND, the order costs {charged} VND.'**
+  String queuedPriceChanged(int id, int seen, int charged);
+
+  /// The API refused a waiting order; problem is the API's own detail.
+  ///
+  /// In en, this message translates to:
+  /// **'Not placed: {description}. {problem}'**
+  String queuedRejected(String description, String problem);
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @openOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openOrder;
+
+  /// No description provided for @syncNotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent yet: the API did not take them. They wait here until the next try.'**
+  String get syncNotSent;
+
+  /// No description provided for @syncRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'The API asked the app to wait before sending more orders.'**
+  String get syncRateLimited;
+
+  /// No description provided for @syncRateLimitedUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'The API asked the app to wait: the next try is after {time}.'**
+  String syncRateLimitedUntil(DateTime time);
+
+  /// No description provided for @syncSignInNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to send these orders.'**
+  String get syncSignInNeeded;
 }
 
 class _AppLocalizationsDelegate
