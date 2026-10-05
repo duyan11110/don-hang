@@ -12,5 +12,11 @@
 	# is not a real file gets index.html, the app starts, and its router reads
 	# the path from the address bar to pick the screen.
 	try_files {path} /index.html
+
+	# lesson: frontend.l3.web-bundle-size
+	# From stage-3 responses are compressed for every browser whose
+	# Accept-Encoding allows it (zstd or gzip); the files on disk stay as
+	# they are. main.dart.js, being text, shrinks the most.
+	encode
 	file_server
 }
