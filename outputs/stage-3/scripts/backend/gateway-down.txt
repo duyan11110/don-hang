@@ -1,0 +1,15 @@
+fake-gateway is stopped: every refund call fails
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+== the refund row after three failed calls: status | attempts
+pending | 3
+== what RefundSender logged about this refund row
+for order 10: attempt 1 failed (...); next attempt in 2 s
+for order 10: attempt 2 failed (...); next attempt in 4 s
+for order 10: attempt 3 failed (...); next attempt in 8 s
+
+fake-gateway is back
+== the refund row now: status | attempts
+refunded | 4
+== refunds the gateway made for order 10
+[{"orderId":10,"amountVnd":1730000}]

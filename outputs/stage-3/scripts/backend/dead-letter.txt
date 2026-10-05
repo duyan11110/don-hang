@@ -1,0 +1,21 @@
+== publish to donhang.orders: order.placed, body 'this is not JSON'
+  routed: true
+messages in notifications.order-events:      0
+messages in notifications.order-events.dead: 1
+
+== the dead-lettered message
+{
+  "routing_key": "order.placed",
+  "payload": "this is not JSON",
+  "message_id": "dead-letter-demo",
+  "x-first-death-queue": "notifications.order-events",
+  "x-first-death-reason": "rejected",
+  "x-death": [
+    {
+      "queue": "notifications.order-events",
+      "reason": "rejected",
+      "count": 1,
+      "exchange": "donhang.orders"
+    }
+  ]
+}

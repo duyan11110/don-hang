@@ -43,3 +43,8 @@ pod-template-hash=\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
 # change to the app, its packages or Flutter.
 \b(?:raw|gzip) \K[0-9]+
 ^bytes sent \K[0-9]+
+# Stage-3 messaging and refund scripts: a refund's request time, a fresh
+# message id, and the client library's words for a refused connection.
+"requestedAt":"\K[^"]*(?=")
+message id \K[0-9a-f-]{36}$
+attempt [0-9]+ failed \(\K.*(?=\); next attempt)

@@ -1,0 +1,12 @@
+rabbitmq is stopped
+== POST /api/v1/orders as customer 1
+  -> 201
+== its outbox row, 3 seconds later
+order.placed | not published
+== what OutboxRelay logs meanwhile (the last line)
+Relaying outbox messages failed (...); trying again in 1 s
+
+rabbitmq is back
+== its outbox row now
+order.placed | published
+== and the email job DonHang.Notifications made from the message: sent

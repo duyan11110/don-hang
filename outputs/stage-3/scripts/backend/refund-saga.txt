@@ -1,0 +1,17 @@
+== POST /api/v1/orders/1/refund as customer 1
+{"id":...,"customerId":1,"status":"refunding","placedAt":"...","items":[{"productId":1,"quantity":1,"unitPriceVnd":1250000},{"productId":2,"quantity":2,"unitPriceVnd":450000}]}
+  -> 202
+
+== donhang: what happened to order 1 (order_status_history)
+refund-requested | refunding
+refunded | cancelled
+== donhang: the messages it saved for RabbitMQ (outbox_messages)
+order.refund-requested | t
+order.refunded | t
+== donhang_payments: order 1's payment rows, then its outbox_messages
+charge | paid | 2150000 | card |  | 0
+refund | refunded | 2150000 | card | anh.tran@example.com | 1
+payment.refunded | t
+== donhang_notifications: the emails to customer 1
+anh.tran@example.com | refund requested | sent
+anh.tran@example.com | order refunded | sent

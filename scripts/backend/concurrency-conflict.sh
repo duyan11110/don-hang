@@ -6,11 +6,14 @@ set -euo pipefail
 
 base=http://localhost:8080/api/v1
 source "$(dirname "$0")/../lib/keycloak.sh"
-reset_order_5() {
+# set_order_5 <status>. From stage-3 Order.Cancel() refuses a paid order
+# (its money goes back through a refund), so the script starts order 5 at
+# `new`, which may be cancelled, and puts back the seed's `paid` at the end.
+set_order_5() {
   psql --host db --username donhang --dbname donhang --no-psqlrc --quiet \
-       --command "UPDATE orders SET status = 'paid' WHERE id = 5"
+       --command "UPDATE orders SET status = '$1' WHERE id = 5"
 }
-reset_order_5
+set_order_5 new
 
 # Order 5 belongs to customer 3.
 token=$(keycloak_access_token dung.le@example.com)
@@ -20,7 +23,7 @@ trap 'rm -f "$ship"' EXIT
 
 # lesson: backend.l2.optimistic-concurrency
 # The ship session changes order 5 and holds its row lock for 2 seconds. The
-# api reads order 5 meanwhile (still paid, old xmin), Order.Cancel() allows
+# api reads order 5 meanwhile (still new, old xmin), Order.Cancel() allows
 # it, and EF Core's UPDATE ... WHERE id = 5 AND xmin = <old value> waits for
 # the lock. Once ship commits, xmin has changed: the UPDATE matches no row.
 psql --host db --username donhang --dbname donhang --no-psqlrc --echo-queries \
@@ -40,4 +43,4 @@ echo "== ship session"; cat "$ship"
 echo "== order 5 afterwards"
 psql --host db --username donhang --dbname donhang --no-psqlrc \
      --command "SELECT id, status FROM orders WHERE id = 5"
-reset_order_5
+set_order_5 paid

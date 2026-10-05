@@ -5,15 +5,17 @@ set -euo pipefail
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 sql() {
-  psql --host db --username donhang --dbname donhang --no-psqlrc --quiet --tuples-only --no-align "$@"
+  psql --host db --username donhang --dbname donhang_notifications --no-psqlrc --quiet --tuples-only --no-align "$@"
 }
 
-# Four demo jobs, due on 1 January 2100: the api's own NotificationSender,
+# Four demo jobs, due on 1 January 2100: NotificationSender (in the
+# notifications service from stage-3, with the table in donhang_notifications),
 # which asks for rows due by now, leaves them alone. The claims below ask
 # for rows due by that date instead, and see only these four.
 due=2100-01-01T00:00:00Z
-sql --command "INSERT INTO notifications (order_id, channel, subject, status, attempts, created_at, next_attempt_at)
-               SELECT 1, 'email', 'demo job ' || n, 'pending', 0, now(), '$due' FROM generate_series(1, 4) AS n"
+sql --command "INSERT INTO notifications (order_id, email, full_name, channel, subject, status, attempts, created_at, next_attempt_at)
+               SELECT 1, 'anh.tran@example.com', 'Trần Minh Anh', 'email', 'demo job ' || n, 'pending', 0, now(), '$due'
+               FROM generate_series(1, 4) AS n"
 trap "sql --command \"DELETE FROM notifications WHERE next_attempt_at = '$due'\"" EXIT
 
 # lesson: backend.l2.skip-locked-claiming

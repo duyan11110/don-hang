@@ -1,0 +1,8 @@
+== publish order.shipped for order 2, message id ...
+  routed: true
+== publish it again, same message id
+  routed: true
+== donhang_notifications: email jobs created since the first publish
+2 | order shipped
+== donhang_notifications: inbox_messages rows with that message id
+1

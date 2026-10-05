@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Place an order, watch its email job in the notifications table go from pending to sent, and find the email in Mailpit.
+# Place an order, watch its email job in donhang_notifications go from pending to sent, and find the email in Mailpit.
 set -euo pipefail
 # Everything below runs inside the lab box; this line puts it there.
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
 
 source "$(dirname "$0")/../lib/keycloak.sh"
 sql() {
-  psql --host db --username donhang --dbname donhang --no-psqlrc --tuples-only --no-align "$@"
+  psql --host db --username donhang --dbname donhang_notifications --no-psqlrc --tuples-only --no-align "$@"
 }
 token=$(keycloak_access_token anh.tran@example.com)
 
@@ -21,7 +21,13 @@ echo "  -> $(tail -n 1 <<<"$response")"
 [ -n "$order" ] || exit 1
 echo
 
-echo "== its row in notifications, the email job:"
+# From stage-3 the row is made by DonHang.Notifications, in its own database,
+# from the order.placed message: it appears a moment after the response.
+for _ in $(seq 40); do
+  [ -n "$(sql --command "SELECT id FROM notifications WHERE order_id = $order")" ] && break
+  sleep 0.25
+done
+echo "== its row in donhang_notifications, the email job:"
 sql --field-separator ' | ' \
     --command "SELECT channel, subject FROM notifications WHERE order_id = $order"
 # NotificationSender looks for due rows every 2 seconds.
