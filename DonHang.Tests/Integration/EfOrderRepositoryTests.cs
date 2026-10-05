@@ -69,13 +69,15 @@ public sealed class EfOrderRepositoryTests(PostgresFixture database)
     // lesson: design.l2.resetting-data-between-tests
     // Both tests insert this same customer, and customers.email is unique:
     // without the reset, whichever test ran second would fail here.
+    // From stage-3 DonHangDbContext has no Products: `products` belongs to the
+    // Catalog module, so the test adds its two rows with SQL.
     private static async Task<(int CustomerId, int PenId, int BookId)> InsertCustomerAndProductsAsync(DonHangDbContext db)
     {
         var customer = new Customer { FullName = "Test Customer", Email = "test.customer@example.com", City = "Hà Nội" };
-        var pen = new Product { Name = "Pen", PriceVnd = 15_000 };
-        var book = new Product { Name = "Book", PriceVnd = 120_000 };
-        db.AddRange(customer, pen, book);
+        db.Add(customer);
         await db.SaveChangesAsync();
-        return (customer.Id, pen.Id, book.Id);
+        var penId = await TestProducts.InsertAsync(db, "Pen", 15_000);
+        var bookId = await TestProducts.InsertAsync(db, "Book", 120_000);
+        return (customer.Id, penId, bookId);
     }
 }

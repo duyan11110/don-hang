@@ -11,12 +11,17 @@ public sealed class OrderServiceTests
 {
     private static List<OrderItem> OneItem() => [new(productId: 1, quantity: 2, new Vnd(100_000))];
 
+    private static List<RequestedItem> TwoOfProductOne() => [new(ProductId: 1, Quantity: 2)];
+
     // From stage-3 OrderService notifies nobody itself: the real
     // NotifyCustomerOnOrderEvents handler does, through the fake notifier.
-    private static OrderService NewService(IOrderRepository repository, FakeNotifier notifier)
+    // Prices come from FakeProductPrices instead of Catalog.
+    private static OrderService NewService(
+        IOrderRepository repository, FakeNotifier notifier, FakeProductPrices? prices = null)
     {
         var handler = new NotifyCustomerOnOrderEvents(notifier);
-        return new OrderService(repository, new DomainEventDispatcher([handler], [handler], [handler]));
+        var events = new DomainEventDispatcher([handler], [handler], [handler]);
+        return new OrderService(repository, prices ?? new FakeProductPrices(), events);
     }
 
     [Fact]
@@ -25,7 +30,7 @@ public sealed class OrderServiceTests
         var repository = new FakeOrderRepository();
         var service = NewService(repository, new FakeNotifier());
 
-        var (order, created) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
+        var (order, created) = await service.PlaceOrderAsync(customerId: 1, TwoOfProductOne());
 
         Assert.True(created);
         Assert.Same(order, await repository.FindAsync(order.Id));
@@ -37,7 +42,7 @@ public sealed class OrderServiceTests
         var notifier = new FakeNotifier();
         var service = NewService(new FakeOrderRepository(), notifier);
 
-        var (order, _) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
+        var (order, _) = await service.PlaceOrderAsync(customerId: 1, TwoOfProductOne());
 
         var sent = Assert.Single(notifier.Sent);
         Assert.Equal(order.Id, sent.OrderId);
@@ -49,8 +54,8 @@ public sealed class OrderServiceTests
         var notifier = new FakeNotifier();
         var service = NewService(new FakeOrderRepository(), notifier);
 
-        var first = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
-        var retry = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
+        var first = await service.PlaceOrderAsync(customerId: 1, TwoOfProductOne(), idempotencyKey: "key-1");
+        var retry = await service.PlaceOrderAsync(customerId: 1, TwoOfProductOne(), idempotencyKey: "key-1");
 
         Assert.Same(first.Order, retry.Order);
         Assert.False(retry.Created);
@@ -92,6 +97,33 @@ public sealed class OrderServiceTests
         Assert.Empty(notifier.Sent);
     }
 
+    // lesson: design.l3.one-way-module-dependencies
+    // The price is Catalog's, not the caller's: RequestedItem has no price.
+    [Fact]
+    public async Task PlaceOrderAsync_TakesEachPriceFromCatalog()
+    {
+        var prices = new FakeProductPrices();
+        prices.Prices[1] = new Vnd(120_000);
+        var service = NewService(new FakeOrderRepository(), new FakeNotifier(), prices);
+
+        var (order, _) = await service.PlaceOrderAsync(customerId: 1, TwoOfProductOne());
+
+        Assert.Equal(new Vnd(120_000), Assert.Single(order.Items).UnitPrice);
+        Assert.Equal(new Vnd(240_000), order.Total);
+    }
+
+    [Fact]
+    public async Task PlaceOrderAsync_UnknownProduct_ThrowsAndSavesNothing()
+    {
+        var repository = new FakeOrderRepository();
+        var service = NewService(repository, new FakeNotifier());
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.PlaceOrderAsync(customerId: 1, [new RequestedItem(ProductId: 999, Quantity: 1)]));
+
+        Assert.Equal(0, repository.SaveCount);
+    }
+
     // lesson: design.l3.dispatching-domain-events
     // A handler that throws stops the use case before SaveChangesAsync.
     [Fact]
@@ -100,7 +132,7 @@ public sealed class OrderServiceTests
         var repository = new FakeOrderRepository();
         repository.Seed(new Order(customerId: 1, OneItem(), DateTimeOffset.UtcNow) { Id = 1 });
         var events = new DomainEventDispatcher([], [new FailingHandler()], []);
-        var service = new OrderService(repository, events);
+        var service = new OrderService(repository, new FakeProductPrices(), events);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.CancelOrderAsync(1));
 

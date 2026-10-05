@@ -6,11 +6,13 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY global.json Directory.Packages.props ./
+COPY DonHang.Catalog/DonHang.Catalog.csproj DonHang.Catalog/
 COPY DonHang.Domain/DonHang.Domain.csproj DonHang.Domain/
 COPY DonHang.Infrastructure/DonHang.Infrastructure.csproj DonHang.Infrastructure/
 COPY DonHang.Api/DonHang.Api.csproj DonHang.Api/
 RUN dotnet restore DonHang.Api/DonHang.Api.csproj
 
+COPY DonHang.Catalog/ DonHang.Catalog/
 COPY DonHang.Domain/ DonHang.Domain/
 COPY DonHang.Infrastructure/ DonHang.Infrastructure/
 COPY DonHang.Api/ DonHang.Api/

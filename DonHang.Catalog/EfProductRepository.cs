@@ -1,10 +1,8 @@
-using DonHang.Domain;
-
-namespace DonHang.Infrastructure;
+namespace DonHang.Catalog;
 
 // lesson: design.l2.decorator-pattern
 // The repository at the centre: it only talks to PostgreSQL through EF Core.
-public sealed class EfProductRepository(DonHangDbContext db) : IProductRepository
+internal sealed class EfProductRepository(CatalogDbContext db) : IProductRepository
 {
     public async Task<Product?> FindAsync(int id) => await db.Products.FindAsync(id);
 

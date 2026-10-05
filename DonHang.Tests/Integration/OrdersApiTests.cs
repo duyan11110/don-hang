@@ -85,6 +85,32 @@ public sealed class OrdersApiTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal("https://donhang.local/problems/not-paid", problem!.Type);
     }
 
+    // lesson: design.l3.one-way-module-dependencies
+    // The client still sends unitPriceVnd; the api answers with Catalog's price.
+    [Fact]
+    public async Task PostOrder_PriceFromClient_IsIgnored()
+    {
+        await InsertCustomerAsync("customer-an");
+        var productId = await InsertProductAsync(); // costs 15 000 đ
+
+        var response = await ClientFor("customer-an", "customer").PostAsJsonAsync("/api/v1/orders",
+            new CreateOrderRequest([new CreateOrderItemRequest(productId, Quantity: 1, UnitPriceVnd: 1)]));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var order = await response.Content.ReadFromJsonAsync<OrderDto>();
+        Assert.Equal(15_000, Assert.Single(order!.Items).UnitPriceVnd);
+    }
+
+    [Fact]
+    public async Task PostOrder_UnknownProduct_Returns400()
+    {
+        await InsertCustomerAsync("customer-an");
+
+        var response = await PlaceOrderAsync(ClientFor("customer-an", "customer"), productId: 999_999);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     // lesson: design.l2.testing-protected-endpoints
     // The caller the api will see: X-Test-Subject becomes the `sub` claim,
     // X-Test-Roles (comma-separated) the `roles` claims.
@@ -112,10 +138,7 @@ public sealed class OrdersApiTests(ApiFactory factory) : IClassFixture<ApiFactor
     private async Task<int> InsertProductAsync()
     {
         await using var db = factory.Database.CreateContext();
-        var product = new Product { Name = "Pen", PriceVnd = 15_000 };
-        db.Products.Add(product);
-        await db.SaveChangesAsync();
-        return product.Id;
+        return await TestProducts.InsertAsync(db, "Pen", 15_000);
     }
 
     private static Task<HttpResponseMessage> PlaceOrderAsync(HttpClient client, int productId) =>

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DonHang.Catalog</RootNamespace>
+  </PropertyGroup>
+
+  <!-- lesson: design.l3.modules-cut-through-layers -->
+  <!-- lesson: design.l3.one-way-module-dependencies -->
+  <!-- The Catalog module: products, their table and their Redis cache, all in
+       one project. No ProjectReference: Catalog needs nothing from Ordering,
+       and ModuleBoundaryTests fails if it ever refers to DonHang.Domain,
+       DonHang.Infrastructure or DonHang.Api. -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+</Project>

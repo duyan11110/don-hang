@@ -1,9 +1,10 @@
-namespace DonHang.Domain;
+namespace DonHang.Catalog;
 
 // lesson: design.l2.decorator-pattern
 // One product at a time: find it, or change its price and save. Anything
 // that wraps a repository (a cache, say) implements this same interface.
-public interface IProductRepository
+// From stage-3 it lives inside the Catalog module and is `internal`.
+internal interface IProductRepository
 {
     Task<Product?> FindAsync(int id);
 

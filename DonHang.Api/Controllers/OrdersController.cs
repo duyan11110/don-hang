@@ -34,11 +34,15 @@ public sealed class OrdersController(
         var customer = await CurrentCustomerAsync();
         if (customer is null) return Forbid();
 
-        var items = request.Items
-            .Select(i => new OrderItem(i.ProductId, i.Quantity, new Vnd(i.UnitPriceVnd)))
+        // lesson: design.l3.one-way-module-dependencies
+        // From stage-3 unitPriceVnd is still accepted, so clients written
+        // for stage-2 keep working, but it is ignored: OrderService takes each
+        // price from Catalog. A product Catalog does not know gets 400.
+        var requested = request.Items
+            .Select(i => new RequestedItem(i.ProductId, i.Quantity))
             .ToList();
 
-        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, requested, idempotencyKey);
 
         // lesson: devops.l2.counters-and-rate
         // Counted only when an order was really created: a retry that repeats

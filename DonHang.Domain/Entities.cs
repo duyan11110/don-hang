@@ -1,8 +1,9 @@
 namespace DonHang.Domain;
 
 // lesson: backend.l1.efcore-mapping
-// One class per table in db/schema.sql. No behaviour here beyond what a row is,
-// except Order, which owns the rules about its own status (from stage-2).
+// One class per table in db/schema.sql, except `products`, which belongs to
+// the Catalog module from stage-3 (DonHang.Catalog). No behaviour here beyond
+// what a row is, except Order, which owns the rules about its own status.
 public sealed class Customer
 {
     public int Id { get; set; }
@@ -13,13 +14,6 @@ public sealed class Customer
     // lesson: backend.l2.validating-provider-tokens
     // Keycloak's id for this customer (the `sub` of their tokens); null until they have an account there.
     public string? IdentitySubject { get; set; }
-}
-
-public sealed class Product
-{
-    public int Id { get; set; }
-    public required string Name { get; set; }
-    public int PriceVnd { get; set; }
 }
 
 // lesson: backend.l1.efcore-relationships-and-keys

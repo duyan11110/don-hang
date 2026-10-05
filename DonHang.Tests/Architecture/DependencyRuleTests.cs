@@ -6,12 +6,15 @@ namespace DonHang.Tests.Architecture;
 // lesson: design.l2.testing-the-dependency-rule
 // An architecture test: it checks what DonHang.Domain is built against, not
 // what its code does. The core may use .NET itself and nothing outer.
+// From stage-3 that includes DonHang.Catalog: Ordering's core asks for prices
+// through its own IProductPrices, never through Catalog's types.
 public sealed class DependencyRuleTests
 {
     private static readonly string[] ForbiddenPrefixes =
     [
         "DonHang.Infrastructure",
         "DonHang.Api",
+        "DonHang.Catalog",
         "Microsoft.EntityFrameworkCore",
         "Microsoft.AspNetCore",
         "Npgsql",

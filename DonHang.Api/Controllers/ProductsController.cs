@@ -1,59 +1,44 @@
 using System.ComponentModel.DataAnnotations;
-using DonHang.Domain;
-using DonHang.Infrastructure;
+using DonHang.Catalog;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace DonHang.Api.Controllers;
 
 // lesson: backend.l1.rest-resources
-// The list reads DonHangDbContext directly: it has no rule to apply, only a
-// query to shape. One product at a time goes through IProductRepository.
+// lesson: design.l3.module-contracts
+// From stage-3 every product request goes through ICatalog, the Catalog
+// module's contract: this controller cannot see Product, Catalog's DbContext
+// or its cache, so it cannot query `products` directly as it did at stage-2.
 [ApiController]
 [Route("api/v1/products")]
-public sealed class ProductsController(DonHangDbContext db, IProductRepository products) : ControllerBase
+public sealed class ProductsController(ICatalog catalog) : ControllerBase
 {
     private const int MaxPageSize = 100;
 
     // lesson: backend.l2.offset-pagination
     // GET /api/v1/products?limit=20&offset=40. A `limit` outside 1..100 is
     // refused with 400, so no request can ask for the whole table at once.
-    // Sorting by the unique id keeps every page in the same, fixed order.
     [HttpGet]
     public async Task<ActionResult<List<ProductDto>>> List(
         [FromQuery, Range(1, MaxPageSize)] int limit = 20,
         [FromQuery, Range(0, int.MaxValue)] int offset = 0,
         [FromQuery] int? maxPriceVnd = null)
     {
-        IQueryable<Product> query = db.Products;
-
-        // lesson: backend.l2.filtering-with-query-parameters
-        // Added to the query before it runs, so PostgreSQL filters, not C#.
-        if (maxPriceVnd is not null)
-        {
-            query = query.Where(p => p.PriceVnd <= maxPriceVnd);
-        }
-
-        var page = await query
-            .OrderBy(p => p.Id)
-            .Skip(offset)
-            .Take(limit)
-            .Select(p => new ProductDto(p.Id, p.Name, p.PriceVnd))
-            .ToListAsync();
-        return Ok(page);
+        var page = await catalog.ListAsync(limit, offset, maxPriceVnd);
+        return Ok(page.Select(ToDto).ToList());
     }
 
     // lesson: backend.l1.get-and-status-codes
     // lesson: backend.l2.cache-aside
-    // `products` is the ProductCache registered in ServiceCollectionExtensions,
-    // so a repeat of this request within the TTL is answered from Redis.
+    // Catalog reads one product through its ProductCache, so a repeat of this
+    // request within the TTL is answered from Redis.
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ProductDto>> Get(int id)
     {
-        var product = await products.FindAsync(id);
+        var product = await catalog.FindAsync(id);
         if (product is null) return NotFound();
-        return Ok(new ProductDto(product.Id, product.Name, product.PriceVnd));
+        return Ok(ToDto(product));
     }
 
     // lesson: backend.l2.cache-invalidation
@@ -64,8 +49,10 @@ public sealed class ProductsController(DonHangDbContext db, IProductRepository p
     [HttpPatch("{id:int}")]
     public async Task<ActionResult<ProductDto>> UpdatePrice(int id, UpdateProductPriceRequest request)
     {
-        var product = await products.UpdatePriceAsync(id, request.PriceVnd);
+        var product = await catalog.ChangePriceAsync(id, request.PriceVnd);
         if (product is null) return NotFound();
-        return Ok(new ProductDto(product.Id, product.Name, product.PriceVnd));
+        return Ok(ToDto(product));
     }
+
+    private static ProductDto ToDto(CatalogProduct product) => new(product.Id, product.Name, product.PriceVnd);
 }

@@ -6,7 +6,7 @@ namespace DonHang.Domain;
 // itself decides which status changes are allowed; this runs the use case.
 // From stage-3 it no longer notifies anyone itself: Order records domain
 // events, and `events` hands them to their handlers before each save.
-public sealed class OrderService(IOrderRepository repository, DomainEventDispatcher events)
+public sealed class OrderService(IOrderRepository repository, IProductPrices prices, DomainEventDispatcher events)
 {
     // lesson: design.l2.valid-from-construction
     // lesson: backend.l2.idempotent-endpoints
@@ -14,7 +14,8 @@ public sealed class OrderService(IOrderRepository repository, DomainEventDispatc
     // created, with Created = false. The key is saved in the order's own row,
     // by the same INSERT, so the unique index on it stops two concurrent
     // retries creating two.
-    public async Task<(Order Order, bool Created)> PlaceOrderAsync(int customerId, List<OrderItem> items, string? idempotencyKey = null)
+    public async Task<(Order Order, bool Created)> PlaceOrderAsync(
+        int customerId, List<RequestedItem> requested, string? idempotencyKey = null)
     {
         if (idempotencyKey is not null)
         {
@@ -22,6 +23,18 @@ public sealed class OrderService(IOrderRepository repository, DomainEventDispatc
             if (earlier is not null && earlier.CustomerId != customerId)
                 throw new ArgumentException("this Idempotency-Key was already used by another customer");
             if (earlier is not null) return (earlier, Created: false);
+        }
+
+        // lesson: design.l3.one-way-module-dependencies
+        // From stage-3 each item costs what Catalog says it costs now, asked
+        // through Ordering's own port. A product Catalog does not know stops
+        // the order here, before anything is saved (400 at the API).
+        var items = new List<OrderItem>();
+        foreach (var item in requested)
+        {
+            var price = await prices.CurrentPriceAsync(item.ProductId)
+                ?? throw new ArgumentException($"product {item.ProductId} does not exist");
+            items.Add(new OrderItem(item.ProductId, item.Quantity, price));
         }
 
         var order = new Order(customerId, items, DateTimeOffset.UtcNow) { IdempotencyKey = idempotencyKey };

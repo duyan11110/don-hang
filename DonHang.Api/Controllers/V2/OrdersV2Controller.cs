@@ -28,11 +28,12 @@ public sealed class OrdersV2Controller(
         var customer = subject is null ? null : await customers.FindByIdentitySubjectAsync(subject);
         if (customer is null) return Forbid();
 
-        var items = request.Lines
-            .Select(l => new OrderItem(l.ProductId, l.Quantity, new Vnd(l.UnitPriceVnd)))
+        // As in v1, a line's unitPriceVnd is ignored: the price comes from Catalog.
+        var requested = request.Lines
+            .Select(l => new RequestedItem(l.ProductId, l.Quantity))
             .ToList();
 
-        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
+        var (order, created) = await orderService.PlaceOrderAsync(customer.Id, requested, idempotencyKey);
         if (created) OrderMetrics.OrdersPlaced.Inc();
         return CreatedAtAction(nameof(Get), new { id = order.Id }, ToDto(order));
     }

@@ -9,11 +9,20 @@ source "$(dirname "$0")/../lib/keycloak.sh"
 token=$(keycloak_access_token anh.tran@example.com)
 start=$(date +%s)000000000 # Loki takes times in nanoseconds
 
-# Product 999 does not exist, so saving the order breaks a foreign key: 500.
-echo "== POST /api/v1/orders for a product that does not exist"
+# Until this script ends, PostgreSQL has a rule the api does not know about:
+# no order item above 1000 pieces. The api lets 5000 through, the INSERT is
+# refused, and nothing in the api turns that error into a 4xx: 500. (Until
+# stage-2 an unknown product did this; from stage-3 the api answers it 400.)
+sql() {
+  psql --host db --username donhang --dbname donhang --no-psqlrc --quiet --command "$1"
+}
+sql "ALTER TABLE order_items ADD CONSTRAINT loki_demo_max_quantity CHECK (quantity <= 1000) NOT VALID"
+trap 'sql "ALTER TABLE order_items DROP CONSTRAINT loki_demo_max_quantity"' EXIT
+
+echo "== POST /api/v1/orders that the database refuses"
 curl -sS -o /dev/null -w '  -> %{http_code}\n' -X POST http://localhost:8080/api/v1/orders \
   -H 'Content-Type: application/json' -H "Authorization: Bearer $token" \
-  -d '{"items":[{"productId":999,"quantity":1,"unitPriceVnd":1000}]}'
+  -d '{"items":[{"productId":1,"quantity":5000,"unitPriceVnd":1}]}'
 echo
 
 # Prints the newest line that matches a LogQL query, from Loki's HTTP API.

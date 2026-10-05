@@ -7,8 +7,13 @@
     <RootNamespace>DonHang.Infrastructure</RootNamespace>
   </PropertyGroup>
 
+  <!-- lesson: design.l3.one-way-module-dependencies -->
+  <!-- Ordering's storage side, and the one place Ordering meets Catalog:
+       CatalogProductPrices calls ICatalog. The reference goes one way only;
+       DonHang.Catalog refers to no DonHang project. -->
   <ItemGroup>
     <ProjectReference Include="..\DonHang.Domain\DonHang.Domain.csproj" />
+    <ProjectReference Include="..\DonHang.Catalog\DonHang.Catalog.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,7 +23,6 @@
     </PackageReference>
     <PackageReference Include="MailKit" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
-    <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
 
 </Project>

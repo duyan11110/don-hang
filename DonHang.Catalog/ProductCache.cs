@@ -1,16 +1,16 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using DonHang.Domain;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-namespace DonHang.Infrastructure;
+namespace DonHang.Catalog;
 
 // lesson: design.l2.decorator-pattern
-// An IProductRepository that holds another IProductRepository (at stage-2,
-// EfProductRepository) and adds one job around its calls: a copy of each
+// An IProductRepository that holds another IProductRepository
+// (EfProductRepository) and adds one job around its calls: a copy of each
 // product in Redis. Callers cannot tell it apart from the repository inside.
-public sealed class ProductCache(IProductRepository inner, IConnectionMultiplexer redis, ILogger<ProductCache> logger)
+// From stage-3 it is part of the Catalog module and `internal`.
+internal sealed class ProductCache(IProductRepository inner, IConnectionMultiplexer redis, ILogger<ProductCache> logger)
     : IProductRepository
 {
     // lesson: backend.l2.cache-invalidation

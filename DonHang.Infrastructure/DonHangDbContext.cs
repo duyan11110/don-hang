@@ -7,7 +7,6 @@ namespace DonHang.Infrastructure;
 public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options) : DbContext(options)
 {
     public DbSet<Customer> Customers => Set<Customer>();
-    public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -28,13 +27,10 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.HasIndex(c => c.IdentitySubject).IsUnique();
         });
 
-        modelBuilder.Entity<Product>(e =>
-        {
-            e.ToTable("products");
-            e.Property(p => p.Id).HasColumnName("id");
-            e.Property(p => p.Name).HasColumnName("name");
-            e.Property(p => p.PriceVnd).HasColumnName("price_vnd");
-        });
+        // lesson: design.l3.module-owns-its-tables
+        // No Product here from stage-3: `products` belongs to the Catalog module
+        // and only CatalogDbContext maps it. The table itself stays as it was,
+        // and so does the foreign key from order_items.product_id to it.
 
         modelBuilder.Entity<Order>(e =>
         {

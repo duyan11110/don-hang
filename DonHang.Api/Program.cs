@@ -1,6 +1,7 @@
 using DonHang.Api.Authorization;
 using DonHang.Api.Jobs;
 using DonHang.Api.Middleware;
+using DonHang.Catalog;
 using DonHang.Domain;
 using DonHang.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,7 +24,13 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 var redisConfiguration = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException("ConnectionStrings:Redis is not set");
 var smtp = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>() ?? new SmtpSettings();
-builder.Services.AddDonHangInfrastructure(connectionString, redisConfiguration, smtp);
+
+// lesson: design.l3.modules-cut-through-layers
+// Two modules in one process. Catalog registers everything it has itself;
+// Ordering is still DonHang.Domain plus DonHang.Infrastructure. Both get the
+// same connection string: they share one database, not one another's tables.
+builder.Services.AddCatalogModule(connectionString, redisConfiguration);
+builder.Services.AddDonHangInfrastructure(connectionString, smtp);
 builder.Services.AddScoped<OrderService>();
 
 // lesson: backend.l2.hosted-services
