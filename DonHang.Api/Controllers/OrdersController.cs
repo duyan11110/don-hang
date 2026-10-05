@@ -35,7 +35,7 @@ public sealed class OrdersController(
         if (customer is null) return Forbid();
 
         var items = request.Items
-            .Select(i => new OrderItem { ProductId = i.ProductId, Quantity = i.Quantity, UnitPriceVnd = i.UnitPriceVnd })
+            .Select(i => new OrderItem(i.ProductId, i.Quantity, new Vnd(i.UnitPriceVnd)))
             .ToList();
 
         var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
@@ -128,5 +128,5 @@ public sealed class OrdersController(
         order.CustomerId,
         order.Status,
         order.PlacedAt,
-        order.Items.Select(i => new OrderItemDto(i.ProductId, i.Quantity, i.UnitPriceVnd)).ToList());
+        order.Items.Select(i => new OrderItemDto(i.ProductId, i.Quantity, i.UnitPrice.Amount)).ToList());
 }

@@ -44,6 +44,11 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(o => o.PlacedAt).HasColumnName("placed_at");
             e.Property(o => o.Status).HasColumnName("status");
             e.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId);
+
+            // lesson: design.l3.aggregate-root
+            // Items is a read-only view; EF Core fills and reads the private
+            // `items` list behind it instead of going through the property.
+            e.Navigation(o => o.Items).HasField("items").UsePropertyAccessMode(PropertyAccessMode.Field);
             e.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId);
 
             // lesson: backend.l2.composite-indexes
@@ -72,7 +77,15 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(i => i.OrderId).HasColumnName("order_id");
             e.Property(i => i.ProductId).HasColumnName("product_id");
             e.Property(i => i.Quantity).HasColumnName("quantity");
-            e.Property(i => i.UnitPriceVnd).HasColumnName("unit_price_vnd");
+
+            // lesson: design.l3.storing-value-objects
+            // A Vnd has no id, so it gets no table: it is stored in the item's own
+            // row. EF Core writes its Amount into the same integer column as at
+            // stage-2 and builds a new Vnd from the column when it loads a row, so a
+            // negative amount in the table makes the load fail.
+            e.Property(i => i.UnitPrice)
+                .HasColumnName("unit_price_vnd")
+                .HasConversion(price => price.Amount, amount => new Vnd(amount));
         });
 
         modelBuilder.Entity<Payment>(e =>

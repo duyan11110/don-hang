@@ -8,7 +8,7 @@ namespace DonHang.Tests.Domain;
 // No repository, no notifier, no fake, no await.
 public sealed class OrderTests
 {
-    private static List<OrderItem> OneItem() => [new() { ProductId = 1, Quantity = 2, UnitPriceVnd = 100_000 }];
+    private static List<OrderItem> OneItem() => [new(productId: 1, quantity: 2, new Vnd(100_000))];
 
     private static Order NewOrder() => new(customerId: 1, OneItem(), DateTimeOffset.UtcNow);
 
@@ -30,7 +30,7 @@ public sealed class OrderTests
     [Fact]
     public void Constructor_QuantityBelowOne_Throws()
     {
-        List<OrderItem> items = [new() { ProductId = 1, Quantity = 0, UnitPriceVnd = 100_000 }];
+        List<OrderItem> items = [new(productId: 1, quantity: 0, new Vnd(100_000))];
 
         Assert.Throws<ArgumentException>(() => new Order(customerId: 1, items, DateTimeOffset.UtcNow));
     }
@@ -113,5 +113,39 @@ public sealed class OrderTests
         var ex = Assert.Throws<OrderStatusException>(order.MarkPaid);
 
         Assert.Equal("already-paid", ex.Code);
+    }
+
+    // lesson: design.l3.aggregate-root
+    // Order keeps a copy: clearing the caller's list leaves the order's items.
+    [Fact]
+    public void Constructor_CallerClearsItsList_OrderKeepsItsItems()
+    {
+        var items = OneItem();
+        var order = new Order(customerId: 1, items, DateTimeOffset.UtcNow);
+
+        items.Clear();
+
+        Assert.Single(order.Items);
+    }
+
+    // Items is a read-only view: even code that casts it to a list cannot empty it.
+    [Fact]
+    public void Items_CannotBeChangedFromOutside()
+    {
+        var order = NewOrder();
+        var asList = (IList<OrderItem>)order.Items;
+
+        Assert.Throws<NotSupportedException>(asList.Clear);
+        Assert.Single(order.Items);
+    }
+
+    // lesson: design.l3.value-objects
+    [Fact]
+    public void Total_AddsEveryItemsUnitPriceTimesQuantity()
+    {
+        List<OrderItem> items = [new(productId: 1, quantity: 2, new Vnd(100_000)), new(productId: 2, quantity: 1, new Vnd(50_000))];
+        var order = new Order(customerId: 1, items, DateTimeOffset.UtcNow);
+
+        Assert.Equal(new Vnd(250_000), order.Total);
     }
 }

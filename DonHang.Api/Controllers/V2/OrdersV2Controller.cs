@@ -29,7 +29,7 @@ public sealed class OrdersV2Controller(
         if (customer is null) return Forbid();
 
         var items = request.Lines
-            .Select(l => new OrderItem { ProductId = l.ProductId, Quantity = l.Quantity, UnitPriceVnd = l.UnitPriceVnd })
+            .Select(l => new OrderItem(l.ProductId, l.Quantity, new Vnd(l.UnitPriceVnd)))
             .ToList();
 
         var (order, created) = await orderService.PlaceOrderAsync(customer.Id, items, idempotencyKey);
@@ -54,8 +54,8 @@ public sealed class OrdersV2Controller(
     private static OrderV2Dto ToDto(Order order)
     {
         var lines = order.Items
-            .Select(i => new OrderLineV2Dto(i.ProductId, i.Quantity, i.UnitPriceVnd, i.Quantity * i.UnitPriceVnd))
+            .Select(i => new OrderLineV2Dto(i.ProductId, i.Quantity, i.UnitPrice.Amount, i.UnitPrice.Times(i.Quantity).Amount))
             .ToList();
-        return new OrderV2Dto(order.Id, order.Status, order.PlacedAt, lines, lines.Sum(l => l.LineTotalVnd));
+        return new OrderV2Dto(order.Id, order.Status, order.PlacedAt, lines, order.Total.Amount);
     }
 }

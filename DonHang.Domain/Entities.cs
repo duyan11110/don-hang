@@ -24,16 +24,24 @@ public sealed class Product
 
 // lesson: backend.l1.efcore-relationships-and-keys
 // lesson: design.l2.ef-core-and-private-setters
-// Only Id keeps a public setter: the database generates it on insert, and
-// FakeOrderRepository.AddAsync assigns it the same way. Everything else
-// changes only through the constructor and the methods below.
+// Id keeps a public setter: the database generates it on insert, and
+// FakeOrderRepository.AddAsync assigns it the same way. So does Customer, a
+// navigation used only for reading; IdempotencyKey can be given only while
+// the order is created (init). Everything else changes only through the
+// constructor and the methods below.
 public sealed class Order
 {
     public int Id { get; set; }
     public int CustomerId { get; private set; }
     public DateTimeOffset PlacedAt { get; private set; }
     public string Status { get; private set; }
-    public List<OrderItem> Items { get; private set; } = [];
+
+    // lesson: design.l3.aggregate-root
+    // The items live in this private list; outside code gets only a read-only
+    // view of it, so nothing but Order can add, remove or clear an item.
+    // EF Core reads and writes the list itself (DonHangDbContext says so).
+    private readonly List<OrderItem> items = [];
+    public IReadOnlyList<OrderItem> Items => items.AsReadOnly();
 
     // lesson: backend.l2.idempotent-endpoints
     // The client's Idempotency-Key, stored in the same row as the order it
@@ -58,15 +66,34 @@ public sealed class Order
     }
 
     // lesson: design.l2.valid-from-construction
-    public Order(int customerId, List<OrderItem> items, DateTimeOffset placedAt)
+    // lesson: design.l3.aggregate-root
+    // The items are copied into Order's own list before they are checked, so
+    // a caller that changes or clears its list afterwards changes nothing here.
+    public Order(int customerId, IEnumerable<OrderItem> items, DateTimeOffset placedAt)
     {
-        if (items.Count == 0) throw new ArgumentException("an order needs at least one item");
-        if (items.Any(item => item.Quantity < 1)) throw new ArgumentException("every item needs a quantity of at least 1");
+        this.items.AddRange(items);
+        if (this.items.Count == 0) throw new ArgumentException("an order needs at least one item");
+        if (this.items.Any(item => item.Quantity < 1)) throw new ArgumentException("every item needs a quantity of at least 1");
 
         CustomerId = customerId;
-        Items = items;
         PlacedAt = placedAt;
         Status = "new";
+    }
+
+    // lesson: design.l3.value-objects
+    // Worked out from the items each time it is read; it is not a column.
+    public Vnd Total
+    {
+        get
+        {
+            var total = Vnd.Zero;
+            foreach (var item in items)
+            {
+                total = total.Plus(item.UnitPrice.Times(item.Quantity));
+            }
+
+            return total;
+        }
     }
 
     // lesson: design.l2.status-changes-through-methods
@@ -96,12 +123,19 @@ public sealed class Order
     }
 }
 
-public sealed class OrderItem
+// lesson: design.l3.aggregate-root
+// Every value comes through the constructor and nothing has a public setter,
+// so once Order has checked an item, no code can change it. EF Core sets
+// OrderId when it saves the order, and uses this same constructor to load.
+public sealed class OrderItem(int productId, int quantity, Vnd unitPrice)
 {
-    public int OrderId { get; set; }
-    public int ProductId { get; set; }
-    public int Quantity { get; set; }
-    public int UnitPriceVnd { get; set; }
+    public int OrderId { get; private set; }
+    public int ProductId { get; private set; } = productId;
+    public int Quantity { get; private set; } = quantity;
+
+    // lesson: design.l3.value-objects
+    // Was `int UnitPriceVnd` until stage-2: any int, even a negative one.
+    public Vnd UnitPrice { get; private set; } = unitPrice;
 }
 
 public sealed class Payment

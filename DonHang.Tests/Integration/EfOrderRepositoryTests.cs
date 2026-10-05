@@ -32,8 +32,8 @@ public sealed class EfOrderRepositoryTests(PostgresFixture database)
             var repository = new EfOrderRepository(db);
             var order = new Order(customerId,
                 [
-                    new() { ProductId = penId, Quantity = 2, UnitPriceVnd = 15_000 },
-                    new() { ProductId = bookId, Quantity = 1, UnitPriceVnd = 120_000 },
+                    new(penId, quantity: 2, new Vnd(15_000)),
+                    new(bookId, quantity: 1, new Vnd(120_000)),
                 ],
                 DateTimeOffset.UtcNow);
             await repository.AddAsync(order);
@@ -47,7 +47,7 @@ public sealed class EfOrderRepositoryTests(PostgresFixture database)
         Assert.NotNull(found);
         Assert.Equal("new", found.Status);
         Assert.Equal(2, found.Items.Count);
-        Assert.Equal(150_000, found.Items.Sum(item => item.Quantity * item.UnitPriceVnd));
+        Assert.Equal(new Vnd(150_000), found.Total);
     }
 
     // lesson: design.l2.testing-the-real-repository
@@ -60,7 +60,7 @@ public sealed class EfOrderRepositoryTests(PostgresFixture database)
         var (_, penId, _) = await InsertCustomerAndProductsAsync(db);
         var repository = new EfOrderRepository(db);
         await repository.AddAsync(new Order(customerId: -1,
-            [new() { ProductId = penId, Quantity = 1, UnitPriceVnd = 15_000 }], DateTimeOffset.UtcNow));
+            [new(penId, quantity: 1, new Vnd(15_000))], DateTimeOffset.UtcNow));
 
         var error = await Assert.ThrowsAsync<DbUpdateException>(repository.SaveChangesAsync);
         Assert.Equal(PostgresErrorCodes.ForeignKeyViolation, Assert.IsType<PostgresException>(error.InnerException).SqlState);

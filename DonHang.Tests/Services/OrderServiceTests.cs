@@ -9,7 +9,7 @@ namespace DonHang.Tests.Services;
 // class keeps only what needs the fakes: saving, notifying, not finding.
 public sealed class OrderServiceTests
 {
-    private static List<OrderItem> OneItem() => [new() { ProductId = 1, Quantity = 2, UnitPriceVnd = 100_000 }];
+    private static List<OrderItem> OneItem() => [new(productId: 1, quantity: 2, new Vnd(100_000))];
 
     [Fact]
     public async Task PlaceOrderAsync_ValidItems_SavesTheOrder()
