@@ -24,7 +24,7 @@ for attempt in first retry; do
   response=$(curl -sS -w '
   -> %{http_code}' -X POST "$base/orders"     -H 'Content-Type: application/json'     -H "Authorization: Bearer $token"     -H "Idempotency-Key: $key"     -d '{"items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}')
   echo "$response"
-  ids+=("$(echo "$response" | sed -nE 's/.*"id":([0-9]+).*//p')")
+  ids+=("$(echo "$response" | sed -nE 's/.*"id":([0-9]+).*/\1/p')")
 done
 echo
 

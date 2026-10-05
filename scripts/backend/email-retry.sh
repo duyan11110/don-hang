@@ -27,8 +27,9 @@ notification=$(sql --command "SELECT id FROM notifications WHERE order_id = $ord
 echo
 
 # lesson: backend.l2.retry-with-backoff
-# Waits of 2, 4, 8 and 16 seconds between the five attempts: about 40 s in all.
-for _ in $(seq 60); do
+# Waits of 2, 4, 8 and 16 seconds between the five attempts, and each failed
+# send also takes a few seconds to give up on mailpit: 1 to 2 minutes in all.
+for _ in $(seq 180); do
   status=$(sql --command "SELECT status FROM notifications WHERE id = $notification")
   [ "$status" = pending ] || break
   sleep 1

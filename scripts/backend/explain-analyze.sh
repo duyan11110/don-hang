@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Read PostgreSQL's plans for queries on donhang_perf: estimates with EXPLAIN, real timings with EXPLAIN ANALYZE.
 set -euo pipefail
-# donhang_perf is built on the host (it needs dotnet); the queries then run
-# inside the lab box.
+# donhang_perf is built from the host (perf-db.sh drives docker compose); the
+# queries then run inside the lab box.
 if [ ! -f /.dockerenv ]; then
   # Quietly: what perf-db.sh prints while it builds is not this script's
   # output; it is shown only if the build fails.

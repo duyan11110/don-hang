@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Compare the plan for one customer's next page of orders with the (customer_id, id) index and without it.
 set -euo pipefail
-# donhang_perf is built on the host (it needs dotnet); the queries then run
-# inside the lab box.
+# donhang_perf is built from the host (perf-db.sh drives docker compose); the
+# queries then run inside the lab box.
 if [ ! -f /.dockerenv ]; then
   # Quietly: what perf-db.sh prints while it builds is not this script's
   # output; it is shown only if the build fails.

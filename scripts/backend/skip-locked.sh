@@ -17,10 +17,13 @@ sql --command "INSERT INTO notifications (order_id, channel, subject, status, at
 trap "sql --command \"DELETE FROM notifications WHERE next_attempt_at = '$due'\"" EXIT
 
 # lesson: backend.l2.skip-locked-claiming
-# The WHERE, ORDER BY and locking clause of NotificationQueue.ClaimDueAsync;
-# each session below sends it in a transaction of its own.
+# The WHERE, ORDER BY and locking clause of NotificationQueue.ClaimDueAsync,
+# plus one condition that keeps the claims to the four demo rows, so a real
+# email waiting for a retry is never claimed here. Each session below sends
+# it in a transaction of its own.
 claim="SELECT subject FROM notifications
        WHERE status = 'pending' AND next_attempt_at <= '$due'
+         AND subject LIKE 'demo job %'
        ORDER BY next_attempt_at, id LIMIT 2"
 
 echo "== session A: BEGIN, claim 2 rows FOR UPDATE SKIP LOCKED, hold the locks for 3 s"

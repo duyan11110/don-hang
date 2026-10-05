@@ -70,8 +70,8 @@ public sealed class OrdersApiTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     // lesson: design.l2.test-pyramid
-    // OrderTests checks every status rule; this checks once that a refusal
-    // reaches the client as 409 with its problem `type`.
+    // OrderTests checks the status rules on Order itself; this checks once
+    // that a refusal reaches the client as 409 with its problem `type`.
     [Fact]
     public async Task ShipOrder_StaffAndNewOrder_Returns409NotPaid()
     {

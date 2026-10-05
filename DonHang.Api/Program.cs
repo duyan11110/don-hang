@@ -34,8 +34,9 @@ builder.Services.AddHostedService<NotificationSender>();
 // lesson: backend.l2.oauth2-roles
 // lesson: backend.l2.openid-connect-id-token
 // lesson: backend.l2.validating-provider-tokens
-// Keycloak issues the tokens; the api only checks them. AddJwtBearer reads
-// Keycloak's metadata and public keys once, then checks each token's
+// Keycloak issues the tokens; the api only checks them. AddJwtBearer fetches
+// Keycloak's metadata and public keys before checking the first token, keeps
+// them, and fetches them again from time to time. It checks each token's
 // signature, issuer, audience and expiry itself, without calling Keycloak.
 var authority = builder.Configuration["Keycloak:Authority"]
     ?? throw new InvalidOperationException("Keycloak:Authority is not set");
@@ -93,16 +94,18 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // lesson: devops.l2.metrics-endpoint
-// Measures every request: how many, with which status code, how long. First
-// in the pipeline, so a request that throws is still counted, with the 500
-// that ExceptionHandlingMiddleware below turns it into.
+// Measures every request except those to /metrics itself: how many, with
+// which status code, how long. First in the pipeline, so a request that
+// throws is still counted, with the 500 that ExceptionHandlingMiddleware
+// below turns it into.
 app.UseHttpMetrics();
 
 // lesson: backend.l1.middleware-pipeline
 // Order matters: every request logged, then exceptions caught, then the
 // terminal middleware (auth, routing) that decides how to answer it. From
-// stage-2 the logging comes first, so that a request that threw is logged
-// too, with the 500 that ExceptionHandlingMiddleware turned it into.
+// stage-2 the logging comes before the exception handling (only the metrics
+// come earlier), so that a request that threw is logged too, with the 500
+// that ExceptionHandlingMiddleware turned it into.
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors();

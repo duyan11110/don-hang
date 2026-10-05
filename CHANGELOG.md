@@ -4,9 +4,9 @@ What changed in each version of Đơn Hàng, for the people who call its API or
 use its app. Newest version first. The format follows Keep a Changelog, and
 version numbers follow Semantic Versioning 2.0.0.
 
-Each pull request that changes behaviour adds a line under Unreleased. A
-release renames that section to the new version (see
-`.github/workflows/release.yml`).
+Each pull request that changes behaviour adds a line under Unreleased. Before
+a release is tagged, someone renames that section to the new version by hand;
+`.github/workflows/release.yml` only reads the section, it changes nothing here.
 
 ## [Unreleased]
 
