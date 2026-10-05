@@ -25,6 +25,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<NotificationQueue>();
         services.AddSingleton<IEmailSender>(new MailKitEmailSender(smtp));
 
+        // lesson: design.l3.dispatching-domain-events
+        // One line per reaction to one kind of event. A new reaction to a
+        // cancelled order is one more line here; Order and OrderService stay
+        // as they are. DomainEventDispatcher gets every handler of each kind.
+        services.AddScoped<IDomainEventHandler<OrderPlaced>, NotifyCustomerOnOrderEvents>();
+        services.AddScoped<IDomainEventHandler<OrderCancelled>, NotifyCustomerOnOrderEvents>();
+        services.AddScoped<IDomainEventHandler<OrderShipped>, NotifyCustomerOnOrderEvents>();
+        services.AddScoped<DomainEventDispatcher>();
+
         // lesson: backend.l2.cache-aside
         // One ConnectionMultiplexer for the whole app: it is built to be shared
         // by every request. abortConnect=false (in redisConfiguration) lets the

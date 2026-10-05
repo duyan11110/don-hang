@@ -4,7 +4,9 @@ namespace DonHang.Domain;
 // Order placement and status changes. The controller layer only calls this;
 // the repository layer only stores what this decides. From stage-2, Order
 // itself decides which status changes are allowed; this runs the use case.
-public sealed class OrderService(IOrderRepository repository, INotifier notifier)
+// From stage-3 it no longer notifies anyone itself: Order records domain
+// events, and `events` hands them to their handlers before each save.
+public sealed class OrderService(IOrderRepository repository, DomainEventDispatcher events)
 {
     // lesson: design.l2.valid-from-construction
     // lesson: backend.l2.idempotent-endpoints
@@ -25,25 +27,28 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
         var order = new Order(customerId, items, DateTimeOffset.UtcNow) { IdempotencyKey = idempotencyKey };
         await repository.AddAsync(order);
 
-        // lesson: backend.l2.database-job-queue
-        // The notifier only adds a pending email job next to the order; this one
-        // SaveChangesAsync then writes both in one transaction, or neither.
-        notifier.Send(order, "order placed");
+        // lesson: design.l3.dispatching-domain-events
+        // The new order has recorded OrderPlaced. Its handlers add their rows
+        // (a pending email job, say) to the same DbContext first; this one
+        // SaveChangesAsync then writes the order and those rows in one
+        // transaction, or none of them. A handler that throws stops it here.
+        await events.DispatchAsync(order);
         await repository.SaveChangesAsync();
         return (order, Created: true);
     }
 
     // lesson: design.l2.domain-model
-    // Find, let the order decide, notify, save. An order that is already
-    // cancelled or shipped makes order.Cancel() throw OrderStatusException.
-    // The notification is saved with the order, by the same SaveChangesAsync.
+    // lesson: design.l3.dispatching-domain-events
+    // Find, let the order decide, hand its events to their handlers, save. An
+    // order that is already cancelled or shipped makes order.Cancel() throw
+    // OrderStatusException. What the handlers add is saved with the order.
     public async Task<Order> CancelOrderAsync(int orderId)
     {
         var order = await repository.FindAsync(orderId)
             ?? throw new KeyNotFoundException($"order {orderId} not found");
 
         order.Cancel();
-        notifier.Send(order, "order cancelled");
+        await events.DispatchAsync(order);
         await repository.SaveChangesAsync();
         return order;
     }
@@ -55,7 +60,7 @@ public sealed class OrderService(IOrderRepository repository, INotifier notifier
             ?? throw new KeyNotFoundException($"order {orderId} not found");
 
         order.Ship();
-        notifier.Send(order, "order shipped");
+        await events.DispatchAsync(order);
         await repository.SaveChangesAsync();
         return order;
     }

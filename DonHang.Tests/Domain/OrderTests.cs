@@ -148,4 +148,39 @@ public sealed class OrderTests
 
         Assert.Equal(new Vnd(250_000), order.Total);
     }
+
+    // lesson: design.l3.domain-events
+    // Order only records what happened; a refused change records nothing.
+    [Fact]
+    public void Constructor_RecordsOrderPlaced()
+    {
+        var order = NewOrder();
+
+        var placed = Assert.IsType<OrderPlaced>(Assert.Single(order.DomainEvents));
+        Assert.Same(order, placed.Order);
+    }
+
+    [Fact]
+    public void Cancel_NewOrder_RecordsOrderCancelled()
+    {
+        var order = NewOrder();
+        order.ClearDomainEvents();
+
+        order.Cancel();
+
+        Assert.IsType<OrderCancelled>(Assert.Single(order.DomainEvents));
+    }
+
+    [Fact]
+    public void Cancel_ShippedOrder_RecordsNothing()
+    {
+        var order = NewOrder();
+        order.MarkPaid();
+        order.Ship();
+        order.ClearDomainEvents();
+
+        Assert.Throws<OrderStatusException>(order.Cancel);
+
+        Assert.Empty(order.DomainEvents);
+    }
 }

@@ -49,6 +49,10 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             // Items is a read-only view; EF Core fills and reads the private
             // `items` list behind it instead of going through the property.
             e.Navigation(o => o.Items).HasField("items").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+            // lesson: design.l3.domain-events
+            // Events live in memory until OrderService has dispatched them.
+            e.Ignore(o => o.DomainEvents);
             e.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId);
 
             // lesson: backend.l2.composite-indexes

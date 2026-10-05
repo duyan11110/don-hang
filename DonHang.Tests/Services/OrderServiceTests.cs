@@ -11,11 +11,19 @@ public sealed class OrderServiceTests
 {
     private static List<OrderItem> OneItem() => [new(productId: 1, quantity: 2, new Vnd(100_000))];
 
+    // From stage-3 OrderService notifies nobody itself: the real
+    // NotifyCustomerOnOrderEvents handler does, through the fake notifier.
+    private static OrderService NewService(IOrderRepository repository, FakeNotifier notifier)
+    {
+        var handler = new NotifyCustomerOnOrderEvents(notifier);
+        return new OrderService(repository, new DomainEventDispatcher([handler], [handler], [handler]));
+    }
+
     [Fact]
     public async Task PlaceOrderAsync_ValidItems_SavesTheOrder()
     {
         var repository = new FakeOrderRepository();
-        var service = new OrderService(repository, new FakeNotifier());
+        var service = NewService(repository, new FakeNotifier());
 
         var (order, created) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
 
@@ -27,7 +35,7 @@ public sealed class OrderServiceTests
     public async Task PlaceOrderAsync_ValidItems_SendsOneNotification()
     {
         var notifier = new FakeNotifier();
-        var service = new OrderService(new FakeOrderRepository(), notifier);
+        var service = NewService(new FakeOrderRepository(), notifier);
 
         var (order, _) = await service.PlaceOrderAsync(customerId: 1, items: OneItem());
 
@@ -39,7 +47,7 @@ public sealed class OrderServiceTests
     public async Task PlaceOrderAsync_SameIdempotencyKey_ReturnsTheFirstOrder()
     {
         var notifier = new FakeNotifier();
-        var service = new OrderService(new FakeOrderRepository(), notifier);
+        var service = NewService(new FakeOrderRepository(), notifier);
 
         var first = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
         var retry = await service.PlaceOrderAsync(customerId: 1, OneItem(), idempotencyKey: "key-1");
@@ -55,7 +63,7 @@ public sealed class OrderServiceTests
         var repository = new FakeOrderRepository();
         repository.Seed(new Order(customerId: 1, OneItem(), DateTimeOffset.UtcNow) { Id = 1 });
         var notifier = new FakeNotifier();
-        var service = new OrderService(repository, notifier);
+        var service = NewService(repository, notifier);
 
         var order = await service.CancelOrderAsync(1);
 
@@ -66,7 +74,7 @@ public sealed class OrderServiceTests
     [Fact]
     public async Task CancelOrderAsync_UnknownOrder_Throws()
     {
-        var service = new OrderService(new FakeOrderRepository(), new FakeNotifier());
+        var service = NewService(new FakeOrderRepository(), new FakeNotifier());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(() => service.CancelOrderAsync(999));
     }
@@ -77,10 +85,30 @@ public sealed class OrderServiceTests
         var repository = new FakeOrderRepository();
         repository.Seed(new Order(customerId: 1, OneItem(), DateTimeOffset.UtcNow) { Id = 1 });
         var notifier = new FakeNotifier();
-        var service = new OrderService(repository, notifier);
+        var service = NewService(repository, notifier);
 
         await Assert.ThrowsAsync<OrderStatusException>(() => service.ShipOrderAsync(1));
 
         Assert.Empty(notifier.Sent);
+    }
+
+    // lesson: design.l3.dispatching-domain-events
+    // A handler that throws stops the use case before SaveChangesAsync.
+    [Fact]
+    public async Task CancelOrderAsync_HandlerThrows_SavesNothing()
+    {
+        var repository = new FakeOrderRepository();
+        repository.Seed(new Order(customerId: 1, OneItem(), DateTimeOffset.UtcNow) { Id = 1 });
+        var events = new DomainEventDispatcher([], [new FailingHandler()], []);
+        var service = new OrderService(repository, events);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.CancelOrderAsync(1));
+
+        Assert.Equal(0, repository.SaveCount);
+    }
+
+    private sealed class FailingHandler : IDomainEventHandler<OrderCancelled>
+    {
+        public Task HandleAsync(OrderCancelled domainEvent) => throw new InvalidOperationException("handler failed");
     }
 }

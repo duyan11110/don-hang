@@ -43,6 +43,15 @@ public sealed class Order
     private readonly List<OrderItem> items = [];
     public IReadOnlyList<OrderItem> Items => items.AsReadOnly();
 
+    // lesson: design.l3.domain-events
+    // What has happened to this order since it was created or loaded. Order
+    // only records an event; it calls no one. DomainEventDispatcher hands the
+    // events to their handlers and then clears them. Not stored: EF Core ignores it.
+    private readonly List<IDomainEvent> domainEvents = [];
+    public IReadOnlyList<IDomainEvent> DomainEvents => domainEvents.AsReadOnly();
+
+    public void ClearDomainEvents() => domainEvents.Clear();
+
     // lesson: backend.l2.idempotent-endpoints
     // The client's Idempotency-Key, stored in the same row as the order it
     // created; null when the client sent none. A unique index guards it.
@@ -78,6 +87,7 @@ public sealed class Order
         CustomerId = customerId;
         PlacedAt = placedAt;
         Status = "new";
+        domainEvents.Add(new OrderPlaced(this, placedAt));
     }
 
     // lesson: design.l3.value-objects
@@ -112,6 +122,11 @@ public sealed class Order
         if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is already cancelled");
         if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
         Status = "cancelled";
+
+        // lesson: design.l3.domain-events
+        // Recorded only after the change is made: a refused Cancel() throws
+        // above and records nothing.
+        domainEvents.Add(new OrderCancelled(this, DateTimeOffset.UtcNow));
     }
 
     public void Ship()
@@ -120,6 +135,7 @@ public sealed class Order
         if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
         if (Status != "paid") throw new OrderStatusException(Id, "not-paid", $"order {Id} is not paid yet");
         Status = "shipped";
+        domainEvents.Add(new OrderShipped(this, DateTimeOffset.UtcNow));
     }
 }
 

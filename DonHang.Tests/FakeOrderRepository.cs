@@ -37,7 +37,20 @@ public sealed class FakeOrderRepository : IOrderRepository
         return Task.CompletedTask;
     }
 
-    public Task SaveChangesAsync() => Task.CompletedTask;
+    // How many times a use case asked to save; nothing is written anywhere.
+    public int SaveCount { get; private set; }
 
-    public void Seed(Order order) => orders[order.Id] = order;
+    public Task SaveChangesAsync()
+    {
+        SaveCount++;
+        return Task.CompletedTask;
+    }
+
+    // An order read from the database has recorded no events yet: a seeded
+    // one should not either, or its OrderPlaced would reach the handlers.
+    public void Seed(Order order)
+    {
+        order.ClearDomainEvents();
+        orders[order.Id] = order;
+    }
 }
