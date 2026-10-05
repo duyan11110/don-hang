@@ -7,4 +7,7 @@ public sealed class EfCustomerRepository(DonHangDbContext db) : ICustomerReposit
 {
     public Task<Customer?> FindByIdentitySubjectAsync(string identitySubject) =>
         db.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.IdentitySubject == identitySubject);
+
+    public Task<Customer?> FindAsync(int id) =>
+        db.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
 }

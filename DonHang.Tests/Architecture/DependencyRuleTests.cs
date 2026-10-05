@@ -7,7 +7,8 @@ namespace DonHang.Tests.Architecture;
 // An architecture test: it checks what DonHang.Domain is built against, not
 // what its code does. The core may use .NET itself and nothing outer.
 // From stage-3 that includes DonHang.Catalog: Ordering's core asks for prices
-// through its own IProductPrices, never through Catalog's types.
+// through its own IProductPrices, never through Catalog's types. Nor does it
+// see RabbitMQ or the outbox table: only its own IOutbox.
 public sealed class DependencyRuleTests
 {
     private static readonly string[] ForbiddenPrefixes =
@@ -15,6 +16,8 @@ public sealed class DependencyRuleTests
         "DonHang.Infrastructure",
         "DonHang.Api",
         "DonHang.Catalog",
+        "DonHang.Messaging",
+        "RabbitMQ",
         "Microsoft.EntityFrameworkCore",
         "Microsoft.AspNetCore",
         "Npgsql",

@@ -16,12 +16,18 @@
     <ProjectReference Include="..\DonHang.Catalog\DonHang.Catalog.csproj" />
   </ItemGroup>
 
+  <!-- lesson: backend.l3.outbox-pattern -->
+  <!-- From stage-3: EfOutbox writes DonHang.Messaging's OutboxMessage rows.
+       DonHang.Domain still references nothing; only IOutbox lives there. -->
+  <ItemGroup>
+    <ProjectReference Include="..\DonHang.Messaging\DonHang.Messaging.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="MailKit" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 

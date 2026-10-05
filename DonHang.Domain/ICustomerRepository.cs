@@ -6,4 +6,8 @@ namespace DonHang.Domain;
 public interface ICustomerRepository
 {
     Task<Customer?> FindByIdentitySubjectAsync(string identitySubject);
+
+    // lesson: backend.l3.message-broker
+    // From stage-3: the email address and name every order message carries.
+    Task<Customer?> FindAsync(int id);
 }

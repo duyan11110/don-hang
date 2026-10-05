@@ -1,10 +1,10 @@
-using DonHang.Domain;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Testcontainers.Redis;
 using Xunit;
 
@@ -21,8 +21,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public PostgresFixture Database { get; } = new();
 
-    public FakeEmailSender Emails { get; } = new();
-
     public async Task InitializeAsync()
     {
         await Database.InitializeAsync();
@@ -33,16 +31,17 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     // lesson: design.l2.testing-protected-endpoints
     // UseSetting feeds the containers' connection strings to the app as
     // configuration, where the lab passes them as environment variables.
-    // ConfigureTestServices runs after Program.cs's registrations: it swaps
-    // only the email sender, and makes TestAuthHandler the default scheme.
+    // ConfigureTestServices runs after Program.cs's registrations: it makes
+    // TestAuthHandler the default scheme and, from stage-3, removes the hosted
+    // services (OutboxRelay, PaymentEventsConsumer): there is no RabbitMQ
+    // here, so outbox rows simply stay unpublished for the tests to read.
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Default", Database.ConnectionString);
         builder.UseSetting("ConnectionStrings:Redis", redis.GetConnectionString());
         builder.ConfigureTestServices(services =>
         {
-            services.RemoveAll<IEmailSender>();
-            services.AddSingleton<IEmailSender>(Emails);
+            services.RemoveAll<IHostedService>();
             services.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, null);
         });

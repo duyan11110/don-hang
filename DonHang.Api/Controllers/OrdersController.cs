@@ -107,6 +107,28 @@ public sealed class OrdersController(
         return Ok(ToDto(order));
     }
 
+    // lesson: backend.l3.saga
+    // lesson: backend.l3.eventual-consistency
+    // POST /api/v1/orders/7/refund: only the order's own customer (staff have
+    // no customer row: 403), only for a paid order (409 otherwise). The order
+    // moves to `refunding` and its order.refund-requested message is saved in
+    // the same transaction; the answer is 202 Accepted with the order as it is
+    // now, `refunding`, before any money has moved. Payments does the rest.
+    [Authorize]
+    [HttpPost("{id:int}/refund")]
+    public async Task<ActionResult<OrderDto>> Refund(int id)
+    {
+        var customer = await CurrentCustomerAsync();
+        if (customer is null) return Forbid();
+
+        var existing = await repository.FindForReadingAsync(id);
+        if (existing is null) return NotFound();
+        if (existing.CustomerId != customer.Id) return Forbid();
+
+        var order = await orderService.RequestRefundAsync(id);
+        return Accepted(ToDto(order));
+    }
+
     // lesson: design.l2.status-changes-through-methods
     // lesson: backend.l2.role-based-access
     // The endpoint decides who may ship: the StaffOnly policy lets in only a

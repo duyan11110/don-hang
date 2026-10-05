@@ -2,8 +2,14 @@
   <Project Path="DonHang.Catalog/DonHang.Catalog.csproj" />
   <Project Path="DonHang.Domain/DonHang.Domain.csproj" />
   <Project Path="DonHang.Infrastructure/DonHang.Infrastructure.csproj" />
+  <Project Path="DonHang.Messaging/DonHang.Messaging.csproj" />
   <Project Path="DonHang.Api/DonHang.Api.csproj" />
+  <Project Path="DonHang.Notifications/DonHang.Notifications.csproj" />
+  <Project Path="DonHang.Payments/DonHang.Payments.csproj" />
   <Project Path="DonHang.Tests/DonHang.Tests.csproj" />
+  <Folder Name="/fake-gateway/">
+    <Project Path="fake-gateway/FakeGateway.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/DonHang.Samples.Tests/DonHang.Samples.Tests.csproj" />
     <Project Path="samples/DonHang.Samples/DonHang.Samples.csproj" />

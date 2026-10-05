@@ -41,10 +41,11 @@ public sealed class OrderService(IOrderRepository repository, IProductPrices pri
         await repository.AddAsync(order);
 
         // lesson: design.l3.dispatching-domain-events
-        // The new order has recorded OrderPlaced. Its handlers add their rows
-        // (a pending email job, say) to the same DbContext first; this one
-        // SaveChangesAsync then writes the order and those rows in one
-        // transaction, or none of them. A handler that throws stops it here.
+        // The new order has recorded OrderPlaced, and AddAsync has given it
+        // its id. Its handlers add their rows (an outbox message, say) to the
+        // same DbContext first; this one SaveChangesAsync then writes the order
+        // and those rows in one transaction, or none of them. A handler that
+        // throws stops it here.
         await events.DispatchAsync(order);
         await repository.SaveChangesAsync();
         return (order, Created: true);
@@ -76,5 +77,44 @@ public sealed class OrderService(IOrderRepository repository, IProductPrices pri
         await events.DispatchAsync(order);
         await repository.SaveChangesAsync();
         return order;
+    }
+
+    // lesson: backend.l3.saga
+    // The refund saga's first local transaction: the order moves to
+    // `refunding` and its order.refund-requested outbox row is saved with it.
+    // Payments takes it from there; the API answers 202 without waiting.
+    public async Task<Order> RequestRefundAsync(int orderId)
+    {
+        var order = await repository.FindAsync(orderId)
+            ?? throw new KeyNotFoundException($"order {orderId} not found");
+
+        order.RequestRefund();
+        await events.DispatchAsync(order);
+        await repository.SaveChangesAsync();
+        return order;
+    }
+
+    // lesson: backend.l3.saga
+    // Called by PaymentEventsConsumer on payment.refunded: the last step.
+    public async Task CompleteRefundAsync(int orderId)
+    {
+        var order = await repository.FindAsync(orderId)
+            ?? throw new KeyNotFoundException($"order {orderId} not found");
+
+        order.CompleteRefund();
+        await events.DispatchAsync(order);
+        await repository.SaveChangesAsync();
+    }
+
+    // lesson: backend.l3.compensating-action
+    // Called by PaymentEventsConsumer on payment.refund-failed.
+    public async Task FailRefundAsync(int orderId)
+    {
+        var order = await repository.FindAsync(orderId)
+            ?? throw new KeyNotFoundException($"order {orderId} not found");
+
+        order.FailRefund();
+        await events.DispatchAsync(order);
+        await repository.SaveChangesAsync();
     }
 }

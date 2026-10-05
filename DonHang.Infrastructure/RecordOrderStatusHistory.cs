@@ -11,13 +11,21 @@ namespace DonHang.Infrastructure;
 // The events themselves are not kept anywhere: orders placed before stage-3
 // have only the `placed` row the AddOrderStatusHistory migration wrote.
 public sealed class RecordOrderStatusHistory(DonHangDbContext db)
-    : IDomainEventHandler<OrderPlaced>, IDomainEventHandler<OrderCancelled>, IDomainEventHandler<OrderShipped>
+    : IDomainEventHandler<OrderPlaced>, IDomainEventHandler<OrderCancelled>, IDomainEventHandler<OrderShipped>,
+      IDomainEventHandler<OrderRefundRequested>, IDomainEventHandler<OrderRefunded>, IDomainEventHandler<OrderRefundFailed>
 {
     public Task HandleAsync(OrderPlaced domainEvent) => AddRow(domainEvent, "placed", "new");
 
     public Task HandleAsync(OrderCancelled domainEvent) => AddRow(domainEvent, "cancelled", "cancelled");
 
     public Task HandleAsync(OrderShipped domainEvent) => AddRow(domainEvent, "shipped", "shipped");
+
+    // The refund saga's three changes to an order (backend.l3.saga).
+    public Task HandleAsync(OrderRefundRequested domainEvent) => AddRow(domainEvent, "refund-requested", "refunding");
+
+    public Task HandleAsync(OrderRefunded domainEvent) => AddRow(domainEvent, "refunded", "cancelled");
+
+    public Task HandleAsync(OrderRefundFailed domainEvent) => AddRow(domainEvent, "refund-failed", "paid");
 
     private Task AddRow(IDomainEvent domainEvent, string eventName, string status)
     {

@@ -20,6 +20,9 @@ services:
       PASSWORD_ACCESS: "false"
       LISTEN_PORT: "2222"
       PGPASSWORD: "${POSTGRES_PASSWORD}"
+      # From stage-3: what the messaging scripts use to sign in to
+      # RabbitMQ's management API (rabbitmq:15672) as user donhang.
+      RABBITMQ_PASSWORD: "${RABBITMQ_PASSWORD}"
     volumes:
       - ./:/repo:ro
       - ./secrets:/keys
@@ -110,10 +113,11 @@ services:
       # lesson: devops.l1.config-and-env
       ConnectionStrings__Default: "Host=db;Database=donhang;Username=donhang;Password=${POSTGRES_PASSWORD}"
       ConnectionStrings__Redis: "redis:6379,abortConnect=false"
-      # lesson: backend.l2.database-job-queue
-      # Where NotificationSender's emails go: the mailpit service below.
-      Smtp__Host: "mailpit"
-      Smtp__Port: "1025"
+      # lesson: backend.l3.message-broker
+      # From stage-3 the api sends no email (notifications does, below): it
+      # publishes messages to RabbitMQ through its outbox.
+      RabbitMq__Host: "rabbitmq"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
       ASPNETCORE_ENVIRONMENT: "Development"
       # lesson: backend.l2.validating-provider-tokens
       # Tokens name http://localhost:8180/realms/donhang as their issuer, the
@@ -140,6 +144,10 @@ services:
       # Started first, not waited for: the api answers from PostgreSQL
       # whenever Redis is not there.
       redis:
+        condition: service_started
+      # The same for RabbitMQ: while it is down, orders are still accepted
+      # and their messages wait in outbox_messages.
+      rabbitmq:
         condition: service_started
     # Healthy once /health/ready answers, so `docker compose up --wait` (and
     # scripts/up.sh) returns only when Caddy can reach the api, not before.
@@ -184,6 +192,155 @@ services:
     networks:
       donhang:
         ipv4_address: 172.28.0.16
+
+  # lesson: backend.l3.message-broker
+  # The message broker, from stage-3. The api publishes to it; Notifications
+  # and Payments consume from it, so none of them needs another to be up.
+  # Its data lives in a volume, so durable queues and persistent messages
+  # survive `docker compose restart rabbitmq`. The management page, at
+  # http://localhost:15672 (user donhang, RABBITMQ_PASSWORD in .env), shows
+  # the exchanges, queues and messages.
+  rabbitmq:
+    image: rabbitmq:4.1.8-management-alpine
+    container_name: donhang-rabbitmq
+    # RabbitMQ names its node, and its data directory, after the hostname.
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "donhang"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD}"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.18
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  # lesson: backend.l3.message-broker
+  # The Notifications service and the job that migrates its own database,
+  # donhang_notifications, on the same PostgreSQL server as donhang; the
+  # migration bundle creates the database the first time it runs.
+  notifications-migrate:
+    build:
+      context: .
+      dockerfile: DonHang.Notifications/Dockerfile
+      target: migrate
+    image: donhang-notifications-migrate:stage-3
+    container_name: donhang-notifications-migrate
+    command: ["--connection", "Host=db;Database=donhang_notifications;Username=donhang;Password=${POSTGRES_PASSWORD}"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.25
+
+  notifications:
+    build:
+      context: .
+      dockerfile: DonHang.Notifications/Dockerfile
+    image: donhang-notifications:stage-3
+    container_name: donhang-notifications
+    hostname: notifications
+    environment:
+      ConnectionStrings__Default: "Host=db;Database=donhang_notifications;Username=donhang;Password=${POSTGRES_PASSWORD}"
+      RabbitMq__Host: "rabbitmq"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
+      # Where NotificationSender's emails go: the mailpit service below.
+      Smtp__Host: "mailpit"
+      Smtp__Port: "1025"
+      Logging__Console__FormatterName: "json"
+    depends_on:
+      notifications-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q Healthy <&3"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.19
+
+  # lesson: backend.l3.payments-service
+  # The Payments service, its migration job (database donhang_payments), and
+  # the fake payment gateway it calls. Only payments gets GATEWAY_API_KEY.
+  payments-migrate:
+    build:
+      context: .
+      dockerfile: DonHang.Payments/Dockerfile
+      target: migrate
+    image: donhang-payments-migrate:stage-3
+    container_name: donhang-payments-migrate
+    command: ["--connection", "Host=db;Database=donhang_payments;Username=donhang;Password=${POSTGRES_PASSWORD}"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.26
+
+  payments:
+    build:
+      context: .
+      dockerfile: DonHang.Payments/Dockerfile
+    image: donhang-payments:stage-3
+    container_name: donhang-payments
+    hostname: payments
+    environment:
+      ConnectionStrings__Default: "Host=db;Database=donhang_payments;Username=donhang;Password=${POSTGRES_PASSWORD}"
+      RabbitMq__Host: "rabbitmq"
+      RabbitMq__Password: "${RABBITMQ_PASSWORD}"
+      Gateway__BaseAddress: "http://fake-gateway:8080/"
+      Gateway__ApiKey: "${GATEWAY_API_KEY}"
+      # refund-design.md waits 1 minute, then 2, 4... up to 1 hour between
+      # tries; the lab waits seconds, so the scripts finish in a minute.
+      Refunds__FirstRetryDelay: "00:00:02"
+      Refunds__MaxRetryDelay: "00:00:10"
+      Keycloak__Authority: "http://localhost:8180/realms/donhang"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"
+      Logging__Console__FormatterName: "json"
+    depends_on:
+      payments-migrate:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      fake-gateway:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q Healthy <&3"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.27
+
+  fake-gateway:
+    build:
+      context: .
+      dockerfile: fake-gateway/Dockerfile
+    image: donhang-fake-gateway:stage-3
+    container_name: donhang-fake-gateway
+    hostname: fake-gateway
+    environment:
+      Gateway__ApiKey: "${GATEWAY_API_KEY}"
+      Logging__Console__FormatterName: "json"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q ok <&3"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.28
 
   # lesson: backend.l2.oauth2-roles
   # The authorization server: customers and staff type their passwords here,
@@ -317,6 +474,7 @@ networks:
 
 volumes:
   db-data:
+  rabbitmq-data:
   caddy-data:
   caddy-config:
   lab-config:

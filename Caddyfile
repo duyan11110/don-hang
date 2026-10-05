@@ -19,6 +19,12 @@
 		# lesson: backend.l1.what-kestrel-does
 		# Caddy stays in front of Kestrel; DonHang.Api never faces the internet
 		# directly (decided in backend.l1.what-kestrel-does, kept through devops).
+		# lesson: backend.l3.compensating-action
+		# From stage-3 one path of the API belongs to the Payments service:
+		# the list of refunds. More specific than /api/v1/*, so it wins.
+		handle /api/v1/refunds* {
+			reverse_proxy payments:8080
+		}
 		handle /api/v1/* {
 			reverse_proxy api:8080
 		}

@@ -18,7 +18,10 @@ public interface IDomainEventHandler<in TEvent> where TEvent : IDomainEvent
 public sealed class DomainEventDispatcher(
     IEnumerable<IDomainEventHandler<OrderPlaced>> onPlaced,
     IEnumerable<IDomainEventHandler<OrderCancelled>> onCancelled,
-    IEnumerable<IDomainEventHandler<OrderShipped>> onShipped)
+    IEnumerable<IDomainEventHandler<OrderShipped>> onShipped,
+    IEnumerable<IDomainEventHandler<OrderRefundRequested>> onRefundRequested,
+    IEnumerable<IDomainEventHandler<OrderRefunded>> onRefunded,
+    IEnumerable<IDomainEventHandler<OrderRefundFailed>> onRefundFailed)
 {
     public async Task DispatchAsync(Order order)
     {
@@ -34,6 +37,15 @@ public sealed class DomainEventDispatcher(
                     break;
                 case OrderShipped shipped:
                     foreach (var handler in onShipped) await handler.HandleAsync(shipped);
+                    break;
+                case OrderRefundRequested refundRequested:
+                    foreach (var handler in onRefundRequested) await handler.HandleAsync(refundRequested);
+                    break;
+                case OrderRefunded refunded:
+                    foreach (var handler in onRefunded) await handler.HandleAsync(refunded);
+                    break;
+                case OrderRefundFailed refundFailed:
+                    foreach (var handler in onRefundFailed) await handler.HandleAsync(refundFailed);
                     break;
             }
         }

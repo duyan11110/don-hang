@@ -3,6 +3,7 @@ using System;
 using DonHang.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DonHang.Infrastructure.Migrations
 {
     [DbContext(typeof(DonHangDbContext))]
-    partial class DonHangDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005231652_PaymentsAndNotificationsLeaveOrdering")]
+    partial class PaymentsAndNotificationsLeaveOrdering
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,10 +103,7 @@ namespace DonHang.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId", "Id");
 
-                    b.ToTable("orders", null, t =>
-                        {
-                            t.HasCheckConstraint("orders_status_check", "status IN ('new', 'paid', 'refunding', 'shipped', 'cancelled')");
-                        });
+                    b.ToTable("orders", (string)null);
                 });
 
             modelBuilder.Entity("DonHang.Domain.OrderItem", b =>
@@ -161,55 +161,6 @@ namespace DonHang.Infrastructure.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("order_status_history", (string)null);
-                });
-
-            modelBuilder.Entity("DonHang.Messaging.InboxMessage", b =>
-                {
-                    b.Property<Guid>("MessageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("message_id");
-
-                    b.Property<DateTimeOffset>("HandledAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("handled_at");
-
-                    b.HasKey("MessageId");
-
-                    b.ToTable("inbox_messages", (string)null);
-                });
-
-            modelBuilder.Entity("DonHang.Messaging.OutboxMessage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("jsonb")
-                        .HasColumnName("body");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTimeOffset?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("published_at");
-
-                    b.Property<string>("RoutingKey")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("routing_key");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt")
-                        .HasFilter("published_at IS NULL");
-
-                    b.ToTable("outbox_messages", (string)null);
                 });
 
             modelBuilder.Entity("DonHang.Domain.Order", b =>

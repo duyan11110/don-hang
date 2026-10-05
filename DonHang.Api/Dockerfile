@@ -9,12 +9,14 @@ COPY global.json Directory.Packages.props ./
 COPY DonHang.Catalog/DonHang.Catalog.csproj DonHang.Catalog/
 COPY DonHang.Domain/DonHang.Domain.csproj DonHang.Domain/
 COPY DonHang.Infrastructure/DonHang.Infrastructure.csproj DonHang.Infrastructure/
+COPY DonHang.Messaging/DonHang.Messaging.csproj DonHang.Messaging/
 COPY DonHang.Api/DonHang.Api.csproj DonHang.Api/
 RUN dotnet restore DonHang.Api/DonHang.Api.csproj
 
 COPY DonHang.Catalog/ DonHang.Catalog/
 COPY DonHang.Domain/ DonHang.Domain/
 COPY DonHang.Infrastructure/ DonHang.Infrastructure/
+COPY DonHang.Messaging/ DonHang.Messaging/
 COPY DonHang.Api/ DonHang.Api/
 RUN dotnet publish DonHang.Api/DonHang.Api.csproj -c Release -o /app --no-restore
 

@@ -12,6 +12,7 @@
     <ProjectReference Include="..\DonHang.Domain\DonHang.Domain.csproj" />
     <ProjectReference Include="..\DonHang.Infrastructure\DonHang.Infrastructure.csproj" />
     <ProjectReference Include="..\DonHang.Catalog\DonHang.Catalog.csproj" />
+    <ProjectReference Include="..\DonHang.Messaging\DonHang.Messaging.csproj" />
   </ItemGroup>
 
   <ItemGroup>

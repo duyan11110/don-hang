@@ -28,6 +28,18 @@ if ! grep -q '^GRAFANA_ADMIN_PASSWORD=' .env 2>/dev/null; then
   echo "added GRAFANA_ADMIN_PASSWORD to .env"
 fi
 
+# From stage-3: the password of RabbitMQ's user donhang (management page at
+# http://localhost:15672), and the key the fake payment gateway expects from
+# DonHang.Payments. Random too, and fake: the gateway is a lab stand-in.
+if ! grep -q '^RABBITMQ_PASSWORD=' .env 2>/dev/null; then
+  echo "RABBITMQ_PASSWORD=$(openssl rand -hex 16)" >> .env
+  echo "added RABBITMQ_PASSWORD to .env"
+fi
+if ! grep -q '^GATEWAY_API_KEY=' .env 2>/dev/null; then
+  echo "GATEWAY_API_KEY=fake-gateway-$(openssl rand -hex 16)" >> .env
+  echo "added GATEWAY_API_KEY to .env"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"

@@ -5,7 +5,7 @@ namespace DonHang.Tests.Domain;
 
 // lesson: design.l2.testing-the-entity
 // Order on its own: built with its constructor, changed with its methods.
-// No repository, no notifier, no fake, no await.
+// No repository, no outbox, no fake, no await.
 public sealed class OrderTests
 {
     private static List<OrderItem> OneItem() => [new(productId: 1, quantity: 2, new Vnd(100_000))];
@@ -60,15 +60,19 @@ public sealed class OrderTests
         Assert.Equal("cancelled", order.Status);
     }
 
+    // lesson: backend.l3.saga-in-progress-status
+    // Until stage-2 a paid order could be cancelled here. From stage-3 its
+    // money must go back first: it leaves through RequestRefund instead.
     [Fact]
-    public void Cancel_PaidOrder_SetsStatusCancelled()
+    public void Cancel_PaidOrder_Throws()
     {
         var order = NewOrder();
         order.MarkPaid();
 
-        order.Cancel();
+        var ex = Assert.Throws<OrderStatusException>(order.Cancel);
 
-        Assert.Equal("cancelled", order.Status);
+        Assert.Equal("paid", ex.Code);
+        Assert.Equal("paid", order.Status);
     }
 
     [Fact]
@@ -182,5 +186,110 @@ public sealed class OrderTests
         Assert.Throws<OrderStatusException>(order.Cancel);
 
         Assert.Empty(order.DomainEvents);
+    }
+
+    private static Order RefundingOrder()
+    {
+        var order = NewOrder();
+        order.MarkPaid();
+        order.RequestRefund();
+        order.ClearDomainEvents();
+        return order;
+    }
+
+    // lesson: backend.l3.saga-in-progress-status
+    // `refunding` is a status like the others: Order checks it in each of
+    // its methods, and these tests check Order, with no saga running at all.
+    [Fact]
+    public void RequestRefund_PaidOrder_MovesToRefundingAndRecordsIt()
+    {
+        var order = NewOrder();
+        order.MarkPaid();
+        order.ClearDomainEvents();
+
+        order.RequestRefund();
+
+        Assert.Equal("refunding", order.Status);
+        Assert.IsType<OrderRefundRequested>(Assert.Single(order.DomainEvents));
+    }
+
+    [Fact]
+    public void RequestRefund_NewOrder_Throws()
+    {
+        var order = NewOrder();
+
+        var ex = Assert.Throws<OrderStatusException>(order.RequestRefund);
+
+        Assert.Equal("not-paid", ex.Code);
+    }
+
+    [Fact]
+    public void RequestRefund_RefundingOrder_Throws()
+    {
+        var order = RefundingOrder();
+
+        var ex = Assert.Throws<OrderStatusException>(order.RequestRefund);
+
+        Assert.Equal("refund-in-progress", ex.Code);
+        Assert.Empty(order.DomainEvents);
+    }
+
+    [Fact]
+    public void Cancel_RefundingOrder_Throws()
+    {
+        var order = RefundingOrder();
+
+        var ex = Assert.Throws<OrderStatusException>(order.Cancel);
+
+        Assert.Equal("refund-in-progress", ex.Code);
+        Assert.Equal("refunding", order.Status);
+    }
+
+    [Fact]
+    public void Ship_RefundingOrder_Throws()
+    {
+        var order = RefundingOrder();
+
+        var ex = Assert.Throws<OrderStatusException>(order.Ship);
+
+        Assert.Equal("refund-in-progress", ex.Code);
+        Assert.Equal("refunding", order.Status);
+    }
+
+    // lesson: backend.l3.saga
+    [Fact]
+    public void CompleteRefund_RefundingOrder_EndsCancelled()
+    {
+        var order = RefundingOrder();
+
+        order.CompleteRefund();
+
+        Assert.Equal("cancelled", order.Status);
+        Assert.IsType<OrderRefunded>(Assert.Single(order.DomainEvents));
+    }
+
+    // lesson: backend.l3.compensating-action
+    // The compensation: back to paid, and the order can ship again.
+    [Fact]
+    public void FailRefund_RefundingOrder_IsPaidAgainAndCanShip()
+    {
+        var order = RefundingOrder();
+
+        order.FailRefund();
+        order.Ship();
+
+        Assert.Equal("shipped", order.Status);
+        Assert.IsType<OrderRefundFailed>(order.DomainEvents[0]);
+    }
+
+    [Fact]
+    public void CompleteRefund_PaidOrder_Throws()
+    {
+        var order = NewOrder();
+        order.MarkPaid();
+
+        var ex = Assert.Throws<OrderStatusException>(order.CompleteRefund);
+
+        Assert.Equal("not-refunding", ex.Code);
     }
 }

@@ -22,7 +22,8 @@ echo "  site (TLS)  https://donhang.local:8443/   (add '127.0.0.1 donhang.local'
 echo "  app (web)   http://localhost:8081/"
 echo "  database    postgres://donhang@localhost:5432/donhang"
 echo "  keycloak    http://localhost:8180/admin   (user admin, password KEYCLOAK_ADMIN_PASSWORD in .env)"
-echo "  mailpit     http://localhost:8025/   (every email the api sends ends up here)"
+echo "  mailpit     http://localhost:8025/   (every email Đơn Hàng sends ends up here)"
+echo "  rabbitmq    http://localhost:15672/  (user donhang, password RABBITMQ_PASSWORD in .env)"
 echo "  lab box     ssh -p 2222 -i secrets/lab_key dev@localhost"
 echo
 echo "Run a lesson's command with, for example: scripts/http/methods.sh"

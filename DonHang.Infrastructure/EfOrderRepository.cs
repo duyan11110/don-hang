@@ -32,7 +32,18 @@ public sealed class EfOrderRepository(DonHangDbContext db) : IOrderRepository
     public Task<Order?> FindByIdempotencyKeyAsync(string idempotencyKey) =>
         db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.IdempotencyKey == idempotencyKey);
 
-    public async Task AddAsync(Order order) => await db.Orders.AddAsync(order);
+    // lesson: backend.l3.outbox-pattern
+    // From stage-3 the new order takes the next value of the orders id
+    // sequence here, before it is saved, so the handlers that run before
+    // SaveChangesAsync can name it in a message. The INSERT then sends that id
+    // instead of letting PostgreSQL pick one; nothing else changes.
+    public async Task AddAsync(Order order)
+    {
+        order.Id = await db.Database
+            .SqlQuery<int>($"SELECT nextval(pg_get_serial_sequence('orders', 'id'))::int AS \"Value\"")
+            .SingleAsync();
+        await db.Orders.AddAsync(order);
+    }
 
     public Task SaveChangesAsync() => db.SaveChangesAsync();
 }

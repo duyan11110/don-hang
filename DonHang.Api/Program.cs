@@ -1,9 +1,10 @@
 using DonHang.Api.Authorization;
-using DonHang.Api.Jobs;
+using DonHang.Api.Messaging;
 using DonHang.Api.Middleware;
 using DonHang.Catalog;
 using DonHang.Domain;
 using DonHang.Infrastructure;
+using DonHang.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -23,20 +24,24 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 // Compose service name, the same way it finds db.
 var redisConfiguration = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException("ConnectionStrings:Redis is not set");
-var smtp = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>() ?? new SmtpSettings();
 
 // lesson: design.l3.modules-cut-through-layers
 // Two modules in one process. Catalog registers everything it has itself;
 // Ordering is still DonHang.Domain plus DonHang.Infrastructure. Both get the
 // same connection string: they share one database, not one another's tables.
 builder.Services.AddCatalogModule(connectionString, redisConfiguration);
-builder.Services.AddDonHangInfrastructure(connectionString, smtp);
+builder.Services.AddDonHangInfrastructure(connectionString);
 builder.Services.AddScoped<OrderService>();
 
-// lesson: backend.l2.hosted-services
-// The host starts NotificationSender when the app starts and stops it when
-// the app stops; it runs in this same process, beside the requests.
-builder.Services.AddHostedService<NotificationSender>();
+// lesson: backend.l3.outbox-relay
+// From stage-3 the api sends no email itself (DonHang.Notifications does).
+// What other services must hear about leaves as outbox rows: OutboxRelay, a
+// hosted service in this process, publishes them to donhang.orders, and
+// PaymentEventsConsumer reads what DonHang.Payments publishes back.
+var rabbitMq = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>() ?? new RabbitMqSettings();
+builder.Services.AddRabbitMq(rabbitMq, clientName: "donhang-api");
+builder.Services.AddOutboxRelay<DonHangDbContext>(exchange: "donhang.orders");
+builder.Services.AddHostedService<PaymentEventsConsumer>();
 
 // lesson: backend.l2.oauth2-roles
 // lesson: backend.l2.openid-connect-id-token
@@ -83,7 +88,8 @@ builder.Services.AddOpenApi();
 // lesson: k8s.l1.health-endpoints
 // One check: can EF Core open a connection to PostgreSQL? Tagged "ready" so
 // only /health/ready runs it. Redis is left out on purpose: when it fails,
-// the api still answers from PostgreSQL.
+// the api still answers from PostgreSQL. So is RabbitMQ, from stage-3: while
+// it is down, orders are still accepted and their messages wait in the outbox.
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<DonHangDbContext>(tags: ["ready"]);
 

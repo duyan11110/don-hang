@@ -1,9 +1,11 @@
 namespace DonHang.Domain;
 
 // lesson: backend.l1.efcore-mapping
-// One class per table in db/schema.sql, except `products`, which belongs to
-// the Catalog module from stage-3 (DonHang.Catalog). No behaviour here beyond
-// what a row is, except Order, which owns the rules about its own status.
+// One class per table in db/schema.sql that Ordering still uses. From stage-3
+// `products` belongs to the Catalog module (DonHang.Catalog), and `payments`
+// and `notifications` to the Payments and Notifications services, which keep
+// them in databases of their own. No behaviour here beyond what a row is,
+// except Order, which owns the rules about its own status.
 public sealed class Customer
 {
     public int Id { get; set; }
@@ -18,8 +20,9 @@ public sealed class Customer
 
 // lesson: backend.l1.efcore-relationships-and-keys
 // lesson: design.l2.ef-core-and-private-setters
-// Id keeps a public setter: the database generates it on insert, and
-// FakeOrderRepository.AddAsync assigns it the same way. So does Customer, a
+// Id keeps a public setter: from stage-3 EfOrderRepository.AddAsync takes it
+// from the database's id sequence, and FakeOrderRepository.AddAsync assigns
+// it the same way, before the order is saved. So does Customer, a
 // navigation used only for reading; IdempotencyKey can be given only while
 // the order is created (init). Everything else changes only through the
 // constructor and the methods below.
@@ -111,10 +114,16 @@ public sealed class Order
     }
 
     // lesson: design.l2.domain-model
+    // lesson: backend.l3.saga-in-progress-status
+    // From stage-3 a paid order is not cancelled here: its money must go back
+    // first, so it leaves through RequestRefund and the refund saga instead.
+    // A refund in progress blocks cancelling, like it blocks shipping.
     public void Cancel()
     {
         if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is already cancelled");
         if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
+        if (Status == "paid") throw new OrderStatusException(Id, "paid", $"order {Id} is paid; request a refund instead");
+        if (Status == "refunding") throw new OrderStatusException(Id, "refund-in-progress", $"order {Id} is being refunded");
         Status = "cancelled";
 
         // lesson: design.l3.domain-events
@@ -127,9 +136,44 @@ public sealed class Order
     {
         if (Status == "cancelled") throw new OrderStatusException(Id, "already-cancelled", $"order {Id} is cancelled");
         if (Status == "shipped") throw new OrderStatusException(Id, "already-shipped", $"order {Id} has already shipped");
+        if (Status == "refunding") throw new OrderStatusException(Id, "refund-in-progress", $"order {Id} is being refunded");
         if (Status != "paid") throw new OrderStatusException(Id, "not-paid", $"order {Id} is not paid yet");
         Status = "shipped";
         domainEvents.Add(new OrderShipped(this, DateTimeOffset.UtcNow));
+    }
+
+    // lesson: backend.l3.saga-in-progress-status
+    // lesson: backend.l3.saga
+    // The first step of the refund saga. Only a paid order can ask for its
+    // money back; `refunding` then tells every other request that a refund is
+    // under way, so a second refund, a cancel or a ship is refused meanwhile.
+    public void RequestRefund()
+    {
+        if (Status == "refunding") throw new OrderStatusException(Id, "refund-in-progress", $"order {Id} is already being refunded");
+        if (Status != "paid") throw new OrderStatusException(Id, "not-paid", $"order {Id} is not paid, so there is nothing to refund");
+        Status = "refunding";
+        domainEvents.Add(new OrderRefundRequested(this, DateTimeOffset.UtcNow));
+    }
+
+    // lesson: backend.l3.saga
+    // The gateway has returned the money (payment.refunded): the order ends
+    // as cancelled, which is what the customer asked for.
+    public void CompleteRefund()
+    {
+        if (Status != "refunding") throw new OrderStatusException(Id, "not-refunding", $"order {Id} is not being refunded");
+        Status = "cancelled";
+        domainEvents.Add(new OrderRefunded(this, DateTimeOffset.UtcNow));
+    }
+
+    // lesson: backend.l3.compensating-action
+    // The gateway refused the refund (payment.refund-failed). The order's own
+    // step cannot be rolled back, it was committed long ago, so a new change
+    // undoes its effect: the order is paid again and can still ship.
+    public void FailRefund()
+    {
+        if (Status != "refunding") throw new OrderStatusException(Id, "not-refunding", $"order {Id} is not being refunded");
+        Status = "paid";
+        domainEvents.Add(new OrderRefundFailed(this, DateTimeOffset.UtcNow));
     }
 }
 
@@ -146,30 +190,4 @@ public sealed class OrderItem(int productId, int quantity, Vnd unitPrice)
     // lesson: design.l3.value-objects
     // Was `int UnitPriceVnd` until stage-2: any int, even a negative one.
     public Vnd UnitPrice { get; private set; } = unitPrice;
-}
-
-public sealed class Payment
-{
-    public int Id { get; set; }
-    public int OrderId { get; set; }
-    public DateTimeOffset PaidAt { get; set; }
-    public int AmountVnd { get; set; }
-    public required string Method { get; set; }
-}
-
-// lesson: backend.l2.database-job-queue
-// From stage-2 each row is also a job: an email waiting to be sent (pending),
-// sent, or given up on after too many failed attempts (failed).
-public sealed class Notification
-{
-    public int Id { get; set; }
-    public int OrderId { get; set; }
-    public Order? Order { get; set; }
-    public required string Channel { get; set; }
-    public required string Subject { get; set; }
-    public required string Status { get; set; }
-    public int Attempts { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset NextAttemptAt { get; set; }
-    public DateTimeOffset? SentAt { get; set; }
 }

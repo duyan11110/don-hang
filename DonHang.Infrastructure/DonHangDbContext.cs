@@ -1,4 +1,5 @@
 using DonHang.Domain;
+using DonHang.Messaging;
 using Microsoft.EntityFrameworkCore;
 
 namespace DonHang.Infrastructure;
@@ -9,9 +10,9 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-    public DbSet<Payment> Payments => Set<Payment>();
-    public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OrderStatusHistoryEntry> OrderStatusHistory => Set<OrderStatusHistoryEntry>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<InboxMessage> InboxMessages => Set<InboxMessage>();
 
     // lesson: backend.l1.efcore-relationships-and-keys
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,6 +41,11 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(o => o.CustomerId).HasColumnName("customer_id");
             e.Property(o => o.PlacedAt).HasColumnName("placed_at");
             e.Property(o => o.Status).HasColumnName("status");
+
+            // lesson: backend.l3.saga-in-progress-status
+            // The statuses Order allows, `refunding` included from stage-3.
+            e.ToTable(t => t.HasCheckConstraint("orders_status_check",
+                "status IN ('new', 'paid', 'refunding', 'shipped', 'cancelled')"));
             e.HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId);
 
             // lesson: design.l3.aggregate-root
@@ -89,34 +95,10 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
                 .HasConversion(price => price.Amount, amount => new Vnd(amount));
         });
 
-        modelBuilder.Entity<Payment>(e =>
-        {
-            e.ToTable("payments");
-            e.Property(p => p.Id).HasColumnName("id");
-            e.Property(p => p.OrderId).HasColumnName("order_id");
-            e.Property(p => p.PaidAt).HasColumnName("paid_at");
-            e.Property(p => p.AmountVnd).HasColumnName("amount_vnd");
-            e.Property(p => p.Method).HasColumnName("method");
-        });
-
-        modelBuilder.Entity<Notification>(e =>
-        {
-            e.ToTable("notifications");
-            e.Property(n => n.Id).HasColumnName("id");
-            e.Property(n => n.OrderId).HasColumnName("order_id");
-            e.Property(n => n.Channel).HasColumnName("channel");
-            e.Property(n => n.SentAt).HasColumnName("sent_at");
-            e.Property(n => n.Subject).HasColumnName("subject");
-            e.HasOne(n => n.Order).WithMany().HasForeignKey(n => n.OrderId);
-
-            // lesson: backend.l2.database-job-queue
-            // The columns that make this table Đơn Hàng's job queue.
-            e.Property(n => n.Status).HasColumnName("status");
-            e.Property(n => n.Attempts).HasColumnName("attempts");
-            e.Property(n => n.CreatedAt).HasColumnName("created_at");
-            e.Property(n => n.NextAttemptAt).HasColumnName("next_attempt_at");
-            e.ToTable(t => t.HasCheckConstraint("notifications_status_check", "status IN ('pending', 'sent', 'failed')"));
-        });
+        // lesson: backend.l3.payments-service
+        // No Payment or Notification here from stage-3: those rows belong to
+        // the Payments and Notifications services, in their own databases. The
+        // old `payments` and `notifications` tables stay in donhang, unread.
 
         // lesson: design.l3.read-model
         // From stage-3: the read model RecordOrderStatusHistory writes. The
@@ -131,6 +113,32 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(h => h.OccurredAt).HasColumnName("occurred_at");
             e.HasOne(h => h.Order).WithMany().HasForeignKey(h => h.OrderId);
             e.HasIndex(h => h.OrderId);
+        });
+
+        // lesson: backend.l3.outbox-pattern
+        // From stage-3: the messages waiting for OutboxRelay. Each row holds
+        // a new id, the routing key and the JSON body; published_at stays null
+        // until RabbitMQ has confirmed the message. The partial index holds only
+        // the rows still waiting, the ones the relay looks for on every tick.
+        modelBuilder.Entity<OutboxMessage>(e =>
+        {
+            e.ToTable("outbox_messages");
+            e.Property(m => m.Id).HasColumnName("id");
+            e.Property(m => m.RoutingKey).HasColumnName("routing_key");
+            e.Property(m => m.Body).HasColumnName("body").HasColumnType("jsonb");
+            e.Property(m => m.CreatedAt).HasColumnName("created_at");
+            e.Property(m => m.PublishedAt).HasColumnName("published_at");
+            e.HasIndex(m => m.CreatedAt).HasFilter("published_at IS NULL");
+        });
+
+        // lesson: backend.l3.idempotent-consumer
+        // The ids of the payment.* messages PaymentEventsConsumer has handled.
+        modelBuilder.Entity<InboxMessage>(e =>
+        {
+            e.ToTable("inbox_messages");
+            e.HasKey(m => m.MessageId);
+            e.Property(m => m.MessageId).HasColumnName("message_id");
+            e.Property(m => m.HandledAt).HasColumnName("handled_at");
         });
     }
 }

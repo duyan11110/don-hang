@@ -21,6 +21,7 @@
   <ItemGroup>
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 
@@ -32,6 +33,9 @@
     <ProjectReference Include="..\DonHang.Infrastructure\DonHang.Infrastructure.csproj" />
     <ProjectReference Include="..\DonHang.Api\DonHang.Api.csproj" />
     <ProjectReference Include="..\DonHang.Catalog\DonHang.Catalog.csproj" />
+    <ProjectReference Include="..\DonHang.Messaging\DonHang.Messaging.csproj" />
+    <ProjectReference Include="..\DonHang.Notifications\DonHang.Notifications.csproj" />
+    <ProjectReference Include="..\DonHang.Payments\DonHang.Payments.csproj" />
   </ItemGroup>
 
 </Project>

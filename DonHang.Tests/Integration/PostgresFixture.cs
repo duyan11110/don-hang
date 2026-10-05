@@ -45,6 +45,6 @@ public sealed class PostgresFixture : IAsyncLifetime
     {
         await using var db = CreateContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE customers, products, orders, order_items, payments, notifications CASCADE");
+            "TRUNCATE customers, products, orders, order_items, payments, notifications, outbox_messages, inbox_messages CASCADE");
     }
 }
