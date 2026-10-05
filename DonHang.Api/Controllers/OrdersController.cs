@@ -14,6 +14,7 @@ public sealed class OrdersController(
     OrderService orderService,
     IOrderRepository repository,
     ICustomerRepository customers,
+    IOrderHistory history,
     IAuthorizationService authorization) : ControllerBase
 {
     private const int MaxPageSize = 100;
@@ -67,6 +68,25 @@ public sealed class OrdersController(
         if (!allowed.Succeeded) return Forbid();
 
         return Ok(ToDto(order));
+    }
+
+    // lesson: design.l3.read-model
+    // GET /api/v1/orders/7/history: the order's status changes, oldest first,
+    // from the read model order_status_history. The OrderOwner check needs the
+    // order's customer, so it runs on an untracked copy first, as in Get; the
+    // history itself comes from IOrderHistory and never builds an Order.
+    [Authorize]
+    [HttpGet("{id:int}/history")]
+    public async Task<ActionResult<List<OrderStatusChangeDto>>> History(int id)
+    {
+        var order = await repository.FindForReadingAsync(id);
+        if (order is null) return NotFound();
+
+        var allowed = await authorization.AuthorizeAsync(User, order, "OrderOwner");
+        if (!allowed.Succeeded) return Forbid();
+
+        var changes = await history.ListAsync(id);
+        return Ok(changes.Select(c => new OrderStatusChangeDto(c.Event, c.Status, c.OccurredAt)).ToList());
     }
 
     // lesson: design.l2.domain-model

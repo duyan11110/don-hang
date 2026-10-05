@@ -11,6 +11,7 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<OrderStatusHistoryEntry> OrderStatusHistory => Set<OrderStatusHistoryEntry>();
 
     // lesson: backend.l1.efcore-relationships-and-keys
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -115,6 +116,21 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(n => n.CreatedAt).HasColumnName("created_at");
             e.Property(n => n.NextAttemptAt).HasColumnName("next_attempt_at");
             e.ToTable(t => t.HasCheckConstraint("notifications_status_check", "status IN ('pending', 'sent', 'failed')"));
+        });
+
+        // lesson: design.l3.read-model
+        // From stage-3: the read model RecordOrderStatusHistory writes. The
+        // index serves the one query on it, one order's rows.
+        modelBuilder.Entity<OrderStatusHistoryEntry>(e =>
+        {
+            e.ToTable("order_status_history");
+            e.Property(h => h.Id).HasColumnName("id");
+            e.Property(h => h.OrderId).HasColumnName("order_id");
+            e.Property(h => h.Event).HasColumnName("event");
+            e.Property(h => h.Status).HasColumnName("status");
+            e.Property(h => h.OccurredAt).HasColumnName("occurred_at");
+            e.HasOne(h => h.Order).WithMany().HasForeignKey(h => h.OrderId);
+            e.HasIndex(h => h.OrderId);
         });
     }
 }

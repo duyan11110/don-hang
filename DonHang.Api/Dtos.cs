@@ -20,6 +20,9 @@ public sealed record CreateOrderRequest(List<CreateOrderItemRequest> Items);
 // lesson: backend.l1.efcore-n-plus-one
 public sealed record OrderSummaryDto(int Id, string Status, string CustomerName);
 
+// lesson: design.l3.read-model
+public sealed record OrderStatusChangeDto(string Event, string Status, DateTimeOffset OccurredAt);
+
 // lesson: backend.l2.api-versioning
 // The /api/v2/orders shape. Breaking for a v1 client: `items` is now `lines`
 // (each with its own total) and `customerId` is gone — the caller is the

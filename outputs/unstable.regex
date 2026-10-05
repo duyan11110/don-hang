@@ -9,6 +9,9 @@
 ^\K[0-9]+(?= +sleep )
  in \K[^\n]*[/\\](?=[A-Za-z0-9_]+\.cs:line )
 "placedAt":"\K[^"]*(?=")
+# design/order-history.sh: the time of a change made just now (a seed order's
+# backfilled `placed` time has no fraction of a second, and stays).
+"occurredAt":"\K[^"]*\.[0-9]+[^"]*(?=")
 "id":\K[0-9]+(?=,"customerId")
 actual time=\K[0-9.]+\.\.[0-9.]+
 ^ *Planning Time: \K[0-9.]+(?= ms$)

@@ -32,7 +32,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDomainEventHandler<OrderPlaced>, NotifyCustomerOnOrderEvents>();
         services.AddScoped<IDomainEventHandler<OrderCancelled>, NotifyCustomerOnOrderEvents>();
         services.AddScoped<IDomainEventHandler<OrderShipped>, NotifyCustomerOnOrderEvents>();
+        services.AddScoped<IDomainEventHandler<OrderPlaced>, RecordOrderStatusHistory>();
+        services.AddScoped<IDomainEventHandler<OrderCancelled>, RecordOrderStatusHistory>();
+        services.AddScoped<IDomainEventHandler<OrderShipped>, RecordOrderStatusHistory>();
         services.AddScoped<DomainEventDispatcher>();
+
+        // lesson: design.l3.read-model
+        services.AddScoped<IOrderHistory, EfOrderHistory>();
 
         // lesson: design.l3.one-way-module-dependencies
         // Ordering asks for prices through its own port; this adapter answers

@@ -10,6 +10,20 @@ a release is tagged, someone renames that section to the new version by hand;
 
 ## [Unreleased]
 
+### Added
+
+- `GET /api/v1/orders/{id}/history` lists an order's status changes, oldest
+  first (the order's customer or staff). Orders placed before this version
+  show only their `placed` change.
+
+### Changed
+
+- `POST /api/v1/orders` and `POST /api/v2/orders` charge each item the
+  product's current price. The `unitPriceVnd` a client sends is still
+  accepted, but ignored.
+- An order for a product that does not exist is refused with `400`; it was a
+  `500`.
+
 ## [1.0.0] - 2026-09-27
 
 The first version with a declared public API: the OpenAPI document at
