@@ -2,6 +2,7 @@ using DonHang.Samples.Clean;
 using DonHang.Samples.Computer;
 using DonHang.Samples.Data;
 using DonHang.Samples.Debug;
+using DonHang.Samples.Design.EventSourcing;
 using DonHang.Samples.Http;
 
 // Every sample in this project is one lesson's example, run by name:
@@ -22,6 +23,7 @@ var samples = new Dictionary<string, Func<Task>>
     ["throws-deep"] = Sync(ThrowsDeep.Run),
     ["logging-demo"] = Sync(LoggingDemo.Run),
     ["place-order"] = Sync(PlaceOrder),
+    ["event-sourcing"] = Sync(EventSourcingDemo.Run),
 };
 
 if (args.Length == 0 || !samples.TryGetValue(args[0], out var run))
