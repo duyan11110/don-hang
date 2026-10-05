@@ -53,8 +53,19 @@ jobs:
       - name: Analyze DonHang.App
         run: flutter analyze
 
+      # lesson: frontend.l3.golden-tests
+      # On this Linux runner the golden tests run too; on failure the images
+      # that did not match, and their differences, are kept as an artifact.
       - name: Test DonHang.App
         run: flutter test
+
+      - name: Keep the golden test failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: DonHang.App/test/**/failures/
+          if-no-files-found: ignore
 
   # lesson: devops.l2.building-images-in-ci
   # Built once per run, from the Dockerfile the lab uses, under the names
