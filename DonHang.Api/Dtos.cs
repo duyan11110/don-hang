@@ -9,6 +9,9 @@ public sealed record ProductDto(int Id, string Name, int PriceVnd);
 // lesson: backend.l2.cache-invalidation
 public sealed record UpdateProductPriceRequest([Range(1, int.MaxValue)] int PriceVnd);
 
+// lesson: design.l3.storing-value-objects
+// The JSON keeps unitPriceVnd as a plain number from stage-3 too: Vnd stays
+// inside DonHang.Domain, and the controller passes on its Amount.
 public sealed record OrderItemDto(int ProductId, int Quantity, int UnitPriceVnd);
 
 public sealed record OrderDto(int Id, int CustomerId, string Status, DateTimeOffset PlacedAt, List<OrderItemDto> Items);
