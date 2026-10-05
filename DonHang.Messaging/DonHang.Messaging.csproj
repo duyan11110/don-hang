@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>DonHang.Messaging</RootNamespace>
+  </PropertyGroup>
+
+  <!-- lesson: backend.l3.outbox-relay -->
+  <!-- The messaging plumbing every Đơn Hàng service shares from stage-3: the
+       outbox and inbox rows, the RabbitMQ connection, the publisher and the
+       relay. It knows no order, payment or email: DonHang.Api, DonHang.Payments
+       and DonHang.Notifications reference it, never the other way round. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+
+</Project>

@@ -12,3 +12,11 @@ DonHang.Api/bin/
 DonHang.Api/obj/
 DonHang.Tests/bin/
 DonHang.Tests/obj/
+DonHang.Messaging/bin/
+DonHang.Messaging/obj/
+DonHang.Notifications/bin/
+DonHang.Notifications/obj/
+DonHang.Payments/bin/
+DonHang.Payments/obj/
+fake-gateway/bin/
+fake-gateway/obj/
