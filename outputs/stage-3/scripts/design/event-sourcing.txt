@@ -1,0 +1,15 @@
+== the stream of order 5
+  version 1: OrderPlaced at 09:00
+  version 2: OrderPaid at 09:30
+== replayed: order 5 is paid at version 2
+== two writers load order 5 at version 2
+  A cancels and appends: the stream is now at version 3
+  B ships and appends: refused (order 5: expected version 2, but the stream is at version 3)
+  B reloads and ships again: order 5 is cancelled, so it cannot be shipped
+== projections over every event
+  counts: cancelled 1, new 1
+  order 5: new at 09:00, paid at 09:30, cancelled at 11:00
+  order 6: new at 10:00
+== a snapshot every 2 events
+  with the snapshot: shipped, 1 event replayed
+  snapshots deleted: shipped, 3 events replayed

@@ -1,0 +1,21 @@
+order 7 in orders:
+ id | customer_id | status  
+----+-------------+---------
+  7 |           3 | shipped
+(1 row)
+
+== GET /api/v1/orders/7/history
+[{"event":"placed","status":"new","occurredAt":"2026-03-18T00:45:00+00:00"}]
+
+== POST /api/v1/orders as customer 3, then PATCH /api/v1/orders/<id>/cancel
+  cancel -> 200
+== GET /api/v1/orders/<id>/history
+[{"event":"placed","status":"new","occurredAt":"..."},{"event":"cancelled","status":"cancelled","occurredAt":"..."}]
+
+its rows in order_status_history:
+   event   |  status   
+-----------+-----------
+ placed    | new
+ cancelled | cancelled
+(2 rows)
+
