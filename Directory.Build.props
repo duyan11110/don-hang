@@ -1,0 +1,10 @@
+<Project>
+  <!-- lesson: devops.l3.pinning-by-content -->
+  <!-- From stage-3 every project restores from a packages.lock.json next to
+       it: the exact version and content hash of each package, direct and
+       transitive. CI and the Dockerfiles restore with locked mode, which
+       fails instead of choosing a version the lock file does not name. -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+</Project>
