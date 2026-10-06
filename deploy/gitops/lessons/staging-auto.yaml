@@ -1,0 +1,24 @@
+# The Application of staging-manual.yaml with one addition. It has the same
+# name, so applying it changes that Application instead of adding one.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: envs/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: donhang
+  # lesson: devops.l3.deploying-by-commit
+  # Sync by itself whenever the folder in Git differs from the cluster, such
+  # as after a commit. Changes made in the cluster are left alone (no
+  # selfHeal), and objects removed from Git are left running (no prune).
+  syncPolicy:
+    automated:
+      selfHeal: false
+      prune: false

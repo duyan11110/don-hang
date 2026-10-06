@@ -1,0 +1,75 @@
+# PostgreSQL in production, as in deploy/k8s/db.yaml: one replica, its data in
+# an emptyDir, so a new db Pod starts from db-init.yaml's schema and seed.
+# The password comes from the Secret db, which the Sealed Secrets controller
+# makes from sealed-db.yaml (scripts/devops/seal-secrets.sh adds that file).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: donhang
+  # lesson: devops.l3.ordering-a-sync
+  # Wave 0, the default, written out: the database, Redis, Keycloak, Mailpit,
+  # the ConfigMaps and the SealedSecrets are applied first, and the sync goes
+  # on to the migration hook (wave 1) only once all of them are healthy.
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:17.6-alpine
+          env:
+            - name: POSTGRES_DB
+              value: donhang
+            - name: POSTGRES_USER
+              value: donhang
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db
+                  key: POSTGRES_PASSWORD
+            - name: TZ
+              value: Asia/Ho_Chi_Minh
+            - name: PGTZ
+              value: Asia/Ho_Chi_Minh
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              # Over TCP: while the image runs the init scripts, PostgreSQL
+              # listens only on its socket, and the migration must wait.
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "donhang", "-d", "donhang"]
+          # The ConfigMap db-init (db-init.yaml, built by
+          # scripts/devops/gitops-render.sh from the files in db/) as files in
+          # /docker-entrypoint-initdb.d, run when the data directory is empty.
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: db-init
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: donhang
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      targetPort: 5432

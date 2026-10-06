@@ -1,0 +1,28 @@
+# lesson: devops.l3.ordering-a-sync
+# The migration as an Argo CD hook: not kept in place like the other objects,
+# but created by every sync, in wave 1, after the database (wave 0) is healthy
+# and before the api (wave 2). If the Pod ends Failed, the sync stops there
+# and the new api is not applied. BeforeHookCreation deletes the previous
+# migrate Pod first, since a new one cannot take a name still in use.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrate
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  restartPolicy: Never
+  containers:
+    - name: migrate
+      # Always the same tag as the api in api.yaml.
+      image: ghcr.io/duyan11110/donhang-migrate:sha-bb184243e4cafed6ae833ca61710608366214aa5
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: api
+              key: ConnectionStrings__Default

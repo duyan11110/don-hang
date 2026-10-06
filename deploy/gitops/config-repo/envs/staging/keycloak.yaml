@@ -1,0 +1,63 @@
+# Keycloak in staging, as in deploy/k8s/keycloak.yaml: start-dev, the realm
+# imported from keycloak-realm.yaml, the admin password from the Secret
+# keycloak, which the Sealed Secrets controller makes from sealed-keycloak.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: donhang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.7.4
+          args: ["start-dev", "--import-realm"]
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: admin
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak
+                  key: KC_BOOTSTRAP_ADMIN_PASSWORD
+            # The same issuer as in Compose; the api fetches the keys from
+            # keycloak:8080 (Keycloak__MetadataAddress in api-configmap.yaml).
+            - name: KC_HOSTNAME
+              value: "http://localhost:8180"
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+          volumeMounts:
+            - name: realm
+              mountPath: /opt/keycloak/data/import
+      volumes:
+        - name: realm
+          configMap:
+            name: keycloak-realm
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: donhang
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - port: 8080
+      targetPort: 8080

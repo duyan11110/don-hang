@@ -1,0 +1,25 @@
+# The Application Đơn Hàng keeps for staging: staging-auto.yaml with
+# self-heal and prune turned on. scripts/devops/gitops-self-heal.sh applies
+# it; scripts/devops/dr-drill.sh applies it to a rebuilt cluster.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: envs/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: donhang
+  # lesson: devops.l3.self-heal
+  # selfHeal: also sync when the live objects drift from Git, such as after
+  # kubectl scale. prune: delete an object whose manifest left the folder.
+  # The objects in donhang that came from envs/staging follow Git both ways.
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

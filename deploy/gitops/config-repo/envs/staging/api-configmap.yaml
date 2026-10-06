@@ -1,0 +1,12 @@
+# The api's settings that are not secret, as in deploy/k8s/api-configmap.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api
+  namespace: donhang
+data:
+  ConnectionStrings__Redis: "redis:6379,abortConnect=false"
+  Smtp__Host: "mailpit"
+  Smtp__Port: "1025"
+  Keycloak__Authority: "http://localhost:8180/realms/donhang"
+  Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"

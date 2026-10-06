@@ -1,0 +1,20 @@
+# lesson: devops.l3.argo-cd-applications
+# An Argo CD Application: where to read manifests (source) and where to apply
+# them (destination). The source is the folder envs/staging of the config
+# repository on the Git server inside the cluster, at its newest commit on
+# main; the destination is this same cluster, namespace donhang. No sync
+# policy: Argo CD only compares, and syncs when someone asks.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: envs/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: donhang

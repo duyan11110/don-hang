@@ -1,0 +1,83 @@
+# The api in production, as Argo CD applies it from this folder: the same
+# Deployment and Service as deploy/k8s/api.yaml, plus what Argo CD needs to
+# know about them. Its settings come from api-configmap.yaml, the connection
+# string from the Secret api, which the Sealed Secrets controller makes from
+# sealed-api.yaml (scripts/devops/seal-secrets.sh adds that file).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+  # lesson: devops.l3.ordering-a-sync
+  # Wave 2: applied only once wave 0 (the database and the other services)
+  # is healthy and the migration hook of wave 1 has succeeded.
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  # lesson: devops.l3.promoting-between-environments
+  # What differs between envs/staging and envs/production: the number of
+  # replicas here and the image tag below.
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+      # lesson: devops.l3.secret-rotation
+      # Pods read the Secret api as environment variables, so a new value
+      # reaches them only in new Pods. scripts/devops/rotate-db-password.sh
+      # raises this number in the same commit that reseals the Secret: the
+      # Pod template changes, and the Deployment rolls out new Pods.
+      annotations:
+        donhang/db-password-version: "1"
+    spec:
+      containers:
+        - name: api
+          # lesson: devops.l3.deploying-by-commit
+          # lesson: devops.l3.rollback-by-revert
+          # A deploy is a commit that changes this tag, and the migration
+          # hook's, to one CI has pushed to ghcr.io.
+          image: ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api
+          env:
+            - name: ConnectionStrings__Default
+              valueFrom:
+                secretKeyRef:
+                  name: api
+                  key: ConnectionStrings__Default
+          # lesson: devops.l3.synced-versus-healthy
+          # Argo CD reports the Deployment Healthy only once its Pods pass this
+          # probe; until then the Application is Synced but Progressing.
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,68 @@
+# lesson: devops.l3.argo-cd-applications
+# The Git server that holds Đơn Hàng's config repository inside
+# donhang-staging, so the lab needs no account on an outside service. One
+# Gitea Pod in the namespace git; its repositories live in an emptyDir, so
+# they are gone with the Pod. Argo CD reads them over plain HTTP at
+# http://gitea.git.svc:3000, which only Pods in this cluster can reach.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: git
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea
+  namespace: git
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitea
+  template:
+    metadata:
+      labels:
+        app: gitea
+    spec:
+      containers:
+        - name: gitea
+          image: gitea/gitea:28.0.0-rootless@sha256:c168e7ccb767164793a67e1e874639488260795567337452b06292d1515bea12
+          env:
+            # Configured by environment instead of the install page: SQLite,
+            # no sign-up, and the address Argo CD clones from.
+            - name: GITEA__security__INSTALL_LOCK
+              value: "true"
+            - name: GITEA__database__DB_TYPE
+              value: sqlite3
+            - name: GITEA__service__DISABLE_REGISTRATION
+              value: "true"
+            - name: GITEA__server__ROOT_URL
+              value: "http://gitea.git.svc:3000/"
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: 3000
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+            - name: config
+              mountPath: /etc/gitea
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitea
+  namespace: git
+spec:
+  selector:
+    app: gitea
+  ports:
+    - port: 3000
+      targetPort: 3000
