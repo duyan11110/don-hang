@@ -9,5 +9,5 @@ staging: Synced, Healthy
       2 ghcr.io/duyan11110/donhang-api:1.0.0
 
 == git log -- envs/staging
-... 2026-10-06 12:14 gitops-deploy.sh: Deploy api 1.0.0 to staging
-... 2026-10-06 12:01 gitops-repo.sh: Staging and production as Đơn Hàng runs them
+... ... gitops-deploy.sh: Deploy api 1.0.0 to staging
+... ... gitops-repo.sh: Staging and production as Đơn Hàng runs them

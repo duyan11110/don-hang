@@ -27,4 +27,8 @@ service/gitea
   envs/staging/redis.yaml
   envs/staging/sealed-api.yaml
   envs/staging/sealed-db.yaml
+  envs/staging/sealed-fake-gateway.yaml
   envs/staging/sealed-keycloak.yaml
+  envs/staging/sealed-notifications.yaml
+  envs/staging/sealed-payments.yaml
+  envs/staging/sealed-rabbitmq.yaml

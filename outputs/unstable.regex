@@ -111,3 +111,11 @@ newest commit in the mirror: \K[0-9a-f]{7}
 # certificate kubectl signs in with.
 pvc-\K[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 X509SHA256=\K[0-9a-f]{64}
+# deploy-verified.sh: the newest published commit, its digests, the api
+# Pods' image; dates of config-repository commits once their hash is masked.
+^== deploy sha-\K[0-9a-f]{40}$
+^== ghcr\.io/duyan11110/donhang-(?:api|migrate)@sha256:\K[0-9a-f]{64}(?= -> )
+^== ghcr\.io/duyan11110/donhang-(?:api|migrate)@sha256:(?:\.\.\.|[0-9a-f]{64}) -> ghcr\.io/duyan11110/donhang-(?:api|migrate)@sha256:\K[0-9a-f]{64}$
+^ +[0-9]+ ghcr\.io/duyan11110/donhang-api:sha-\K[0-9a-f]{40}@sha256:[0-9a-f]{64}$
+Deploy verified api sha-\K[0-9a-f]{40}
+^\.\.\. \K[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(?= )

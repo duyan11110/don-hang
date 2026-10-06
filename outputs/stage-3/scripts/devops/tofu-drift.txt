@@ -9,9 +9,10 @@ namespace/donhang labeled
 
       ~ metadata {
           ~ generation       = 0 -> (known after apply)
-          - labels           = {
-              - "owner" = "by-hand"
-            } -> null
+          ~ labels           = {
+              - "owner"                              = "by-hand" -> null
+                # (3 unchanged elements hidden)
+            }
             name             = "donhang"
           ~ resource_version = ...
             # (1 unchanged attribute hidden)
@@ -28,8 +29,9 @@ exit code: 2
         # (1 unchanged attribute hidden)
 
       ~ metadata {
-          + labels           = {
-              + "owner" = "by-hand"
+          ~ labels           = {
+              + "owner"                              = "by-hand"
+                # (3 unchanged elements hidden)
             }
             name             = "donhang"
           ~ resource_version = ...
@@ -50,5 +52,5 @@ exit code: 2
 
 == tofu apply
 Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
-labels now: {"kubernetes.io/metadata.name":"donhang"}
+labels now: {"kubernetes.io/metadata.name":"donhang","pod-security.kubernetes.io/audit":"restricted","pod-security.kubernetes.io/enforce":"baseline","pod-security.kubernetes.io/warn":"restricted"}
 tofu plan -detailed-exitcode: exit code 0

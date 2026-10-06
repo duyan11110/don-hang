@@ -26,6 +26,17 @@ OpenTofu will perform the following actions:
 
           + node {
               + role = "control-plane"
+
+              + extra_port_mappings {
+                  + container_port = 30080
+                  + host_port      = 18080
+                  + listen_address = "127.0.0.1"
+                }
+              + extra_port_mappings {
+                  + container_port = 30443
+                  + host_port      = 18443
+                  + listen_address = "127.0.0.1"
+                }
             }
         }
     }
@@ -62,6 +73,11 @@ OpenTofu will perform the following actions:
 
       + metadata {
           + generation       = (known after apply)
+          + labels           = {
+              + "pod-security.kubernetes.io/audit"   = "restricted"
+              + "pod-security.kubernetes.io/enforce" = "baseline"
+              + "pod-security.kubernetes.io/warn"    = "restricted"
+            }
           + name             = "donhang"
           + resource_version = ...
           + uid              = (known after apply)

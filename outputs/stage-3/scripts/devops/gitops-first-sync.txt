@@ -2,22 +2,26 @@
 application.argoproj.io/staging
 staging: OutOfSync, Missing
 
-ConfigMap/api             OutOfSync  
-ConfigMap/db-init         OutOfSync  
-ConfigMap/keycloak-realm  OutOfSync  
-Deployment/api            OutOfSync  
-Deployment/db             OutOfSync  
-Deployment/keycloak       OutOfSync  
-Deployment/mailpit        OutOfSync  
-Deployment/redis          OutOfSync  
-SealedSecret/api          OutOfSync  
-SealedSecret/db           OutOfSync  
-SealedSecret/keycloak     OutOfSync  
-Service/api               OutOfSync  
-Service/db                OutOfSync  
-Service/keycloak          OutOfSync  
-Service/mailpit           OutOfSync  
-Service/redis             OutOfSync  
+ConfigMap/api               OutOfSync  
+ConfigMap/db-init           OutOfSync  
+ConfigMap/keycloak-realm    OutOfSync  
+Deployment/api              OutOfSync  
+Deployment/db               OutOfSync  
+Deployment/keycloak         OutOfSync  
+Deployment/mailpit          OutOfSync  
+Deployment/redis            OutOfSync  
+SealedSecret/api            OutOfSync  
+SealedSecret/db             OutOfSync  
+SealedSecret/fake-gateway   OutOfSync  
+SealedSecret/keycloak       OutOfSync  
+SealedSecret/notifications  OutOfSync  
+SealedSecret/payments       OutOfSync  
+SealedSecret/rabbitmq       OutOfSync  
+Service/api                 OutOfSync  
+Service/db                  OutOfSync  
+Service/keycloak            OutOfSync  
+Service/mailpit             OutOfSync  
+Service/redis               OutOfSync  
 
 == sync
 application.argoproj.io/staging
@@ -33,23 +37,27 @@ staging   Synced        Healthy
 NAME   READY   UP-TO-DATE   AVAILABLE   AGE
 api    2/2     2            2           ...
 
-ConfigMap/api             Synced  
-ConfigMap/db-init         Synced  
-ConfigMap/keycloak-realm  Synced  
-Deployment/api            Synced  
-Deployment/db             Synced  
-Deployment/keycloak       Synced  
-Deployment/mailpit        Synced  
-Deployment/redis          Synced  
-Pod/migrate                       
-SealedSecret/api          Synced  
-SealedSecret/db           Synced  
-SealedSecret/keycloak     Synced  
-Service/api               Synced  
-Service/db                Synced  
-Service/keycloak          Synced  
-Service/mailpit           Synced  
-Service/redis             Synced  
+ConfigMap/api               Synced  
+ConfigMap/db-init           Synced  
+ConfigMap/keycloak-realm    Synced  
+Deployment/api              Synced  
+Deployment/db               Synced  
+Deployment/keycloak         Synced  
+Deployment/mailpit          Synced  
+Deployment/redis            Synced  
+Pod/migrate                         
+SealedSecret/api            Synced  
+SealedSecret/db             Synced  
+SealedSecret/fake-gateway   Synced  
+SealedSecret/keycloak       Synced  
+SealedSecret/notifications  Synced  
+SealedSecret/payments       Synced  
+SealedSecret/rabbitmq       Synced  
+Service/api                 Synced  
+Service/db                  Synced  
+Service/keycloak            Synced  
+Service/mailpit             Synced  
+Service/redis               Synced  
 
 == is the namespace donhang among the Application's objects?
 no
