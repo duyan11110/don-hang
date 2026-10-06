@@ -16,7 +16,8 @@ terraform {
 # kubectl label shows up in the next plan as a change OpenTofu would undo.
 resource "kubernetes_namespace_v1" "donhang" {
   metadata {
-    name = "donhang"
+    name   = "donhang"
+    labels = local.pod_security_labels
   }
 }
 
@@ -36,5 +37,17 @@ resource "kubernetes_secret_v1" "sealing_key" {
   data = {
     "tls.crt" = var.sealing_certificate
     "tls.key" = var.sealing_private_key
+  }
+}
+
+# lesson: k8s.l3.pod-security-admission
+# The namespace's Pod Security labels (from stage-3): enforce the level the
+# environment gives, the strictest that all of its Pods pass; warn and audit
+# at restricted, so that every Pod short of it is reported.
+locals {
+  pod_security_labels = {
+    "pod-security.kubernetes.io/enforce" = var.pod_security_enforce
+    "pod-security.kubernetes.io/warn"    = "restricted"
+    "pod-security.kubernetes.io/audit"   = "restricted"
   }
 }

@@ -10,6 +10,15 @@ module "cluster" {
   source  = "../../../modules/kind-cluster"
   name    = "donhang-staging"
   workers = 0
+
+  # lesson: k8s.l2.ingress
+  # Traefik listens on node ports 30080 (HTTP) and 30443 (HTTPS) of this
+  # node (deploy/gitops/config-repo/apps/traefik.yaml); this machine reaches
+  # them as localhost:18080 and localhost:18443.
+  published_ports = [
+    { node_port = 30080, host_port = 18080 },
+    { node_port = 30443, host_port = 18443 },
+  ]
 }
 
 # The platform layer reads these through terraform_remote_state. The

@@ -30,4 +30,8 @@ module "platform" {
   source              = "../../../modules/donhang-platform"
   sealing_certificate = file("${path.root}/../../../../../secrets/sealing.crt")
   sealing_private_key = file("${path.root}/../../../../../secrets/sealing.key")
+
+  # PostgreSQL, RabbitMQ, Keycloak, Redis and Mailpit run their images as
+  # they are and pass baseline, not restricted (k8s.l3.pod-security-admission).
+  pod_security_enforce = "baseline"
 }
