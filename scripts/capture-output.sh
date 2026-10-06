@@ -9,7 +9,13 @@ tag="${TAG:-stage-0}"
 
 capture() {
   local script="${1#./}"
-  local out="outputs/$tag/${script%.sh}.txt"
+  shift
+  # Extra arguments are passed to the script and named in the output file:
+  # dr-drill.sh --without-sealing-key -> dr-drill-without-sealing-key.txt.
+  local -a args=("$@")
+  local suffix=""
+  for arg in "${args[@]}"; do suffix="$suffix-${arg#--}"; done
+  local out="outputs/$tag/${script%.sh}$suffix.txt"
   mkdir -p "$(dirname "$out")"
 
   # scripts/terminal/ssh-into-lab.sh and scripts/debug/run-throws-deep.sh talk
@@ -26,7 +32,7 @@ capture() {
       # A script that says it runs on the host (it needs docker or dotnet
       # itself) is run here, like one that sends itself into the box.
       if grep -q -e 'lab-run.sh' -e '^# Runs on the host' "$script"; then
-        command=(bash "$script")
+        command=(bash "$script" "${args[@]}")
       else
         command=(scripts/lab-run.sh "$script")
       fi
@@ -41,12 +47,21 @@ capture() {
     return 1
   fi
 
+  # OpenTofu prints a progress line every 10 s while it works, so how many
+  # there are depends on the machine: the devops scripts run here lose them.
+  if is_devops_host "$script"; then
+    perl -ni -e 'print unless /: Still [a-z]+\.\.\. \[[0-9hms]+ elapsed\]$/' "$out"
+  fi
+
   # kubectl pads every table column to its widest value, so a masked Pod name
   # or age would still shift the columns after it. In the output of
-  # scripts/k8s/, each run of two or more spaces between words becomes three.
-  case "$script" in
-    scripts/k8s/*) perl -pi -e 's/(?<=\S) {2,}(?=\S)/   /g' "$out" ;;
-  esac
+  # scripts/k8s/ (and of the devops scripts that run kubectl against
+  # donhang-staging), each run of two or more spaces between words becomes
+  # three. OpenTofu's own output lines up nothing that changes, so its
+  # scripts keep their spacing.
+  if [[ "$script" == scripts/k8s/* ]] || kubectl_tables "$script"; then
+    perl -pi -e 's/(?<=\S) {2,}(?=\S)/   /g' "$out"
+  fi
 
   perl - "$out" <<'MASK'
 my ($file) = @ARGV;
@@ -67,8 +82,8 @@ close $written;
 MASK
 
   # Then line the columns up again, now that no value in them changes.
-  case "$script" in
-    scripts/k8s/*) perl - "$out" <<'ALIGN'
+  if [[ "$script" == scripts/k8s/* ]] || kubectl_tables "$script"; then
+    perl - "$out" <<'ALIGN'
 my ($file) = @ARGV;
 open my $in, '<', $file or die "$file: $!";
 my @lines = map { chomp; $_ } <$in>;
@@ -99,8 +114,7 @@ open my $written, '>', $file or die "$file: $!";
 print {$written} "$_\n" for @out;
 close $written;
 ALIGN
-      ;;
-  esac
+  fi
 
   echo "captured $out"
 }
@@ -116,19 +130,49 @@ k8s_scripts=(
   health liveness readiness resources
 )
 
+# The scripts of devops/iac, gitops and secrets-backup-dr drive OpenTofu,
+# kind, Argo CD and the Git server inside donhang-staging from this machine,
+# and build on each other: --devops-host runs them here, in the order of the
+# lessons. CI has none of that, so --all skips them. tofu-env.sh and
+# gitops-render.sh are plumbing they call.
+devops_host_scripts=(
+  tofu-teardown tofu-first-cluster tofu-plan-apply tofu-state tofu-moved tofu-teardown
+  tofu-environments tofu-db tofu-lock tofu-drift
+  argocd-install gitops-repo gitops-first-sync gitops-order gitops-deploy
+  gitops-self-heal gitops-revert gitops-promote
+  sealed-secrets-install seal-secrets rotate-db-password
+  "dr-drill --without-sealing-key" dr-drill
+)
+is_devops_host() {
+  local name
+  for name in "${devops_host_scripts[@]}" tofu-env gitops-render; do
+    [ "$1" = "scripts/devops/${name%% *}.sh" ] && return 0
+  done
+  return 1
+}
+
+kubectl_tables() { is_devops_host "$1" && [[ "$1" != scripts/devops/tofu-* ]]; }
+
 if [ "${1:-}" = "--all" ]; then
   # scripts/lib/ holds helpers other scripts source, not lessons; scripts/k8s/
   # is captured by --k8s.
   for script in $(find scripts git-playground -name '*.sh' ! -path 'scripts/lib/*' ! -path 'scripts/k8s/*' \
                     ! -name 'up.sh' ! -name 'down.sh' ! -name 'dev-secrets.sh' \
                     ! -name 'lab-run.sh' ! -name 'capture-output.sh' | sort); do
-    capture "$script"
+    is_devops_host "$script" || capture "$script"
   done
 elif [ "${1:-}" = "--k8s" ]; then
   scripts/k8s/cluster-down.sh >/dev/null
   for name in "${k8s_scripts[@]}"; do
     capture "scripts/k8s/$name.sh"
   done
+elif [ "${1:-}" = "--devops-host" ]; then
+  # The first tofu-teardown removes what an earlier run left (it captures
+  # nothing new: the second one, after the modules lesson, overwrites it).
+  for entry in "${devops_host_scripts[@]}"; do
+    read -r -a words <<< "$entry"
+    capture "scripts/devops/${words[0]}.sh" "${words[@]:1}"
+  done
 else
-  capture "${1:?usage: scripts/capture-output.sh <path to a script> | --all | --k8s}"
+  capture "${1:?usage: scripts/capture-output.sh <path to a script> [arguments] | --all | --k8s | --devops-host}" "${@:2}"
 fi

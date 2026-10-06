@@ -88,3 +88,20 @@ new token -> 200 \(after \K[0-9]+
 ^== ghcr\.io/duyan11110/donhang-[a-z-]+:sha-.* -> ghcr\.io/duyan11110/donhang-[a-z-]+@sha256:\K[0-9a-f]{64}
 ^Verification for ghcr\.io/duyan11110/donhang-[a-z-]+@sha256:\K[0-9a-f]{64}(?= --)
 ^built by .* at commit \K[0-9a-f]{40}
+# Stage-3 OpenTofu scripts (captured on the host, capture-output.sh
+# --devops-host): how long each step took, a namespace's resource version,
+# how long a plan waited for the lock.
+complete after \K(?:[0-9]+m)?[0-9]+(?=s\b)
+resource_version += \K.*$
+^it waited about \K[0-9]+(?= s)
+# Stage-3 GitOps scripts: commits of the config repository (made on every
+# run) and their dates, the start of a SealedSecret's ciphertext, how long
+# each step of the DR drill took.
+^\K[0-9a-f]{7}(?= [a-z-]+\.sh: )
+^\K[0-9a-f]{7}(?= [0-9]{4}-)
+^[0-9a-f]{7} \K[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(?= )
+^pushed \K[0-9a-f]{7}$
+newest commit in the mirror: \K[0-9a-f]{7}
+^    POSTGRES_PASSWORD: \K\S+(?=\.\.\.$)
+^ *\K[0-9]+(?= s  [0-9]\. )
+^total: \K[0-9]+(?= s from)
