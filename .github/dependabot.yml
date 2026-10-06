@@ -1,0 +1,53 @@
+# lesson: devops.l3.automated-dependency-updates
+# Dependabot, a GitHub service, reads this file and opens a pull request
+# when a newer version of a dependency exists. Each pull request changes the
+# pin itself (a lock file, an action's commit id, a base image digest) and
+# must pass ci.yml like any other change. Once a week; minor and patch
+# updates of one ecosystem arrive together as one pull request; a release
+# is proposed only after it has been out for 7 days.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      nuget-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pub
+    directory: /DonHang.App
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      pub-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /DonHang.Api
+      - /DonHang.Notifications
+      - /DonHang.Payments
+      - /fake-gateway
+      - /lab
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      docker-minor-and-patch:
+        update-types: [minor, patch]
