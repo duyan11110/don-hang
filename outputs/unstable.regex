@@ -35,7 +35,7 @@ responded [0-9]+ in \K[0-9]+(?=ms)
 \(\K(?:[0-9]+[smhd]){1,2}(?= ago\))
 \b(?:web|api|coredns|kindnet|kube-proxy|db|redis|keycloak|mailpit)-\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
 \b(?:web|api|coredns|db|redis|keycloak|mailpit)-\.\.\.-\K[bcdfghjklmnpqrstvwxz2456789]{5}\b
-\b10\.244\.[0-9]+\.[0-9]+\b
+\b10\.244\.[0-9]+\.[0-9]+\b(?!/)
 \b10\.96\.(?!0\.1\b|0\.10\b)[0-9]+\.[0-9]+\b
 (?<=   )donhang-worker\K2?(?=   |$)
 pod-template-hash=\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
@@ -121,3 +121,20 @@ Deploy verified api sha-\K[0-9a-f]{40}
 ^\.\.\. \K[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(?= )
 # statefulset-db.sh: the time on PostgreSQL's log line.
 ^\K[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+(?= \+07 \[[0-9]+\] LOG:)
+# Stage-3 k8s scripts of networking-deep, bare-metal and
+# operators-and-cluster-lifecycle (capture-output.sh --k8s-host): the random
+# parts of more Pod names, node ports Kubernetes picked, kube-proxy's chain
+# for one Pod (named from its address), hardware (MAC) addresses of node
+# containers, how long a failover took, certificate expiry dates, the port
+# kind gave donhang-ha's load balancer. (Pod ranges such as 10.244.1.0/24
+# stay: they say which node owns which range.)
+\b(?:echo-ip|traefik-ha|controller|local-path-provisioner|store|payments)-\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
+\b(?:echo-ip|traefik-ha|controller|local-path-provisioner|store|payments)-\.\.\.-\K[bcdfghjklmnpqrstvwxz2456789]{5}\b
+\bspeaker-\K[bcdfghjklmnpqrstvwxz2456789]{5}\b
+\b(?:80|443):\K3(?!0080/|0443/)[0-9]{4}(?=/TCP)
+KUBE-SEP-\K[A-Z0-9]{16}\b
+\b(?:[0-9a-f]{2}:){5}[0-9a-f]{2}\b
+^after about \K[0-9]+ s and [0-9]+ calls \([0-9]+(?= failed\))
+^calls: \K[0-9]+, failed: [0-9]+, the last one about [0-9]+(?= s after the pause)
+\b[A-Z][a-z]{2} [0-9]{2}, [0-9]{4} [0-9]{2}:[0-9]{2} UTC\b
+^the kubeconfig's API server: https://127\.0\.0\.1:\K[0-9]+$

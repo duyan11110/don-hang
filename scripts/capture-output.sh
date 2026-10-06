@@ -146,13 +146,20 @@ devops_host_scripts=(
 # and security-and-policy run on donhang-staging after the scripts above
 # (or on donhang, from pvc to reclaim-policy), each building on the one
 # before: --k8s-host runs them here, in the order of the lessons, and
-# leaves donhang-staging running.
+# leaves donhang-staging running. egress-policy (networking-deep) commits
+# staging's egress policies right after its ingress ones. Then the lessons
+# of networking-deep, bare-metal and operators-and-cluster-lifecycle, on
+# donhang; control-plane-ha, etcd-snapshot and encryption-at-rest create
+# and delete clusters of their own (donhang-ha, donhang-lifecycle).
 k8s_host_scripts=(
   helm-template helm-release traefik-install ingress gateway gateway-tls
   kustomize-render kustomize-config-repo
   pvc storage-class reclaim-policy statefulset-db headless-dns stateful-staging db-backup
   api-request-checks rbac-role service-accounts cluster-roles security-context pod-security
-  network-policy admission-policy
+  network-policy egress-policy admission-policy
+  pod-network cni kube-proxy service-types coredns dns-search network-debug
+  metallb-install metallb-pool metallb-l2 external-traffic-policy traefik-ha csi control-plane-ha
+  custom-resources kubeadm etcd-snapshot encryption-at-rest drain version-skew
 )
 
 is_devops_host() {
