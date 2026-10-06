@@ -140,8 +140,21 @@ devops_host_scripts=(
   argocd-install gitops-repo gitops-first-sync gitops-order gitops-deploy
   gitops-self-heal gitops-revert gitops-promote
   sealed-secrets-install seal-secrets rotate-db-password
-  "dr-drill --without-sealing-key" dr-drill
+  "dr-drill --without-sealing-key" dr-drill deploy-verified
 )
+# From stage-3 the k8s track's lessons of ingress-helm, state-and-storage
+# and security-and-policy run on donhang-staging after the scripts above
+# (or on donhang, from pvc to reclaim-policy), each building on the one
+# before: --k8s-host runs them here, in the order of the lessons, and
+# leaves donhang-staging running.
+k8s_host_scripts=(
+  helm-template helm-release traefik-install ingress gateway gateway-tls
+  kustomize-render kustomize-config-repo
+  pvc storage-class reclaim-policy statefulset-db headless-dns stateful-staging db-backup
+  api-request-checks rbac-role service-accounts cluster-roles security-context pod-security
+  network-policy admission-policy
+)
+
 is_devops_host() {
   local name
   for name in "${devops_host_scripts[@]}" tofu-env gitops-render; do
@@ -170,6 +183,10 @@ elif [ "${1:-}" = "--devops-host" ]; then
     read -r -a words <<< "$entry"
     capture "scripts/devops/${words[0]}.sh" "${words[@]:1}"
   done
+elif [ "${1:-}" = "--k8s-host" ]; then
+  for name in "${k8s_host_scripts[@]}"; do
+    capture "scripts/k8s/$name.sh"
+  done
 else
-  capture "${1:?usage: scripts/capture-output.sh <path to a script> [arguments] | --all | --k8s | --devops-host}" "${@:2}"
+  capture "${1:?usage: scripts/capture-output.sh <path to a script> [arguments] | --all | --k8s | --devops-host | --k8s-host}" "${@:2}"
 fi

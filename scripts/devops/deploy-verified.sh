@@ -7,11 +7,7 @@ cd "$(dirname "$0")/../.."
 source scripts/lib/images.sh
 source scripts/lib/gitops.sh
 
-if [ -f "$config_repo/envs/staging/kustomization.yaml" ]; then
-  echo "the config repository uses the Kustomize layout of k8s.l2.config-repo-overlays;" >&2
-  echo "run scripts/devops/gitops-repo.sh --reset to go back to plain manifests first" >&2
-  exit 1
-fi
+full_layout_only
 [ -d "$config_repo/.git" ] || scripts/devops/gitops-repo.sh >/dev/null
 
 # lesson: devops.l3.verifying-before-deploy
@@ -49,6 +45,9 @@ for tag in "${tags[@]}"; do
     continue
   fi
   app_refresh
+  # Healthy alone could still be the previous commit's state: first wait
+  # for the sync of this commit to finish.
+  app_wait_sync "$(config_head --verify)" >/dev/null
   app_wait Synced Healthy "$(config_head --verify)"
   kubectl rollout status deployment/api -n donhang --timeout=300s >/dev/null
   # With a digest in the image, the node pulls by digest: what runs is
