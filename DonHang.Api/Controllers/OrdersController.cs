@@ -4,6 +4,7 @@ using DonHang.Api.Monitoring;
 using DonHang.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DonHang.Api.Controllers;
 
@@ -26,7 +27,11 @@ public sealed class OrdersController(
     // lesson: backend.l2.idempotent-endpoints
     // The optional Idempotency-Key header is created by the client once per
     // order it means to place; a retry sends the same value again.
+    // lesson: backend.l3.rate-limiting
+    // From stage-3 the "orders" rate limit (Program.cs) applies: a customer
+    // over the limit gets 429 before this method runs.
     [Authorize]
+    [EnableRateLimiting("orders")]
     [HttpPost]
     public async Task<ActionResult<OrderDto>> Create(
         CreateOrderRequest request,

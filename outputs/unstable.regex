@@ -53,3 +53,4 @@ next attempt in \K[0-9.]+(?= s)
 ^for order [0-9]+ waits \K[0-9.]+(?= s$)
 # How many attempts a refund took depends on when the circuit breaker opened.
 ^refunded \| \K[0-9]+$
+Retry-After: \K[0-9]+$

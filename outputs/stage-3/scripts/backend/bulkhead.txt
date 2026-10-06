@@ -1,0 +1,7 @@
+redis is stopped: every product read now queries PostgreSQL
+== 100 requests at once for GET /api/v1/products/3
+  answered 200 or 503, nothing else: yes
+  some answered 503: yes
+  some answered 200: yes
+== POST /api/v1/orders sent at the same moment
+  -> 201

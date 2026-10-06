@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using DonHang.Catalog;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DonHang.Api.Controllers;
 
@@ -20,6 +21,7 @@ public sealed class ProductsController(ICatalog catalog) : ControllerBase
     // GET /api/v1/products?limit=20&offset=40. A `limit` outside 1..100 is
     // refused with 400, so no request can ask for the whole table at once.
     [HttpGet]
+    [EnableRateLimiting("catalog-reads")]
     public async Task<ActionResult<List<ProductDto>>> List(
         [FromQuery, Range(1, MaxPageSize)] int limit = 20,
         [FromQuery, Range(0, int.MaxValue)] int offset = 0,
@@ -33,7 +35,11 @@ public sealed class ProductsController(ICatalog catalog) : ControllerBase
     // lesson: backend.l2.cache-aside
     // Catalog reads one product through its ProductCache, so a repeat of this
     // request within the TTL is answered from Redis.
+    // lesson: backend.l3.bulkhead
+    // Both product reads share the "catalog-reads" concurrency limit
+    // (Program.cs): a read over it gets 503 at once. Orders do not count.
     [HttpGet("{id:int}")]
+    [EnableRateLimiting("catalog-reads")]
     public async Task<ActionResult<ProductDto>> Get(int id)
     {
         var product = await catalog.FindAsync(id);

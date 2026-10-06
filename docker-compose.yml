@@ -134,6 +134,10 @@ services:
       # Only this setting changed, no log call in the code; without it the
       # same build prints the usual readable lines (as `dotnet run` does).
       Logging__Console__FormatterName: "json"
+      # lesson: backend.l3.rate-limiting
+      # 10 orders per customer per minute (Program.cs); the lab counts in
+      # windows of 10 s, so that scripts/backend/rate-limit.sh waits seconds.
+      RateLimiting__Orders__Window: "00:00:10"
     depends_on:
       db:
         condition: service_healthy

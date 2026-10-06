@@ -7,7 +7,9 @@ using DonHang.Infrastructure;
 using DonHang.Messaging;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.RateLimiting;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -96,9 +98,60 @@ builder.Services.AddHealthChecks()
 // lesson: frontend.l1.fetching-with-http-package
 // DonHang.App (app-web:8081) and the api are different origins behind
 // Caddy (api:8080); bearer tokens need no cookies, so a permissive dev policy
-// is enough here — no credentials to leak.
+// is enough here — no credentials to leak. From stage-3 the app may also read
+// Retry-After, which a browser hides from another origin unless exposed.
 builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+    options.AddDefaultPolicy(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()
+        .WithExposedHeaders("Retry-After")));
+
+// lesson: backend.l3.rate-limiting
+// "orders": each customer may place PermitLimit orders per fixed Window,
+// counted by the `sub` of the access token. Not by client IP address: behind
+// Caddy every request reaches the api from Caddy's address. Each api process
+// keeps its own counts in memory, so two copies allow twice as many.
+var ordersLimit = new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) };
+builder.Configuration.GetSection("RateLimiting:Orders").Bind(ordersLimit);
+
+// lesson: backend.l3.bulkhead
+// "catalog-reads": at most PermitLimit product reads run at once and QueueLimit
+// more wait for a turn; any read beyond that is refused at once. With Redis
+// down every product read needs a database connection, and orders need them too.
+var catalogReads = new ConcurrencyLimiterOptions { PermitLimit = 20, QueueLimit = 5 };
+builder.Configuration.GetSection("RateLimiting:CatalogReads").Bind(catalogReads);
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("orders", context =>
+    {
+        var customer = context.User.FindFirst("sub")?.Value;
+        if (customer is null) return RateLimitPartition.GetNoLimiter("signed-out");
+        return RateLimitPartition.GetFixedWindowLimiter(customer, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = ordersLimit.PermitLimit,
+            Window = ordersLimit.Window,
+        });
+    });
+    options.AddConcurrencyLimiter("catalog-reads", limiter =>
+    {
+        limiter.PermitLimit = catalogReads.PermitLimit;
+        limiter.QueueLimit = catalogReads.QueueLimit;
+    });
+
+    // lesson: backend.l3.rate-limiting
+    // A refused request never reaches the controller: the middleware answers
+    // it with RejectionStatusCode, 503 unless set. A fixed window knows when
+    // its next permit comes, so that refusal becomes 429 with Retry-After in
+    // whole seconds. The concurrency limiter cannot know: its refusals stay 503.
+    options.OnRejected = (context, _) =>
+    {
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+        }
+        return ValueTask.CompletedTask;
+    };
+});
 
 // lesson: devops.l2.migrations-in-the-pipeline
 // Until stage-1 the app applied pending migrations here, every time it
@@ -123,6 +176,10 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors();
 app.UseAuthentication();
+// lesson: backend.l3.rate-limiting
+// After authentication, so that the "orders" policy can read the caller's
+// `sub`; only endpoints marked [EnableRateLimiting] are limited.
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 app.MapOpenApi();

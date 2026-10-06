@@ -39,6 +39,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         builder.UseSetting("ConnectionStrings:Default", Database.ConnectionString);
         builder.UseSetting("ConnectionStrings:Redis", redis.GetConnectionString());
+        // From stage-3 POST /api/v1/orders is rate limited per customer; the
+        // tests place many orders as the same few customers within a minute.
+        // RateLimitTests sets a low limit for itself.
+        builder.UseSetting("RateLimiting:Orders:PermitLimit", "1000");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IHostedService>();
