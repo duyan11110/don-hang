@@ -1,0 +1,10 @@
+== GET /api/v1/targets: what Prometheus scrapes, and how the last scrape went
+  job=api url=http://api:8080/metrics interval=5s health=up
+  job=rabbitmq url=http://rabbitmq:15692/metrics/detailed?family=queue_coarse_metrics interval=5s health=up
+
+== the query up{job="api"}
+  1
+
+== the same query after docker compose stop api (and one more scrape)
+  0
+  health=down

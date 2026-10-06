@@ -33,4 +33,5 @@ docker compose stop api 2>/dev/null
 trap 'docker compose start api 2>/dev/null && wait_for_up 1' EXIT
 wait_for_up 0
 echo "  $(up_value)"
-prometheus targets | jq -r '.data.activeTargets[] | "  health=\(.health)"'
+# From stage-3 Prometheus scrapes RabbitMQ too; this line is about the api.
+prometheus targets | jq -r '.data.activeTargets[] | select(.labels.job == "api") | "  health=\(.health)"'

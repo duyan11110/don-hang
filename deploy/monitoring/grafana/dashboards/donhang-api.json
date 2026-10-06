@@ -189,6 +189,96 @@
           "legendFormat": "orders"
         }
       ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Order emails waiting in RabbitMQ",
+      "description": "rabbitmq_detailed_queue_messages_ready: messages in notifications.order-events that Notifications has not taken yet. A gauge: it rises while messages arrive faster than they are handled. From stage-3.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rabbitmq_detailed_queue_messages_ready{queue=\"notifications.order-events\"}",
+          "legendFormat": "waiting"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Dead-lettered order messages",
+      "description": "Messages in notifications.order-events.dead. Any message at all here needs a person to look at it. From stage-3.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "rabbitmq_detailed_queue_messages{queue=\"notifications.order-events.dead\"}",
+          "legendFormat": "dead-lettered"
+        }
+      ]
     }
   ]
 }

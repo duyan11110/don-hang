@@ -218,6 +218,9 @@ services:
   # survive `docker compose restart rabbitmq`. The management page, at
   # http://localhost:15672 (user donhang, RABBITMQ_PASSWORD in .env), shows
   # the exchanges, queues and messages.
+  # lesson: backend.l3.queue-backlog-metrics
+  # The image turns on the rabbitmq_prometheus plugin too: the same numbers
+  # for Prometheus, on port 15692, which only the donhang network reaches.
   rabbitmq:
     image: rabbitmq:4.1.8-management-alpine
     container_name: donhang-rabbitmq
