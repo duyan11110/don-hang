@@ -54,3 +54,10 @@ show kubectl delete namespace storage-lessons
 sleep 10
 echo "== the PersistentVolumes left"
 volumes
+
+# Leave the cluster as it was: the Released volume and retain-local go.
+# (local-path leaves the Released volume's folder on its node.)
+for pv in $(kubectl get pv -o jsonpath='{range .items[?(@.spec.storageClassName=="retain-local")]}{.metadata.name}{" "}{end}'); do
+  kubectl delete pv "$pv" >/dev/null
+done
+kubectl delete -f deploy/k8s/lessons/retain-storageclass.yaml >/dev/null

@@ -1,0 +1,30 @@
+$ kubectl apply -f deploy/k8s/lessons/data-pvc.yaml
+persistentvolumeclaim/data created
+$ kubectl apply -f deploy/k8s/lessons/data-writer-pod.yaml
+pod/writer created
+$ kubectl get pvc data -n storage-lessons -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,CAPACITY:.status.capacity.storage,ACCESS:.spec.accessModes[0]
+NAME   STATUS   CAPACITY   ACCESS
+data   Bound    100Mi      ReadWriteOnce
+
+$ kubectl exec writer -n storage-lessons -- sh -c 'echo "order 13: written by $(hostname)" > /data/note.txt'
+$ kubectl delete pod writer -n storage-lessons
+pod "writer" deleted from storage-lessons namespace
+$ kubectl get pvc data -n storage-lessons -o custom-columns=NAME:.metadata.name,STATUS:.status.phase
+NAME   STATUS
+data   Bound
+
+$ kubectl apply -f deploy/k8s/lessons/data-writer-pod.yaml
+pod/writer created
+$ kubectl exec writer -n storage-lessons -- cat /data/note.txt
+order 13: written by writer
+
+$ kubectl apply -f - (writer-2: the same Pod, on writer's node)
+pod/writer-2 created
+$ kubectl exec writer-2 -n storage-lessons -- sh -c 'echo "order 14: written by $(hostname)" >> /data/note.txt; cat /data/note.txt'
+order 13: written by writer
+order 14: written by writer-2
+$ kubectl get pods -n storage-lessons -o custom-columns=NAME:.metadata.name,STATUS:.status.phase
+NAME       STATUS
+writer     Running
+writer-2   Running
+nodes they run on: 1

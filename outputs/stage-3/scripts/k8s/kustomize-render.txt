@@ -1,0 +1,40 @@
+== deploy/gitops/config-repo-kustomize
+base/api.yaml
+base/db.yaml
+base/db-backup.yaml
+base/db-init.yaml
+base/fake-gateway.yaml
+base/keycloak.yaml
+base/keycloak-realm.yaml
+base/kustomization.yaml
+base/mailpit.yaml
+base/migrate-hook.yaml
+base/network-policies.yaml
+base/notifications.yaml
+base/payments.yaml
+base/rabbitmq.yaml
+base/redis.yaml
+envs/production/kustomization.yaml
+envs/staging/kustomization.yaml
+
+== kubectl kustomize envs/staging: 35 objects
+== kubectl kustomize envs/production: 35 objects
+$ kubectl kustomize envs/staging | grep -e '^kind:' | sort | uniq -c
+      3 kind: ConfigMap
+      1 kind: CronJob
+      7 kind: Deployment
+      8 kind: NetworkPolicy
+      1 kind: PersistentVolumeClaim
+      3 kind: Pod
+     10 kind: Service
+      2 kind: StatefulSet
+
+== the api's ConfigMap in staging, and the reference to it
+name: api-...
+      2 name: api-...
+
+$ diff <(kubectl kustomize envs/staging) <(kubectl kustomize envs/production)
+443c443
+<   replicas: 2
+---
+>   replicas: 3

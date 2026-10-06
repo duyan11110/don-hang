@@ -106,3 +106,8 @@ newest commit in the mirror: \K[0-9a-f]{7}
 ^ *\K[0-9]+(?= s  [0-9]\. )
 ^total: \K[0-9]+(?= s from)
 ^endpoint = "https://127\.0\.0\.1:\K[0-9]+(?=")
+# Stage-3 k8s scripts on the host (capture-output.sh --k8s-host): the id in
+# a dynamically provisioned volume's name, the fingerprint of the
+# certificate kubectl signs in with.
+pvc-\K[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+X509SHA256=\K[0-9a-f]{64}

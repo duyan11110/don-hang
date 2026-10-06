@@ -1,0 +1,32 @@
+$ kubectl get storageclass
+NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  ...
+
+$ kubectl apply -f deploy/k8s/lessons/data-pvc.yaml
+persistentvolumeclaim/data created
+claim data: Pending, PersistentVolumes for it: 0
+$ kubectl apply -f deploy/k8s/lessons/data-writer-pod.yaml
+pod/writer created
+claim data: Bound
+
+== the PersistentVolume
+storage class: standard
+reclaim policy: Delete
+folder: /var/local-path-provisioner/pvc-..._storage-lessons_data
+node in its nodeAffinity is writer's node: yes
+
+$ kubectl cordon <writer's node>
+$ kubectl delete pod writer -n storage-lessons
+pod "writer" deleted from storage-lessons namespace
+$ kubectl apply -f deploy/k8s/lessons/data-writer-pod.yaml
+pod/writer created
+$ kubectl get pod writer -n storage-lessons -o custom-columns=NAME:.metadata.name,STATUS:.status.phase
+NAME     STATUS
+writer   Pending
+== why, from the scheduler
+1 node(s) didn't match PersistentVolume's node affinity, 1 node(s) had untolerated taint(s), 1 node(s) were unschedulable. no new claims to deallocate, preemption: 0/3 nodes are available: 3 Preemption is not helpful for scheduling.
+
+$ kubectl uncordon <writer's node>
+$ kubectl get pod writer -n storage-lessons -o custom-columns=NAME:.metadata.name,STATUS:.status.phase
+NAME     STATUS
+writer   Running
