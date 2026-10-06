@@ -18,6 +18,18 @@ datasources:
     type: loki
     access: proxy
     url: http://loki:3100
+    # lesson: backend.l3.trace-ids-in-logs
+    # From stage-3: a line's trace_id (structured metadata, see Alloy's
+    # config) shows as a link that opens that trace in the Tempo data source.
+    # $$ is how this file writes a literal $.
+    jsonData:
+      derivedFields:
+        - name: TraceId
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: "$${__value.raw}"
+          urlDisplayLabel: "Open the trace"
 
   # lesson: backend.l3.traces-and-spans
   # From stage-3, the third data source: Tempo, for traces. Explore → Tempo

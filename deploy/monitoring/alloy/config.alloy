@@ -23,7 +23,22 @@ loki.source.docker "donhang" {
   host          = "unix:///var/run/docker.sock"
   targets       = discovery.docker.donhang.targets
   relabel_rules = discovery.relabel.compose_service.rules
-  forward_to    = [loki.write.loki.receiver]
+  forward_to    = [loki.process.trace_ids.receiver]
+}
+
+// lesson: backend.l3.trace-ids-in-logs
+// ...from stage-3, copy the trace id out of each JSON line's Scopes into
+// structured metadata, trace_id, kept next to the line but not indexed. Not
+// a label: a label with a new value for every request would make a new
+// stream for every request. A line with no trace id passes through as it is...
+loki.process "trace_ids" {
+  stage.json {
+    expressions = { trace_id = "Scopes[?TraceId] | [0].TraceId" }
+  }
+  stage.structured_metadata {
+    values = { trace_id = "" }
+  }
+  forward_to = [loki.write.loki.receiver]
 }
 
 // ...and send every line to Loki.

@@ -57,3 +57,11 @@ Retry-After: \K[0-9]+$
 # Stage-3 tracing scripts: trace and span ids are random on every run.
 ^traceparent: 00-\K[0-9a-f]{32}-[0-9a-f]{16}(?=-0[01]$)
 trace id \K[0-9a-f]{32}
+^payments: Refund \K[0-9]+(?= for order)
+trace_id="\K[0-9a-f]{32}
+# From stage-3 JSON log lines carry "Scopes" (IncludeScopes): span, trace and
+# connection ids, new for every request.
+(?:SpanId|ParentId)"?: ?"?\K[0-9a-f]{16}
+TraceId"?: ?"?\K[0-9a-f]{32}
+\b0HN[0-9A-Z]{10}\b
+\.\.\.:\K[0-9]{8}\b

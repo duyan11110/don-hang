@@ -1,0 +1,36 @@
+== GET /api/v1/products/2
+  -> 200
+== the line the api wrote for it, as it is:
+{"EventId":0,"LogLevel":"Information","Category":"DonHang.Api.Middleware.RequestLoggingMiddleware","Message":"GET /api/v1/products/2 responded 200 in ...ms","State":{"Method":"GET","Path":"/api/v1/products/2","StatusCode":200,"ElapsedMs":...,"{OriginalFormat}":"{Method} {Path} responded {StatusCode} in {ElapsedMs}ms"},"Scopes":[{"Message":"SpanId:..., TraceId:..., ParentId:...","SpanId":"...","TraceId":"...","ParentId":"..."},{"Message":"ConnectionId:...","ConnectionId":"..."},{"Message":"RequestPath:/api/v1/products/2 RequestId:...:...","RequestId":"...:...","RequestPath":"/api/v1/products/2"}]}
+
+== the same line, pretty-printed:
+{
+  "EventId": 0,
+  "LogLevel": "Information",
+  "Category": "DonHang.Api.Middleware.RequestLoggingMiddleware",
+  "Message": "GET /api/v1/products/2 responded 200 in ...ms",
+  "State": {
+    "Method": "GET",
+    "Path": "/api/v1/products/2",
+    "StatusCode": 200,
+    "ElapsedMs": ...,
+    "{OriginalFormat}": "{Method} {Path} responded {StatusCode} in {ElapsedMs}ms"
+  },
+  "Scopes": [
+    {
+      "Message": "SpanId:..., TraceId:..., ParentId:...",
+      "SpanId": "...",
+      "TraceId": "...",
+      "ParentId": "..."
+    },
+    {
+      "Message": "ConnectionId:...",
+      "ConnectionId": "..."
+    },
+    {
+      "Message": "RequestPath:/api/v1/products/2 RequestId:...:...",
+      "RequestId": "...:...",
+      "RequestPath": "/api/v1/products/2"
+    }
+  ]
+}

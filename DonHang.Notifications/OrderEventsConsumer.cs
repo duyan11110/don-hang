@@ -104,6 +104,7 @@ public sealed class OrderEventsConsumer(
         try
         {
             await db.SaveChangesAsync();
+            logger.LogInformation("Saved the {Subject} email for order {OrderId}", subject, message.OrderId);
         }
         catch (DbUpdateException ex) when (Inbox.IsDuplicate(ex))
         {
