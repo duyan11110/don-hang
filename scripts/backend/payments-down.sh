@@ -15,9 +15,17 @@ order_10() {
     | sed -nE 's/.*"status":"([a-z]+)".*/\1/p')
   echo "  GET /api/v1/orders/10 -> status $status"
 }
+# waiting_in_queue <expected>: RabbitMQ refreshes these counts every few
+# seconds, so give it up to 15 s to show the expected one, then print it.
 waiting_in_queue() {
-  docker compose exec -T rabbitmq rabbitmqctl -q list_queues name messages \
-    | awk '$1 == "payments.refund-requests" { print "  messages waiting in payments.refund-requests: " $2 }'
+  local count
+  for _ in $(seq 30); do
+    count=$(docker compose exec -T rabbitmq rabbitmqctl -q list_queues name messages \
+      | awk '$1 == "payments.refund-requests" { print $2 }')
+    [ "$count" = "$1" ] && break
+    sleep 0.5
+  done
+  echo "  messages waiting in payments.refund-requests: $count"
 }
 
 reset_refund 10
@@ -37,7 +45,7 @@ echo "  -> $(curl -sS -w '\n%{http_code}' -X POST http://localhost:8080/api/v1/o
 sleep 5
 echo "== 5 seconds later"
 order_10
-waiting_in_queue
+waiting_in_queue 1
 echo "  refund rows for order 10 in donhang_payments: $(payments_sql --tuples-only --no-align --command \
   "SELECT count(*) FROM payments WHERE order_id = 10 AND kind = 'refund'")"
 echo
@@ -47,6 +55,6 @@ echo "payments is back"
 wait_for_status 10 cancelled
 echo "== once Payments has caught up"
 order_10
-waiting_in_queue
+waiting_in_queue 0
 echo "  the refund row: $(payments_sql --tuples-only --no-align --command \
   "SELECT status FROM payments WHERE order_id = 10 AND kind = 'refund'")"
