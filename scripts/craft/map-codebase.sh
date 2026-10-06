@@ -11,11 +11,11 @@ ls -1 db docs samples scripts www
 
 echo
 echo "2. where does execution start?"
-find samples -name 'Program.cs'
+find samples -name 'Program.cs' -not -path '*/obj/*' -not -path '*/bin/*'
 
 echo
 echo "3. how much code is there?"
-find samples -name '*.cs' | wc -l
+find samples -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' | wc -l
 
 echo
 echo "4. from a word you saw on screen to the line that produced it:"

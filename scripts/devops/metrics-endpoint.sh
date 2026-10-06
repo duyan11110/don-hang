@@ -12,10 +12,12 @@ echo
 # lesson: devops.l2.metrics-endpoint
 # One line per combination of label values: a metric name, the labels in
 # braces, the current value. The api answers with every metric it has;
-# these are only the lines about GET /api/v1/products/{id}.
+# these are only the lines about GET /api/v1/products/{id}, sorted (the api
+# lists them in the order they first appeared, which differs between runs).
 echo "== GET http://api:8080/metrics (on the donhang network), a few of its lines"
 curl -sS http://api:8080/metrics \
-  | grep -E '^# (HELP|TYPE) http_requests_received_total |^http_requests_received_total\{.*method="GET".*endpoint="api/v1/products/\{id:int\}"'
+  | grep -E '^# (HELP|TYPE) http_requests_received_total |^http_requests_received_total\{.*method="GET".*endpoint="api/v1/products/\{id:int\}"' \
+  | LC_ALL=C sort
 echo
 
 echo "== GET http://localhost:8080/metrics, through Caddy"

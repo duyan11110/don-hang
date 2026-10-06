@@ -8,8 +8,22 @@ source scripts/lib/keycloak.sh
 token=$(keycloak_access_token anh.tran@example.com)
 tmp=$(mktemp -d)
 
+# Afterwards Redis comes back, and the api caches product reads again
+# before the script ends: the api reconnects on its own, a few seconds
+# later, and a script run right after this one must find the cache working.
+restore() {
+  docker compose start redis 2>/dev/null
+  docker compose up --wait redis 2>/dev/null
+  for _ in $(seq 30); do
+    curl -sS -o /dev/null http://localhost:8080/api/v1/products/3
+    [ "$(docker compose exec -T redis redis-cli EXISTS product:3)" = 1 ] && break
+    sleep 1
+  done
+  rm -rf "$tmp"
+}
+
 docker compose stop redis 2>/dev/null
-trap 'docker compose start redis 2>/dev/null; rm -rf "$tmp"' EXIT
+trap restore EXIT
 echo "redis is stopped: every product read now queries PostgreSQL"
 
 # lesson: backend.l3.bulkhead
