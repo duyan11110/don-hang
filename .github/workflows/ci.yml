@@ -408,7 +408,7 @@ jobs:
 
   # Runs the scripts of the k8s track, in the order of the lessons, on a kind
   # cluster created on this runner, and fails when an output differs from the
-  # one committed under outputs/stage-2/scripts/k8s/. The cluster pulls the
+  # one committed under outputs/stage-3/scripts/k8s/. The cluster pulls the
   # api and migrate images from GitHub Container Registry, by the tags in the
   # manifests (a sha- tag and 1.0.0), as a learner's cluster does.
   k8s:
@@ -418,7 +418,7 @@ jobs:
     # the whole track takes well under this.
     timeout-minutes: 60
     env:
-      TAG: stage-2
+      TAG: stage-3
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -461,17 +461,26 @@ jobs:
           kubectl get pods --all-namespaces || true
           kubectl get events -n donhang || true
 
+      - name: Keep the captured outputs
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: k8s-outputs
+          path: outputs/stage-3/scripts/k8s/
+
       - name: Delete the cluster
         if: always()
         run: ./scripts/k8s/cluster-down.sh
 
   # Runs every lesson script against the lab and fails when an output differs
-  # from the one committed under outputs/stage-2/. The k8s track's scripts
-  # run in the k8s job above instead.
+  # from the one committed under outputs/stage-3/. The k8s track's scripts
+  # run in the k8s job above instead; the scripts that drive OpenTofu, Argo CD
+  # and kind clusters from the host, verify-image.sh and change-hotspots.sh
+  # are captured on a learner's machine (see STAGE.md).
   lab:
     runs-on: ubuntu-24.04
     env:
-      TAG: stage-2
+      TAG: stage-3
       # The scripts in scripts/devops/ need Prometheus, Grafana, Loki and
       # Alloy, which Compose starts only with the monitoring profile.
       COMPOSE_PROFILES: monitoring
@@ -513,6 +522,14 @@ jobs:
           detail=$(tail -n 40 "$RUNNER_TEMP"/*.log 2>/dev/null | sed 's/%/%25/g; s/\r//g')
           echo "::error title=ci failed::${detail//$'\n'/%0A}"
           docker compose logs --tail 100
+
+      # The outputs as this run wrote them, to compare or to take as they are.
+      - name: Keep the captured outputs
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lab-outputs
+          path: outputs/
 
       - name: Stop the lab
         if: always()

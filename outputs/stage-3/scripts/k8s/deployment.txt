@@ -1,0 +1,27 @@
+$ kubectl apply -f deploy/k8s/lessons/web-deployment.yaml
+deployment.apps/web created
+$ kubectl wait --for=condition=Available deployment/web -n donhang --timeout=120s
+deployment.apps/web condition met
+$ kubectl get deployment,replicaset,pods -n donhang
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   3/3     3            3           ...
+
+NAME                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-...   3         3         3       ...
+
+NAME              READY   STATUS    RESTARTS   AGE
+pod/web-...-...   1/1     Running   0          ...
+pod/web-...-...   1/1     Running   0          ...
+pod/web-...-...   1/1     Running   0          ...
+
+$ kubectl apply -f - (web-deployment.yaml with replicas: 5)
+deployment.apps/web configured
+$ kubectl get replicaset -n donhang -l app=web
+NAME      DESIRED   CURRENT   READY   AGE
+web-...   5         5         5       ...
+Pods from before the change still running: 3 of 3
+
+$ kubectl delete deployment web -n donhang
+deployment.apps "web" deleted from donhang namespace
+$ kubectl get replicaset,pods -n donhang -l app=web
+No resources found in donhang namespace.

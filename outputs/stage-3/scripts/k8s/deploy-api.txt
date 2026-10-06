@@ -1,0 +1,20 @@
+$ kubectl apply -f deploy/k8s/lessons/api-deployment.yaml
+deployment.apps/api created
+$ kubectl wait --for=condition=Available deployment/api -n donhang --timeout=300s
+deployment.apps/api condition met
+$ kubectl get deployment api -n donhang -o wide
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                                                        SELECTOR
+api    2/2     2            2           ...   api          ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5   app=api
+$ kubectl get pods -n donhang -l app=api
+NAME          READY   STATUS    RESTARTS   AGE
+api-...-...   1/1     Running   0          ...
+api-...-...   1/1     Running   0          ...
+
+$ kubectl get deployment api -n donhang -o jsonpath='{.spec.template.spec.containers[0].imagePullPolicy}'
+IfNotPresent
+
+$ kubectl logs deployment/api -n donhang | grep 'Now listening'
+      Now listening on: http://[::]:8080
+
+== GET http://<IP of an api Pod>:8080/api/v1/products, from a Pod inside the cluster
+wget: server returned error: HTTP/1.1 500 Internal Server Error

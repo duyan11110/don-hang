@@ -1,0 +1,12 @@
+== GET http://api:8080/health/live
+HTTP/1.1 200 OK
+Healthy
+== GET http://api:8080/health/ready
+HTTP/1.1 200 OK
+Healthy
+
+== GET http://<IP of api-no-db>:8080/health/live
+HTTP/1.1 200 OK
+Healthy
+== GET http://<IP of api-no-db>:8080/health/ready
+HTTP/1.1 503 Service Unavailable

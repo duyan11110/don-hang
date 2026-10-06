@@ -1,0 +1,32 @@
+== namespace
+namespace/donhang
+== Secrets, from .env (scripts/k8s/secrets.sh)
+secret/api
+secret/db
+secret/keycloak
+== ConfigMaps
+configmap/db-init
+configmap/keycloak-realm
+configmap/api
+== PostgreSQL, Redis, Keycloak and Mailpit, each with its Service
+deployment.apps/db
+service/db
+deployment.apps/redis
+service/redis
+deployment.apps/keycloak
+service/keycloak
+deployment.apps/mailpit
+service/mailpit
+deployment.apps/db condition met
+== the migration
+pod/migrate
+pod/migrate ended: Succeeded
+== the api
+deployment.apps/api
+service/api
+deployment "api" successfully rolled out
+deployment.apps/api condition met
+deployment.apps/db condition met
+deployment.apps/keycloak condition met
+deployment.apps/mailpit condition met
+deployment.apps/redis condition met
