@@ -170,13 +170,24 @@ is_devops_host() {
   return 1
 }
 
+# Scripts --all leaves out although they run on the host: verify-image.sh
+# checks the signature of an image CI pushes only after the lab job, and
+# change-hotspots.sh reads the whole Git history, which CI does not fetch
+# and every new commit changes. Capture them one by one.
+is_host_only() {
+  case "$1" in
+    scripts/devops/verify-image.sh | scripts/management/change-hotspots.sh) return 0 ;;
+  esac
+  return 1
+}
+
 if [ "${1:-}" = "--all" ]; then
   # scripts/lib/ holds helpers other scripts source, not lessons; scripts/k8s/
   # is captured by --k8s.
   for script in $(find scripts git-playground -name '*.sh' ! -path 'scripts/lib/*' ! -path 'scripts/k8s/*' \
                     ! -name 'up.sh' ! -name 'down.sh' ! -name 'dev-secrets.sh' \
                     ! -name 'lab-run.sh' ! -name 'capture-output.sh' | sort); do
-    is_devops_host "$script" || capture "$script"
+    is_devops_host "$script" || is_host_only "$script" || capture "$script"
   done
 elif [ "${1:-}" = "--k8s" ]; then
   scripts/k8s/cluster-down.sh >/dev/null
