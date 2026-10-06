@@ -40,6 +40,34 @@ if ! grep -q '^GATEWAY_API_KEY=' .env 2>/dev/null; then
   echo "added GATEWAY_API_KEY to .env"
 fi
 
+# lesson: devops.l3.remote-state-and-locking
+# From stage-3: OpenTofu derives the key that encrypts its state from this
+# passphrase before the state reaches the donhang_tofu database. Lose it and
+# no state written with it can be read again; it is in no backup.
+if ! grep -q '^TOFU_STATE_PASSPHRASE=' .env 2>/dev/null; then
+  echo "TOFU_STATE_PASSPHRASE=$(openssl rand -hex 32)" >> .env
+  echo "added TOFU_STATE_PASSPHRASE to .env"
+fi
+
+# The password of the admin user of the Git server that holds the config
+# repository inside donhang-staging (scripts/devops/gitops-repo.sh).
+if ! grep -q '^GITEA_ADMIN_PASSWORD=' .env 2>/dev/null; then
+  echo "GITEA_ADMIN_PASSWORD=$(openssl rand -hex 16)" >> .env
+  echo "added GITEA_ADMIN_PASSWORD to .env"
+fi
+
+# lesson: devops.l3.sealed-secrets
+# The sealing key pair of the Sealed Secrets controller, one per learner:
+# kubeseal encrypts with the certificate (public), only the private key
+# decrypts. OpenTofu's platform layer installs both into the cluster; the
+# private key exists nowhere else, so this folder is in no backup either.
+if [ ! -f secrets/sealing.key ]; then
+  # (MSYS_NO_PATHCONV keeps Git Bash on Windows from reading -subj as a path.)
+  MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:4096 -nodes -days 3650 -subj '/CN=sealed-secret/O=donhang-dev' \
+    -keyout secrets/sealing.key -out secrets/sealing.crt 2>/dev/null
+  echo "created secrets/sealing.key and secrets/sealing.crt"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"

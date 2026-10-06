@@ -20,3 +20,14 @@ DonHang.Payments/bin/
 DonHang.Payments/obj/
 fake-gateway/bin/
 fake-gateway/obj/
+# OpenTofu: providers downloaded by init, state files (they hold credentials
+# in plain text), saved plans, and the kubeconfig files the kind provider
+# writes next to a configuration.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+deploy/tofu/**/*-config
+# The working clone and the mirror of the config repository on the Git
+# server inside donhang-staging (scripts/devops/gitops-repo.sh).
+.gitops/
