@@ -1,0 +1,3 @@
+# A values file for the web chart: only the key it changes.
+# scripts/k8s/helm-template.sh renders the chart with it (-f).
+replicas: 3

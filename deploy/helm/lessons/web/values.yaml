@@ -1,0 +1,8 @@
+# lesson: k8s.l2.helm-charts
+# lesson: k8s.l2.helm-releases
+# The chart's defaults. A values file given with -f overrides the keys it
+# sets, and --set overrides both; this file itself never changes.
+replicas: 1
+image:
+  repository: caddy
+  tag: "2.10.0"

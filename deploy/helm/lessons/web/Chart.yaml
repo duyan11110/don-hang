@@ -1,0 +1,9 @@
+# lesson: k8s.l2.helm-charts
+# The chart's name and its own version. version changes whenever the chart
+# changes; appVersion only says which Caddy the default values run.
+apiVersion: v2
+name: web
+description: Caddy's default page, as a chart; the Helm lessons render and install it.
+type: application
+version: 0.1.0
+appVersion: "2.10.0"

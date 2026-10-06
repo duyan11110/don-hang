@@ -1,0 +1,23 @@
+# lesson: k8s.l2.helm-charts
+# The web Deployment of deploy/k8s/lessons/web-deployment.yaml with two
+# placeholders: Helm writes the values in when it renders the chart.
+# .Release.Name is the name given to helm install or helm template.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 80

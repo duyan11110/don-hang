@@ -1,0 +1,11 @@
+# One address for the release's Pods, as deploy/k8s/lessons/web-service.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - port: 80
+      targetPort: 80
