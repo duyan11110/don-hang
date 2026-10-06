@@ -1,0 +1,38 @@
+# lesson: k8s.l3.admission-policies
+# A check written in CEL that the API server evaluates itself, during
+# admission, for every Pod created or updated where a binding applies it:
+# an image from ghcr.io/duyan11110/ must be named by digest (@sha256:),
+# as scripts/devops/deploy-verified.sh and the overlays' images name them.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: require-image-digest
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c,
+          !c.image.startsWith('ghcr.io/duyan11110/') || c.image.contains('@sha256:'))
+      message: "an image from ghcr.io/duyan11110/ must be named by digest (@sha256:...)"
+---
+# lesson: k8s.l3.admission-policies
+# Where the policy applies, and what a failure does: Pods in staging's
+# donhang, and Deny refuses them. (Warn would only warn the client; Audit
+# would only record it in the API server's audit log.)
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: require-image-digest
+spec:
+  policyName: require-image-digest
+  validationActions: ["Deny"]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: donhang

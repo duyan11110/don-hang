@@ -1,0 +1,26 @@
+# lesson: k8s.l3.service-accounts
+# Two Pods that name no ServiceAccount, so both run as default. Kubernetes
+# mounts a token for it into with-token, as it does unless told otherwise;
+# without-token says no with automountServiceAccountToken: false.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: with-token
+  namespace: security-lessons
+spec:
+  containers:
+    - name: shell
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: without-token
+  namespace: security-lessons
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: shell
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]

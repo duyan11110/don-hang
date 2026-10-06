@@ -1,0 +1,44 @@
+# lesson: k8s.l3.security-context
+# Caddy's image names no user, so it runs as root. runAsNonRoot asks the
+# kubelet to check before starting the container: it refuses, and the Pod
+# stays in CreateContainerConfigError.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: root-caddy
+  namespace: security-lessons
+spec:
+  containers:
+    - name: caddy
+      image: caddy:2.10.0
+      securityContext:
+        runAsNonRoot: true
+---
+# lesson: k8s.l3.security-context
+# Prometheus' image runs as the user nobody, by name. The kubelet can check
+# only a number, so runAsNonRoot refuses this one too, until runAsUser gives
+# the number (65534 is nobody's), as in the Pod after it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-by-name
+  namespace: security-lessons
+spec:
+  containers:
+    - name: prometheus
+      image: prom/prometheus:v3.5.5
+      securityContext:
+        runAsNonRoot: true
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-by-number
+  namespace: security-lessons
+spec:
+  containers:
+    - name: prometheus
+      image: prom/prometheus:v3.5.5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534

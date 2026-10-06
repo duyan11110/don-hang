@@ -24297,6 +24297,7 @@ rules:
   - create
   - list
 ---
+# lesson: k8s.l3.cluster-roles
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

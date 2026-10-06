@@ -1,0 +1,21 @@
+# lesson: k8s.l3.admission-policies
+# The Application for platform/policies: staging's admission policies, kept
+# in the config repository like everything else Argo CD applies. They are
+# cluster-wide objects, in no namespace.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: policies-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: platform/policies
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

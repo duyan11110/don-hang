@@ -1,0 +1,9 @@
+# lesson: k8s.l3.pod-security-admission
+# A namespace whose label asks Pod Security admission to enforce the level
+# restricted: the API server rejects every Pod here that does not meet it.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pod-security-lessons
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

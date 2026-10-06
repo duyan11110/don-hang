@@ -1,0 +1,31 @@
+# lesson: k8s.l3.roles-and-role-bindings
+# A Role: rules, each naming API groups ("" is the core group, where Pods
+# are), kinds of objects and verbs. It allows these actions in its own
+# namespace only, and nothing else: there is no rule that denies.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: security-lessons
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+# lesson: k8s.l3.roles-and-role-bindings
+# The RoleBinding gives that Role to the user junior-dev, in the same
+# namespace. Kubernetes keeps no such user: junior-dev is whoever a
+# certificate or token the API server trusts names that way.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-reader
+  namespace: security-lessons
+subjects:
+  - kind: User
+    name: junior-dev
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
