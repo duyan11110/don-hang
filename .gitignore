@@ -31,3 +31,5 @@ deploy/tofu/**/*-config
 # The working clone and the mirror of the config repository on the Git
 # server inside donhang-staging (scripts/devops/gitops-repo.sh).
 .gitops/
+# Dumps scripts/k8s/db-backup.sh copies out of donhang-staging.
+backups/

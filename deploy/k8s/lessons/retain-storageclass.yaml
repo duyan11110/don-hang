@@ -1,0 +1,11 @@
+# lesson: k8s.l2.reclaim-policy
+# The same provisioner as kind's standard, with one change: Retain. When a
+# claim of this class is deleted, its PersistentVolume and the files on it
+# stay, Released, until someone deals with them by hand.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: retain-local
+provisioner: rancher.io/local-path
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer

@@ -1,0 +1,15 @@
+# lesson: k8s.l2.persistent-volume-claims
+# lesson: k8s.l2.storage-classes
+# A request for storage, not storage: 100 MiB that one node at a time may
+# mount read-write. No storageClassName, so the cluster's default
+# StorageClass provides it (standard in a kind cluster).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data
+  namespace: storage-lessons
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 100Mi

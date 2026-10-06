@@ -1,0 +1,21 @@
+# lesson: k8s.l2.persistent-volume-claims
+# A Pod that mounts the claim data at /data. The volume is declared by the
+# claim's name: deleting this Pod leaves the claim, and what is on its
+# volume, for the next Pod that names it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: writer
+  namespace: storage-lessons
+spec:
+  containers:
+    - name: shell
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: data
