@@ -1,6 +1,7 @@
 using DonHang.Samples.Clean;
 using DonHang.Samples.Computer;
 using DonHang.Samples.Data;
+using DonHang.Samples.Data.Sharding;
 using DonHang.Samples.Debug;
 using DonHang.Samples.Design.EventSourcing;
 using DonHang.Samples.Http;
@@ -24,6 +25,7 @@ var samples = new Dictionary<string, Func<Task>>
     ["logging-demo"] = Sync(LoggingDemo.Run),
     ["place-order"] = Sync(PlaceOrder),
     ["event-sourcing"] = Sync(EventSourcingDemo.Run),
+    ["sharded-orders"] = ShardedOrdersDemo.RunAsync,
 };
 
 if (args.Length == 0 || !samples.TryGetValue(args[0], out var run))
