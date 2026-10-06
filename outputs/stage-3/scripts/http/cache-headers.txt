@@ -1,0 +1,10 @@
+1. the response says how long a cache may reuse it:
+HTTP/1.1 200 OK
+Cache-Control: max-age=60
+Etag: ...
+
+2. asking again, quoting the ETag we already have:
+   304
+
+3. a page the server says nothing about:
+   no Cache-Control header, so every cache decides for itself

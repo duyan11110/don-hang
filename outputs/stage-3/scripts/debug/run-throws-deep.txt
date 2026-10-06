@@ -1,0 +1,9 @@
+System.InvalidOperationException: order 999 has no total
+ ---> System.ArgumentNullException: Value cannot be null. (Parameter 's')
+   at System.Int32.Parse(String s)
+   at DonHang.Samples.Debug.ThrowsDeep.ParseTotal(Int32 orderId, String rawTotal) in ...ThrowsDeep.cs:line 26
+   --- End of inner exception stack trace ---
+   at DonHang.Samples.Debug.ThrowsDeep.ParseTotal(Int32 orderId, String rawTotal) in ...ThrowsDeep.cs:line 30
+   at DonHang.Samples.Debug.ThrowsDeep.ReadRow(Int32 orderId) in ...ThrowsDeep.cs:line 20
+   at DonHang.Samples.Debug.ThrowsDeep.LoadOrder(Int32 orderId) in ...ThrowsDeep.cs:line 18
+   at DonHang.Samples.Debug.ThrowsDeep.Run() in ...ThrowsDeep.cs:line 10

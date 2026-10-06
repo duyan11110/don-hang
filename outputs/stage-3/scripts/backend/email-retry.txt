@@ -4,10 +4,10 @@ mailpit is stopped: every send fails
   -> 201
 
 == what NotificationSender logged about this notification:
-Notification ... failed on attempt 1; next attempt in 2 s
-Notification ... failed on attempt 2; next attempt in 4 s
-Notification ... failed on attempt 3; next attempt in 8 s
-Notification ... failed on attempt 4; next attempt in 16 s
+Notification ... failed on attempt 1; next attempt in ... s
+Notification ... failed on attempt 2; next attempt in ... s
+Notification ... failed on attempt 3; next attempt in ... s
+Notification ... failed on attempt 4; next attempt in ... s
 Notification ... failed on attempt 5; giving up
 
 == its row now:

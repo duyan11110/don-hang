@@ -1,0 +1,16 @@
+the request and the answer:
+HTTP/1.1 401 Unauthorized
+Content-Length: 0
+Date: ...
+Server: Kestrel
+Via: 1.1 Caddy
+Www-Authenticate: Bearer
+
+
+
+text becomes bytes through an encoding, and the two counts differ:
+7
+11
+
+the bytes UTF-8 uses for those seven characters:
+ c4 90 c3 a0 20 4e e1 ba b5 6e 67
