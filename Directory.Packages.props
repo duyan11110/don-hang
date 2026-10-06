@@ -17,7 +17,7 @@
          strategies under it (Polly.Core comes with it). -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="StackExchange.Redis" Version="3.3.1" />
-    <PackageVersion Include="Npgsql" Version="9.0.4" />
+    <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
     <!-- lesson: backend.l3.opentelemetry-sdk -->
