@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 show() { echo "\$ $*"; "$@"; }
 kubectl() { command kubectl --context kind-donhang-staging "$@"; }
-url=http://donhang.localhost:18080/api/v1/products
+url=http://ingress.donhang.localhost:18080/api/v1/products
 status() { curl -s -o /dev/null -w '%{http_code}' "$url"; }
 
 kubectl delete -f deploy/k8s/lessons/api-ingress.yaml --ignore-not-found >/dev/null
@@ -24,7 +24,8 @@ echo
 # The Ingress names Traefik's class; Traefik watches Ingress objects, sees
 # the new rule and forwards matching requests to the Service api.
 show kubectl apply -f deploy/k8s/lessons/api-ingress.yaml
-show kubectl get ingress api -n donhang
+echo "\$ kubectl get ingress api -n donhang"
+kubectl get ingress api -n donhang -o custom-columns=NAME:.metadata.name,CLASS:.spec.ingressClassName,HOST:.spec.rules[0].host,PATH:.spec.rules[0].http.paths[0].path,SERVICE:.spec.rules[0].http.paths[0].backend.service.name
 for _ in $(seq 60); do [ "$(status)" = 200 ] && break; sleep 1; done
 echo
 echo "== GET $url, with the Ingress"

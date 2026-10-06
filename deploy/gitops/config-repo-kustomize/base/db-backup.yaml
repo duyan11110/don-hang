@@ -1,11 +1,15 @@
 # Where the nightly backups go: a claim of its own, on the same node as
 # data-db-0, so it is lost with that node or with the cluster. A backup
 # counts once it is copied off the cluster (scripts/k8s/db-backup.sh).
+# Wave 3, after everything else: the claim stays Pending until the first
+# backup Pod uses it, and Argo CD waits for it to be bound.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: db-backups
   namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -22,6 +26,8 @@ kind: CronJob
 metadata:
   name: db-backup
   namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   schedule: "0 2 * * *"
   concurrencyPolicy: Forbid

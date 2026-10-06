@@ -143,3 +143,11 @@ app_wait_sync() {
   echo "no finished sync of $revision after $seconds s" >&2
   return 1
 }
+
+# routes_without_refunds <httproutes.yaml>: staging's routes before Payments
+# runs there (scripts/k8s/stateful-staging.sh): without the rule for
+# /api/v1/refunds, whose Service does not exist yet and would leave the
+# HTTPRoute api Degraded in Argo CD.
+routes_without_refunds() {
+  perl -0pe 's/    # lesson: k8s\.l2\.staging-keeps-its-data\n.*?(?=---\n)//s' "$1"
+}

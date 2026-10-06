@@ -12,11 +12,12 @@ show() { echo "\$ $*"; "$@"; }
 # staging. HTTPS needs the certificate of k8s.l2.tls-at-the-gateway: until
 # scripts/k8s/gateway-tls.sh, the Gateway is committed without its https
 # listener and redirect (everything from the TLS lesson's first comment
-# on), and the routes attach to the http listener.
+# on), and the routes attach to the http listener. The route to Payments
+# waits for scripts/k8s/stateful-staging.sh.
 mkdir -p "$config_repo/platform/edge"
 sed '/# lesson: k8s.l2.tls-at-the-gateway/,$d' deploy/gitops/config-repo/platform/edge/gateway.yaml \
   > "$config_repo/platform/edge/gateway.yaml"
-sed 's/sectionName: https/sectionName: http/' deploy/gitops/config-repo/platform/edge/httproutes.yaml \
+routes_without_refunds deploy/gitops/config-repo/platform/edge/httproutes.yaml | sed 's/sectionName: https/sectionName: http/' \
   > "$config_repo/platform/edge/httproutes.yaml"
 cp deploy/gitops/config-repo/apps/edge-staging.yaml "$config_repo/apps/edge-staging.yaml"
 if [ -n "$(git -C "$config_repo" status --porcelain)" ]; then
@@ -41,10 +42,10 @@ echo
 
 # The same paths as Caddy in Compose: /api/v1, /api/v2 and /openapi on
 # donhang.localhost go to the api, the host auth.donhang.localhost to Keycloak.
-for url in http://donhang.localhost:18080/api/v1/products http://donhang.localhost:18080/api/v2/products \
+# (/api/v2/orders/1 answers 401: the api wants a token for it.)
+for url in http://donhang.localhost:18080/api/v1/products http://donhang.localhost:18080/api/v2/orders/1 \
            http://donhang.localhost:18080/openapi/v1.json \
-           http://auth.donhang.localhost:18080/realms/donhang/.well-known/openid-configuration \
-           http://donhang.localhost:18080/index.html; do
+           http://auth.donhang.localhost:18080/realms/donhang/.well-known/openid-configuration; do
   for _ in $(seq 30); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$url")" != 404 ] && break; sleep 1; done
   echo "GET $url -> $(curl -s -o /dev/null -w '%{http_code}' "$url")"
 done

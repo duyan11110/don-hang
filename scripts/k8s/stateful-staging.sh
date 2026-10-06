@@ -9,6 +9,14 @@ show() { echo "\$ $*"; "$@"; }
 psql_db() { kubectl exec db-0 -n donhang -- psql -U donhang -d donhang -tAc "$1"; }
 waiting() { kubectl exec rabbitmq-0 -n donhang -- rabbitmqctl list_queues --quiet name messages | awk '$1 == "notifications.order-events" { print $2 }'; }
 
+# Ready is not enough: wait until the RabbitMQ app itself runs on the node.
+wait_rabbit() {
+  for _ in $(seq 120); do
+    kubectl exec rabbitmq-0 -n donhang -- rabbitmq-diagnostics -q check_running >/dev/null 2>&1 && return 0
+    sleep 1
+  done
+}
+
 if [ ! -f "$config_repo/envs/staging/kustomization.yaml" ]; then
   echo "envs/staging is not a Kustomize overlay yet: run scripts/k8s/kustomize-config-repo.sh first" >&2
   exit 1
@@ -25,11 +33,16 @@ kind load docker-image donhang-fake-gateway:stage-3 --name donhang-staging >/dev
 # the api with its migration in their stage-3 form.
 config_take base/db.yaml base/rabbitmq.yaml base/notifications.yaml base/payments.yaml base/fake-gateway.yaml \
   base/api.yaml base/migrate-hook.yaml
+# And the Gateway's route for /api/v1/refunds, now that Payments exists.
+cp deploy/gitops/config-repo/platform/edge/httproutes.yaml "$config_repo/platform/edge/httproutes.yaml"
 git -C "$config_repo" status --short | sed 's/^/  /'
 config_commit stateful-staging.sh "Notifications, Payments and the fake gateway in staging"
-app_refresh
-app_wait_sync "$(config_head --verify)" >/dev/null
-app_wait Synced Healthy "$(config_head --verify)"
+for app in staging edge-staging; do
+  app_refresh
+  app_wait_sync "$(config_head --verify)" >/dev/null
+  app_wait Synced Healthy "$(config_head --verify)"
+done
+app=staging
 echo
 
 # The migration hooks of wave 1 ran before the Deployments of wave 2.
@@ -62,6 +75,7 @@ echo
 # Both StatefulSet Pods go at once; their replacements mount the same claims.
 show kubectl delete pod db-0 rabbitmq-0 -n donhang
 kubectl wait --for=condition=Ready pod/db-0 pod/rabbitmq-0 -n donhang --timeout=300s >/dev/null
+wait_rabbit
 echo "order $order: $(psql_db "SELECT status FROM orders WHERE id = $order")"
 echo "messages waiting for Notifications: $(waiting)"
 echo

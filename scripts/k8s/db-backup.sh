@@ -18,8 +18,9 @@ if [ -n "$(git -C "$config_repo" status --porcelain)" ]; then
   config_commit db-backup.sh "A nightly backup of staging's three databases"
 fi
 app_refresh
-app_wait_sync "$(config_head --verify)" >/dev/null
-app_wait Synced Healthy "$(config_head --verify)"
+# The claim db-backups stays Pending until a backup Pod uses it, so the sync
+# of wave 3 finishes only after the first run below.
+for _ in $(seq 300); do kubectl get cronjob db-backup -n donhang >/dev/null 2>&1 && break; sleep 1; done
 show kubectl get cronjob db-backup -n donhang -o custom-columns=NAME:.metadata.name,SCHEDULE:.spec.schedule,CONCURRENCY:.spec.concurrencyPolicy
 echo
 
@@ -29,6 +30,8 @@ echo
 kubectl delete job db-backup-now -n donhang --ignore-not-found >/dev/null
 show kubectl create job db-backup-now --from=cronjob/db-backup -n donhang
 kubectl wait --for=condition=Complete job/db-backup-now -n donhang --timeout=300s >/dev/null
+app_wait_sync "$(config_head --verify)" >/dev/null
+app_wait Synced Healthy "$(config_head --verify)"
 show kubectl get job db-backup-now -n donhang -o custom-columns=NAME:.metadata.name,COMPLETIONS:.status.succeeded,FAILED:.status.failed
 kubectl logs job/db-backup-now -n donhang | sed -E 's/-[0-9]{8}T[0-9]{6}Z/-<time>/'
 echo

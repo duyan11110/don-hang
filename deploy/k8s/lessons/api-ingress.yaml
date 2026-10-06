@@ -1,6 +1,6 @@
 # lesson: k8s.l2.ingress
-# One HTTP rule: a request for the host donhang.localhost whose path starts
-# with /api/v1 goes to port 8080 of the Service api. ingressClassName names
+# One HTTP rule: a request for the host ingress.donhang.localhost whose path
+# starts with /api/v1 goes to port 8080 of the Service api. ingressClassName names
 # the controller that should act on it; without a controller, nothing does.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: donhang.localhost
+    - host: ingress.donhang.localhost
       http:
         paths:
           - path: /api/v1

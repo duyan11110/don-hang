@@ -6,6 +6,12 @@ cd "$(dirname "$0")/../.."
 source scripts/lib/gitops.sh
 source scripts/lib/keycloak.sh
 show() { echo "\$ $*"; "$@"; }
+# curl on Windows checks certificates through Schannel, which also asks
+# for revocation data that the lab's own CA does not publish: skip that
+# check there (other builds of curl do not make it).
+if command curl --version | grep -q Schannel; then
+  curl() { command curl --ssl-no-revoke "$@"; }
+fi
 [ -d "$config_repo/platform/edge" ] || scripts/k8s/gateway.sh >/dev/null
 api=https://donhang.localhost:18443/api/v1/products
 
@@ -22,12 +28,12 @@ echo
 # http listener, the routes moved to the https listener, and Keycloak's
 # public address in HTTPS. Keycloak writes that address into every token as
 # the issuer, so the api's Keycloak__Authority changes with it.
-cp deploy/gitops/config-repo/platform/edge/gateway.yaml deploy/gitops/config-repo/platform/edge/httproutes.yaml \
-  "$config_repo/platform/edge/"
+cp deploy/gitops/config-repo/platform/edge/gateway.yaml "$config_repo/platform/edge/"
+routes_without_refunds deploy/gitops/config-repo/platform/edge/httproutes.yaml > "$config_repo/platform/edge/httproutes.yaml"
 perl -pi -e 's#http://localhost:8180#https://auth.donhang.localhost:18443#' \
   "$config_repo/envs/staging/keycloak.yaml" "$config_repo/envs/staging/api-configmap.yaml"
-git -C "$config_repo" diff -U0 -- envs/staging | grep '^[-+] '
-config_commit gateway-tls.sh "HTTPS at the Gateway; Keycloak's public address is https://auth.donhang.localhost:18443"
+git -C "$config_repo" diff -U0 -- envs/staging/keycloak.yaml envs/staging/api-configmap.yaml | grep '^[-+] ' || true
+[ -z "$(git -C "$config_repo" status --porcelain)" ] || config_commit gateway-tls.sh "HTTPS at the Gateway; Keycloak's public address is https://auth.donhang.localhost:18443"
 for app in edge-staging staging; do
   app_refresh
   app_wait_sync "$(config_head --verify)" >/dev/null
@@ -56,7 +62,7 @@ curl -s -o /dev/null -w 'HTTP %{http_code}, Location: %{redirect_url}\n' http://
 
 # curl trusts the certificate only with the lab's CA certificate.
 echo "== GET $api, without and with --cacert secrets/lab-ca.crt"
-curl -sS -o /dev/null "$api" 2>&1 | sed -E 's/^curl: \(([0-9]+)\).*/curl: error \1, the certificate is not trusted/' || true
+curl -sS -o /dev/null "$api" 2>&1 | grep '^curl: (' | sed -E 's/^curl: \(([0-9]+)\).*/curl: error \1, the certificate is not trusted/' || true
 for _ in $(seq 60); do
   [ "$(curl -s --cacert secrets/lab-ca.crt -o /dev/null -w '%{http_code}' "$api")" = 200 ] && break
   sleep 1
@@ -66,12 +72,10 @@ echo
 
 # Signing in from outside the cluster: Keycloak through the Gateway, over
 # HTTPS. The token's issuer is the HTTPS address, and the api accepts it.
-export CURL_CA_BUNDLE=secrets/lab-ca.crt
-keycloak=https://auth.donhang.localhost:18443/realms/donhang/protocol/openid-connect
-for _ in $(seq 120); do
-  token=$(keycloak_access_token anh.tran@example.com 2>/dev/null) && break
-  sleep 2
-done
+# (scripts/lib/gateway.sh: curl trusts the lab CA from here on, and signs in
+# through https://auth.donhang.localhost:18443.)
+source scripts/lib/gateway.sh
+token=$(gateway_token anh.tran@example.com)
 payload=$(printf %s "$token" | cut -d. -f2 | tr '_-' '/+')
 while [ $(( ${#payload} % 4 )) -ne 0 ]; do payload="$payload="; done
 echo "== the token's issuer"

@@ -7,8 +7,16 @@ source scripts/lib/keycloak.sh
 gateway=https://donhang.localhost:18443
 # Sign in with Keycloak through the Gateway too (keycloak_access_token).
 keycloak=https://auth.donhang.localhost:18443/realms/donhang/protocol/openid-connect
-# curl trusts the lab's own certificate authority (scripts/dev-secrets.sh).
-export CURL_CA_BUNDLE=secrets/lab-ca.crt
+
+# Every curl here trusts the lab's own certificate authority
+# (scripts/dev-secrets.sh). curl on Windows checks certificates through
+# Schannel, which also asks for revocation data that this CA does not
+# publish: that check is skipped there (other builds of curl do not make it).
+curl_tls=(--cacert secrets/lab-ca.crt)
+if command curl --version | grep -q Schannel; then
+  curl_tls+=(--ssl-no-revoke)
+fi
+curl() { command curl "${curl_tls[@]}" "$@"; }
 
 # gateway_token <email>: an access token, waiting for Keycloak if it is
 # still starting.

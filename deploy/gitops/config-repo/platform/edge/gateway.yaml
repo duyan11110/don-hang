@@ -27,8 +27,9 @@ spec:
           - name: donhang-tls
 ---
 # lesson: k8s.l2.tls-at-the-gateway
-# The only route on the http listener: it answers every request there with
-# a redirect to the same host and path over HTTPS, on port 18443.
+# The only route on the http listener: it answers every request there for
+# Đơn Hàng's two hosts with a redirect to the same host and path over
+# HTTPS, on port 18443.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -38,6 +39,9 @@ spec:
   parentRefs:
     - name: donhang
       sectionName: http
+  hostnames:
+    - donhang.localhost
+    - auth.donhang.localhost
   rules:
     - filters:
         - type: RequestRedirect
