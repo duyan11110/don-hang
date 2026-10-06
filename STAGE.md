@@ -1,151 +1,243 @@
-# Đơn Hàng at tag `stage-2`
+# Đơn Hàng at tag `stage-3`
 
 ## What exists at this tag
 
-`scripts/up.sh` still starts everything: it runs `scripts/dev-secrets.sh`,
-builds the Flutter web app, then `docker compose up --build --wait`.
+`scripts/up.sh` still starts the lab: it runs `scripts/dev-secrets.sh`,
+builds the Flutter web app, then `docker compose up --build --wait`. Without a
+profile that starts the API, its two new services, their databases, RabbitMQ,
+Keycloak, Redis, Mailpit and the lab box.
 
-- **Sign-in through Keycloak** (`keycloak`, published as `localhost:8180`
-  through Caddy). The API no longer issues tokens: it validates Keycloak's
-  access tokens, with the policies `StaffOnly` (role `staff`) and `OrderOwner`
-  (the order's customer, or staff). Five customers and one staff account
-  (`lan.do@example.com`) share the fake password `donhang-dev-password`.
-- **API design**: offset pages and `maxPriceVnd` on products, cursor pages on
-  orders, `/api/v2/orders` beside an unchanged `/api/v1/orders`, a problem
-  `type` for each 409, `Idempotency-Key` on `POST /api/v1/orders`, a row
-  version token, and the OpenAPI document at `/openapi/v1.json`.
-- **Domain model**: `Order` owns its status rules (`Cancel`, `Ship`,
-  `MarkPaid`) and is valid from its constructor; `DonHang.Domain` references
-  no project and no package.
-- **Redis** caches products through `ProductCache`, a decorator of
-  `IProductRepository` (cache-aside, invalidation on `PATCH`, one loader per
-  key).
-- **Background job**: order emails are rows in `notifications`, claimed with
-  `FOR UPDATE SKIP LOCKED` by `NotificationSender` and retried with backoff;
-  they arrive in **Mailpit** (`localhost:8025`).
-- **Migrations** run once in a `migrate` container (an EF Core migration
-  bundle) before `api` starts; the API no longer migrates at startup.
-- **Monitoring** (Compose profile `monitoring`): `/metrics`, Prometheus
-  (`localhost:9090`), Grafana (`localhost:3000`) with one dashboard, JSON logs
-  shipped by Alloy into Loki.
-- **Tests**: `Order` unit tests, a dependency-rule test, and integration tests
-  on real PostgreSQL and Redis (Testcontainers, `WebApplicationFactory`).
-- **`DonHang.App`**: Riverpod state, go_router routes with deep links and a
-  sign-in guard, Keycloak sign-in with PKCE, English and Vietnamese, a dark
-  theme, a validated order form. `DonHang.App/README.md` is still Flutter's
-  template text, on purpose (`management.l2.readme`).
-- **CI/CD**: `.github/workflows/ci.yml` (tests, app, images, a staging run,
-  publishing `sha-<commit>` images to GHCR, kubeconform, the k8s scripts on
-  kind, the lab capture) and `release.yml` (a `v*.*.*` tag promotes images to
-  `X.Y.Z`); `CHANGELOG.md`.
-- **Kubernetes**: plain manifests under `deploy/k8s/` for a kind cluster (one
-  control plane, two workers) and namespace `donhang`.
-- **Team docs**: the refund flow, planned but not built: velocity history, a
-  plan with three-point estimates and a buffer, a risk register, a stakeholder
-  update, requirements and a design doc. A root `README.md` in Vietnamese.
+- **A modular monolith with two services split off.** `DonHang.Api` holds
+  two modules: Ordering (`DonHang.Domain`, `DonHang.Infrastructure`) and
+  Catalog (`DonHang.Catalog`, reached only through `ICatalog`);
+  `ModuleBoundaryTests` keep the boundaries. Order emails moved to
+  `DonHang.Notifications` and refunds to `DonHang.Payments`, each with a
+  database of its own (`donhang_notifications`, `donhang_payments`). The
+  tag shows both shapes at once on purpose: the lessons about a notification
+  module inside the process quote `stage-2`.
+- **Domain model**: `Order` raises domain events, dispatched by
+  `DomainEventDispatcher` before `SaveChangesAsync`; `Vnd` is a value object;
+  `RecordOrderStatusHistory` writes the read model `order_status_history`
+  behind `GET /api/v1/orders/{id}/history`.
+- **Messaging**: RabbitMQ (`rabbitmq`, management UI on `localhost:15672`),
+  the shared project `DonHang.Messaging` (outbox, relay, inbox), a quorum
+  queue with a dead-letter queue per service.
+- **Refund saga**: `POST /api/v1/orders/{id}/refund` returns `202`; Payments
+  calls `fake-gateway` (a stand-in for the chosen gateway, see
+  `docs/team/payment-gateway-evaluation.md`) through `GatewayRefundClient`,
+  with retries, a timeout and a circuit breaker; staff list failed refunds at
+  `GET /api/v1/refunds?status=failed`.
+- **Resilience**: rate limiting on placing orders (`429` with
+  `Retry-After`), a concurrency limit on the product list, jittered backoff.
+- **Observability**: OpenTelemetry traces from every service to Tempo through
+  Alloy, trace ids in the JSON logs, queue backlog panels.
+- **Data**: PostgreSQL archives its WAL to the volume `wal-archive`; the
+  one-shot service `db-init` creates the databases `keycloak` and
+  `donhang_tofu`; Keycloak keeps its data in `keycloak` (still `start-dev`);
+  `scripts/devops/` takes logical and base backups into the volume
+  `backups`, restores them and recovers to a point in time; lab databases
+  for tenancy, partitioning and sharding live under `db/`.
+- **`DonHang.App`**: a design system (`lib/design/`: tokens, a
+  `ThemeExtension`, components, brands) with a gallery
+  (`lib/gallery_main.dart`), accessibility and golden tests; products
+  cached for offline use and orders queued while the API does not answer
+  (`lib/offline/`).
+- **Supply chain**: NuGet and pub lock files, every action and base image
+  pinned by digest, Dependabot, an SBOM and a vulnerability scan per image,
+  images signed with Cosign and attested in CI, `verify-image.sh` and
+  `deploy-verified.sh`.
+- **Infrastructure as code and GitOps**: OpenTofu creates the kind cluster
+  `donhang-staging` and its platform (`deploy/tofu/`), state in PostgreSQL;
+  Argo CD in that cluster syncs the config repository
+  (`deploy/gitops/config-repo/`, later the Kustomize layout of
+  `config-repo-kustomize/`) from a Git server in the cluster; secrets are
+  sealed before they enter that repository.
+- **Kubernetes**: Helm, Ingress and the Gateway API with TLS on staging,
+  StatefulSets with claims, RBAC, Pod Security, NetworkPolicies and an
+  admission policy; on the cluster `donhang` the networking internals,
+  MetalLB, a CRD, etcd snapshots, encryption at rest and draining nodes.
+- **Team docs**: ADRs in `docs/adr/`, a tech debt register, a vendor
+  evaluation, the list of components the team runs itself, the refund and
+  order history designs.
 
 ## Prerequisites
 
 Docker Desktop, Flutter 3.47 and Bash (Git Bash on Windows) for the lab;
 .NET SDK 10.0.300 (`global.json`) to run the tests, which also need Docker.
-The `scripts/k8s/` scripts run on the host and need kind v0.33.0 and kubectl
-1.34 there; they read `.env`, so run `scripts/dev-secrets.sh` (or `up.sh`)
-first.
+On Windows and macOS run `flutter test --exclude-tags golden`: the golden
+images are made on Linux (ubuntu-24.04) and compared only there; refresh
+them with the workflow `update-goldens.yml`.
+
+The scripts marked `# Runs on the host` need, on the host:
+
+- kind v0.33.0 and kubectl 1.34 (`scripts/k8s/`, as at `stage-2`).
+- OpenTofu 1.10 (`scripts/devops/tofu-*.sh`, `dr-drill.sh`).
+- kubeseal 0.40 (`seal-secrets.sh`, `sealed-secrets-install.sh`,
+  `rotate-db-password.sh`).
+- Helm 3.19 (`helm-template.sh`, `helm-release.sh`, `traefik-install.sh`,
+  `traefik-ha.sh`).
+- Nothing for Syft, Grype or Cosign: `sbom.sh`, `scan-image.sh` and
+  `verify-image.sh` run them in containers pinned by digest. The GitHub CLI
+  is not needed.
+
+Network: `verify-image.sh` and `deploy-verified.sh` need `ghcr.io` and
+Sigstore (`rekor.sigstore.dev`, `fulcio.sigstore.dev`); without them they
+stop. CI signs the six images the `publish` job pushes (api, migrate,
+notifications and its migrate, payments and its migrate); `fake-gateway` is
+built, scanned and given an SBOM, but neither pushed nor signed. Dependabot
+runs only on GitHub, not in the lab.
+
+Every script reads `.env` and `secrets/`, so run `scripts/dev-secrets.sh`
+(or `up.sh`) first. From stage-3 it also writes `RABBITMQ_PASSWORD`,
+`GATEWAY_API_KEY`, `TOFU_STATE_PASSPHRASE` and `GITEA_ADMIN_PASSWORD`, the
+sealing key pair (`secrets/sealing.*`), a lab CA and the gateway's
+certificate (`secrets/lab-ca.*`, `secrets/donhang-tls.*`, 825 days) and
+`secrets/encryption-config.yaml` (a `secretbox` key, then `identity`).
+Nothing under `secrets/` or `backups/` is committed.
+
+## Compose profiles and volumes
+
+| Profile | Services | What for |
+|---|---|---|
+| none | lab, web, db, db-init, migrate, api, redis, mailpit, rabbitmq, notifications(-migrate), payments(-migrate), fake-gateway, keycloak, app-web | everything the app needs |
+| `monitoring` | prometheus, grafana, loki, alloy, tempo | `scripts/devops/` metrics and logs, the tracing scripts of `scripts/backend/` |
+| `replica` | db-replica | a streaming replica 5 seconds behind (`replica-lag.sh`) |
+| `pitr` | db-pitr | a recovery to a point in time; `pitr.sh` creates and removes it |
+
+Volumes beyond `stage-2`: `rabbitmq-data`, `tempo-data`, `backups` (dumps
+and base backups), `wal-archive` (gzipped WAL), `db-replica-data`,
+`db-pitr-data`. `scripts/down.sh` removes them all.
+
+## Clusters and their resources
+
+All clusters are kind clusters on Docker Desktop; give Docker at least 12 GB
+of memory to keep the lab, `donhang` and `donhang-staging` up together.
+
+- `donhang` (one control plane, two workers, about 3.5 GB): the `stage-2`
+  lessons and, from stage-3, the storage, networking, bare-metal and
+  lifecycle lessons. Those leave MetalLB, the namespaces `network-lessons`
+  and `ha-lessons` and the container `donhang-lb-client` behind. Docker Desktop does not route from the host
+  to the `kind` network: a LoadBalancer address is reached from
+  `donhang-lb-client`, a container attached to that network.
+- `donhang-staging` (one node, about 4 GB with Argo CD, the Git server,
+  Keycloak and the backend): created by `tofu-env.sh staging`, it publishes
+  the Gateway on `127.0.0.1:18080` (HTTP) and `127.0.0.1:18443` (HTTPS) for
+  `donhang.localhost` and `auth.donhang.localhost`. Trust
+  `secrets/lab-ca.crt` to call it over HTTPS (with curl on Windows:
+  `--cacert secrets/lab-ca.crt --ssl-no-revoke`). `tofu-teardown.sh
+  --staging` removes it.
+- `donhang-iac` (one node): the first OpenTofu lessons create and delete it.
+- `donhang-ha` (three control planes; about 3 GB more memory while it
+  runs) and `donhang-lifecycle` (one node): `control-plane-ha.sh`,
+  `etcd-snapshot.sh` and `encryption-at-rest.sh` create and delete them;
+  their kubeconfigs stay in `secrets/`, `~/.kube/config` is not touched.
+  etcd snapshots are copied to `backups/etcd/`.
+
+`dr-drill.sh` rebuilds staging with only the Application `apps/staging.yaml`;
+Traefik, the edge and the policies come back with their own scripts.
 
 ## Data flow
 
 ```mermaid
 flowchart LR
   B[Browser: DonHang.App from app-web :8081] -->|HTTP :8080 / :8180| C[Caddy]
-  L[Lab box: curl, psql, redis-cli] -->|HTTP| C
-  L -->|psql| P
-  C -->|/api/v1, /api/v2, /openapi| API[DonHang.Api]
+  C -->|/api/v1, /api/v2| API[DonHang.Api: Ordering + Catalog]
+  C -->|/api/v1/refunds| PAY[DonHang.Payments]
   C -->|:8180| K[Keycloak]
-  API -->|keys| K
   API -->|EF Core| P[(PostgreSQL)]
-  M[migrate] -->|bundle, once| P
   API -->|cache-aside| R[(Redis)]
-  API -->|SMTP| MP[Mailpit :8025]
-  PR[Prometheus :9090] -->|/metrics| API
-  G[Grafana :3000] --> PR
-  G --> LK[Loki]
+  API -->|outbox| MQ[RabbitMQ]
+  MQ --> N[DonHang.Notifications]
+  MQ --> PAY
+  PAY -->|outbox| MQ
+  PAY -->|refund| GW[fake-gateway]
+  N -->|SMTP| MP[Mailpit :8025]
+  N --> P
+  PAY --> P
+  API & N & PAY -->|OTLP| A[Alloy] --> T[Tempo]
 ```
 
-## Changed since `stage-1`
+## Changed since `stage-2`
 
-`stage-1` was one 3-layer API that signed its own tokens, sent nothing in the
-background and migrated itself at startup. `stage-2` hands sign-in to
-Keycloak, moves the business rules into `Order`, adds a cache, a job queue,
-versioned and paginated endpoints, and the machinery around the code (CI,
-images, a release workflow, monitoring, a kind cluster), because the stage-2
-lessons are about running one service properly before splitting it in
-`stage-3`. `POST /api/v1/auth/login`, `AuthController`, `JwtTokenService`,
-`PasswordHasher` and `MigrationBaseline.cs` are gone.
+`stage-2` was one service run properly. `stage-3` splits it where the lessons
+need a split: Catalog becomes a module with a contract, email and payments
+become services joined by messages, and the refund flow of the stage-2 design
+doc is built as a saga. Around the code, staging becomes a cluster created by
+OpenTofu and deployed by Argo CD from a config repository, images are signed
+and checked before deploy, and the team writes its decisions down as ADRs.
+`QueuedNotifier`, `INotifier`, `NotificationQueue`, `NotificationSender`,
+`MailKitEmailSender` (now in Notifications) and `ProductCache` in
+Infrastructure (now in Catalog) are gone from the API; the old tables
+`notifications` and `payments` stay in `donhang` (debt N1, N2, ADR 0008).
 
 ## Lessons at this tag
 
 | Module | Lessons |
 |---|---|
-| backend/api-design | 8 |
-| backend/oauth-and-authz | 7 |
-| backend/caching | 4 |
-| backend/background-jobs | 6 |
-| backend/indexes-and-plans | 8 |
-| design/gof-patterns | 7 |
-| design/clean-hexagonal | 7 |
-| design/domain-model | 8 |
-| design/integration-testing | 8 |
-| frontend/state-and-routing | 8 |
-| frontend/forms-i18n-theming | 7 |
-| devops/ci-cd | 8 |
-| devops/release | 7 |
-| devops/monitoring-basics | 8 |
-| k8s/why-and-architecture | 7 |
-| k8s/workloads | 8 |
-| k8s/config-and-probes | 8 |
-| management/planning-and-risk | 8 |
-| management/technical-writing | 7 |
+| backend/messaging | 7 |
+| backend/sagas-and-consistency | 8 |
+| backend/observability | 7 |
+| backend/resilience | 6 |
+| backend/multitenancy-and-sharding | 7 |
+| design/ddd-tactical | 5 |
+| design/modular-monolith | 5 |
+| design/cqrs-event-sourcing | 7 |
+| devops/iac | 7 |
+| devops/gitops | 7 |
+| devops/secrets-backup-dr | 6 |
+| devops/supply-chain | 7 |
+| frontend/performance-offline | 7 |
+| frontend/design-system | 7 |
+| k8s/ingress-helm | 8 |
+| k8s/state-and-storage | 8 |
+| k8s/security-and-policy | 8 |
+| k8s/networking-deep | 8 |
+| k8s/bare-metal | 8 |
+| k8s/operators-and-cluster-lifecycle | 8 |
+| management/tech-debt-and-adr | 8 |
+| management/build-vs-buy-tco | 7 |
 
 ## Capturing outputs
 
-`TAG=stage-2 scripts/capture-output.sh <script>` captures one script into
-`outputs/stage-2/scripts/<module>/<name>.txt`, masked by
-`outputs/unstable.regex`. `--all` runs every script except `scripts/k8s/`
-against the running lab (start it with `COMPOSE_PROFILES=monitoring` for
-`scripts/devops/`). `--k8s` deletes the kind cluster, runs the k8s scripts in
-lesson order on a new one, and leaves it running
-(`scripts/k8s/cluster-down.sh`). Scripts marked `# Runs on the host` run
-outside the lab box.
+`TAG=stage-3 scripts/capture-output.sh <script>` captures one script into
+`outputs/stage-3/scripts/<module>/<name>.txt`, masked by
+`outputs/unstable.regex`. The modes, each in the order of the lessons:
+
+- `--all`: every script except `scripts/k8s/`, the host scripts of
+  `--devops-host`, `verify-image.sh` (it checks an image CI pushes after the
+  lab job) and `change-hotspots.sh` (it reads the whole Git history), against
+  the running lab started with `COMPOSE_PROFILES=monitoring`. CI's `lab` job.
+- `--k8s`: deletes `donhang`, runs the `stage-2` k8s scripts on a new one.
+  CI's `k8s` job.
+- `--devops-host`: the OpenTofu, GitOps, sealed secrets and disaster
+  recovery scripts, ending with `deploy-verified.sh` (needs `ghcr.io` and
+  Sigstore); recreates `donhang-staging`.
+- `--k8s-host`: the stage-3 k8s scripts, on `donhang-staging` and then on
+  `donhang`.
+
+The last two, `verify-image.sh` and `change-hotspots.sh` run only on a
+learner's machine; CI does not check their outputs.
 
 ## What a lesson can learn from each new place
 
 | Path | What a lesson learns from it |
 |---|---|
-| `DonHang.Domain/Entities.cs`, `OrderStatusException.cs`, `OrderService.cs` | transaction script vs. domain model, status changes through methods, where a rule belongs |
-| `DonHang.Domain/I*Repository.cs`, `IEmailSender.cs`, `INotifier.cs`, `OrderSummary.cs` | ports, the dependency rule, projections |
-| `DonHang.Infrastructure/Ef*Repository.cs`, `DonHangDbContext.cs`, `Migrations/*` | no-tracking and projection queries, cursor pages, indexes, optimistic concurrency |
-| `DonHang.Infrastructure/ProductCache.cs`, `ServiceCollectionExtensions.cs` | cache-aside, invalidation, stampede, the decorator pattern |
-| `DonHang.Infrastructure/NotificationQueue.cs`, `QueuedNotifier.cs`, `MailKitEmailSender.cs`, `DonHang.Api/Jobs/NotificationSender.cs` | hosted services, a database job queue, retry with backoff, at-least-once, SKIP LOCKED, adapter |
-| `DonHang.Api/Controllers/*`, `Controllers/V2/*`, `Dtos.cs` | pagination, filtering, breaking changes, versioning, idempotent endpoints |
-| `DonHang.Api/Authorization/*`, `Program.cs`, `keycloak/donhang-realm.json`, `scripts/lib/keycloak.sh` | OAuth 2.0 roles, the code flow, OIDC, token validation, role- and resource-based access, the composition root |
-| `DonHang.Api/Middleware/*`, `Monitoring/OrderMetrics.cs`, `appsettings.json` | problem types, JSON logs, counters |
-| `DonHang.Tests/Domain/*`, `Architecture/*`, `Integration/*` | testing the entity, testing the dependency rule, Testcontainers, fixtures, `WebApplicationFactory`, protected endpoints |
-| `DonHang.App/lib/providers.dart`, `router.dart`, `auth/*`, `screens/*`, `l10n/*`, `l10n.yaml`, `test/*` | Riverpod, go_router, deep links, route guards, theming, ARB messages, forms and server errors |
-| `samples/DonHang.Samples/Samples/Design/CheckoutTotal.cs`, `ShippingFeeFactory.cs`, `OrderEvents.cs` | strategy, factory, observer |
-| `db/queries/*`, `db/perf/fill.sql`, `db/migrations-baseline.sql` | query plans, composite indexes, a baseline for a database created from `schema.sql` |
-| `DonHang.Api/Dockerfile`, `docker-compose.yml`, `Caddyfile`, `deploy/app-web/Caddyfile`, `lab/Dockerfile` | the migrate stage, Redis, Mailpit, Keycloak, the monitoring profile, a single-page app host |
-| `.github/workflows/*`, `CHANGELOG.md`, `scripts/release-notes.sh` | CI stages, quality gate, caches, artifacts, environments, registries, tags and digests, a release |
-| `deploy/monitoring/*` | Prometheus scraping, PromQL, Grafana provisioning, Alloy and Loki |
-| `deploy/k8s/*`, `deploy/k8s/lessons/*`, `scripts/k8s/*` | nodes, Pods, labels, ReplicaSets, Deployments, Services, rollouts, ConfigMaps, Secrets, probes, requests and limits |
-| `scripts/backend/*`, `scripts/devops/*` | every command the backend and monitoring lessons show |
-| `scripts/dev-secrets.sh` | fake dev secrets: Keycloak and Grafana admin passwords, no JWT key any more |
-| `docs/team/velocity-history.md` | velocity per sprint, a forecast as a range, fewer people means fewer points |
-| `docs/team/refund-plan-example.md` | three-point estimates, (O + 4M + P) / 6, one visible buffer line |
-| `docs/team/risk-register-example.md` | a risk register, likelihood and impact, four kinds of response, one owner each |
-| `docs/team/stakeholder-update-example.md` | who needs which part of a plan, an update in the reader's words |
-| `README.md`, `DonHang.App/README.md` | a README that answers what, how to run, where next; one nobody rewrote |
-| `docs/team/refund-requirements.md` | a requirements document, numbered checkable requirements, measurable non-functional ones, open questions with owners |
-| `docs/design/refund-design.md` | a design doc: requirements answered, proposal, a rejected option, out of scope, open questions |
+| `DonHang.Domain/DomainEvents.cs`, `IDomainEventHandler.cs`, `Vnd.cs`, `Entities.cs` | aggregates, value objects, domain events and their dispatch |
+| `DonHang.Catalog/*`, `DonHang.Tests/Architecture/ModuleBoundaryTests.cs` | a module with a contract, owning its tables, tested boundaries |
+| `DonHang.Messaging/*`, `DonHang.Notifications/*` | a message broker, outbox, relay, inbox, dead-letter queues, a service extracted |
+| `DonHang.Payments/*`, `fake-gateway/*`, `docs/design/refund-design.md` | a saga, compensation, an anti-corruption layer, timeouts, a circuit breaker |
+| `DonHang.Infrastructure/RecordOrderStatusHistory.cs`, `samples/DonHang.Samples/Samples/Design/EventSourcing/*`, `docs/design/order-history-design.md` | CQRS read models, event sourcing on a sample, when not to use it |
+| `db/pg_hba.conf`, `db/databases.sql`, `db/replica/`, `db/pitr/`, `db/tenancy/`, `db/partitioning/`, `db/sharding/` | WAL archiving, replicas, point-in-time recovery, row-level security, partitions, shards |
+| `DonHang.App/lib/design/*`, `lib/gallery/*`, `lib/offline/*`, `test/design/*` | tokens, theme extensions, components, a gallery, golden and accessibility tests, an offline queue |
+| `.github/workflows/*`, `.github/dependabot.yml`, `**/packages.lock.json`, `.grype.yaml` | pinning by content, dependency updates, SBOMs, scanning, signing, provenance |
+| `deploy/tofu/*` | OpenTofu resources, state, modules, environments, drift |
+| `deploy/argocd/`, `deploy/gitops/*`, `deploy/sealed-secrets/` | pull-based deployment, sync order, self-heal, promotion, sealed secrets, overlays |
+| `deploy/helm/lessons/`, `deploy/gateway-api/`, `deploy/metallb/`, `deploy/k8s/lessons/*`, `deploy/k8s/bare-metal/` | Helm, Ingress and the Gateway API, storage, RBAC, Pod Security, policies, networking internals, bare-metal load balancing, CRDs, lifecycle |
+| `scripts/backend/*`, `scripts/design/*`, `scripts/frontend/*`, `scripts/devops/*`, `scripts/k8s/*`, `scripts/management/*` | every command the stage-3 lessons show |
+| `docs/adr/*` | ADRs: structure, options, proposing, superseding, TCO, lock-in, an exit plan |
+| `docs/team/tech-debt-register.md` | a technical debt register, its interest, what was repaid |
+| `docs/team/payment-gateway-evaluation.md` | a vendor evaluation, SLA turned into time, contract terms |
+| `docs/team/self-run-components.md` | the recurring cost of running open source yourself |
 
 The authoritative list of files this tag must contain is
-`tools/validate --manifest 2` in the curriculum repository.
+`tools/validate --manifest 3` in the curriculum repository.
