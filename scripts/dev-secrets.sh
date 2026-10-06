@@ -83,6 +83,28 @@ if [ ! -f secrets/donhang-tls.key ]; then
   echo "created secrets/lab-ca.crt and secrets/donhang-tls.crt, with their keys"
 fi
 
+# lesson: k8s.l3.encryption-at-rest
+# From stage-3: the file scripts/k8s/encryption-at-rest.sh gives the API
+# server of donhang-lifecycle. Secrets are encrypted with the first provider,
+# secretbox, and a random 32-byte key; identity, listed after it, still
+# reads the Secrets written before, unencrypted.
+if [ ! -f secrets/encryption-config.yaml ]; then
+  cat > secrets/encryption-config.yaml <<CONFIG
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - secretbox:
+          keys:
+            - name: key1
+              secret: $(openssl rand -base64 32)
+      - identity: {}
+CONFIG
+  echo "created secrets/encryption-config.yaml"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"

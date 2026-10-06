@@ -1,0 +1,13 @@
+# lesson: k8s.l3.draining-nodes
+# The same budget asking for all three: no eviction is ever allowed, and a
+# drain of a node running one of them never finishes.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: lifecycle-lessons
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: web

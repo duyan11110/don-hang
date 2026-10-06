@@ -1,0 +1,13 @@
+# lesson: k8s.l3.custom-resources
+# One BackupPolicy: back up the claim data-db-0 every night at 2:00 and keep
+# each copy seven days. The API server stores it like any object; nothing
+# acts on it unless a controller watches BackupPolicies.
+apiVersion: donhang.example/v1alpha1
+kind: BackupPolicy
+metadata:
+  name: db-nightly
+  namespace: operator-lessons
+spec:
+  claimName: data-db-0
+  schedule: "0 2 * * *"
+  retentionDays: 7

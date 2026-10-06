@@ -1,0 +1,14 @@
+# lesson: k8s.l3.draining-nodes
+# A budget for the three web Pods of scripts/k8s/drain.sh: at least two of
+# them available at any time. The API server refuses an eviction that would
+# leave fewer, so a drain takes them one by one.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: lifecycle-lessons
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: web

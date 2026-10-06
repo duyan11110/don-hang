@@ -1,0 +1,10 @@
+# lesson: k8s.l3.etcd-snapshots
+# The cluster donhang-lifecycle that scripts/k8s/etcd-snapshot.sh creates
+# and scripts/k8s/encryption-at-rest.sh deletes: a single control-plane
+# node, no worker, the same node image as kind-config.yaml. etcd runs on
+# that node as a static Pod, its data in /var/lib/etcd.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d
