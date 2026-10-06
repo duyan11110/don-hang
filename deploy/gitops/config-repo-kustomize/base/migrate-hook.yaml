@@ -1,0 +1,35 @@
+# The api's migration as an Argo CD hook in wave 1, as in
+# config-repo/envs/staging/migrate-hook.yaml: created by every sync, after
+# the database is healthy and before the api.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrate
+  namespace: donhang
+  labels:
+    app: migrate
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: migrate
+      # Tag and digest from each overlay's images field, like the api's.
+      image: ghcr.io/duyan11110/donhang-migrate
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: api
+              key: ConnectionStrings__Default
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault

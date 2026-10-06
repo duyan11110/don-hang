@@ -1,0 +1,39 @@
+# lesson: k8s.l2.kustomize-overlays
+# Production: the same base, three replicas of the api, and its own images.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+# A patch names an object by kind and name and gives only the fields that
+# change; everything else comes from the base as it is.
+patches:
+  - target:
+      kind: Deployment
+      name: api
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+# lesson: k8s.l2.config-repo-overlays
+# Promoting to production is one change here: the api's and the
+# migration's tag and digest, the ones deploy-verified.sh verified for
+# staging. Production runs what staging runs now.
+images:
+  - name: ghcr.io/duyan11110/donhang-api
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:4f05067078ab4e6bca443a2af2cd6e5c01324a332423ad9350068be0135ea83d
+  - name: ghcr.io/duyan11110/donhang-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:7e57128628749abb3d83c13308b69903115e7aaeab2b0da5877c95957f1a8127
+  - name: ghcr.io/duyan11110/donhang-notifications
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:d3512be4015adcbc46bbb9d6bd5c086a834c6902c27410f2ff1b62cf7ae54604
+  - name: ghcr.io/duyan11110/donhang-notifications-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:1877ac3670a844352e8d26fca5fcfb1fe994692568d1f90075da863cc117d244
+  - name: ghcr.io/duyan11110/donhang-payments
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:5eac6efe14e8a1199d0d5cf0585765a3e3baae00c342fcee692e807d16716fbc
+  - name: ghcr.io/duyan11110/donhang-payments-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:a5a0e4dc959c0aad1208a6e8e5e35cccccad2670e7714e9b05dba06b5e9a428f

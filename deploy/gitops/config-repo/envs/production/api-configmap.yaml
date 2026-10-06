@@ -1,4 +1,6 @@
-# The api's settings that are not secret, as in deploy/k8s/api-configmap.yaml.
+# The api's settings that are not secret, as in deploy/k8s/api-configmap.yaml;
+# from stage-3 the api sends no email (Notifications does) and publishes to
+# RabbitMQ.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,7 +8,8 @@ metadata:
   namespace: donhang
 data:
   ConnectionStrings__Redis: "redis:6379,abortConnect=false"
-  Smtp__Host: "mailpit"
-  Smtp__Port: "1025"
+  RabbitMq__Host: "rabbitmq"
   Keycloak__Authority: "http://localhost:8180/realms/donhang"
   Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"
+  # No trace collector runs in the cluster before stage-4.
+  OTEL_SDK_DISABLED: "true"

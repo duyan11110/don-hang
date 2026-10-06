@@ -1,0 +1,99 @@
+# The Payments service, as in docker-compose.yml: its own database,
+# donhang_payments, and the fake payment gateway it sends refunds to.
+# lesson: k8s.l2.staging-keeps-its-data
+# Its migration is a hook of its own in wave 1, as the api's is: Argo CD
+# applies the Deployment below, in wave 2, only once it has succeeded.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payments-migrate
+  namespace: donhang
+  labels:
+    app: payments-migrate
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: migrate
+      image: ghcr.io/duyan11110/donhang-payments-migrate
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: payments
+              key: ConnectionStrings__Default
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: payments
+          image: ghcr.io/duyan11110/donhang-payments
+          ports:
+            - containerPort: 8080
+          # ConnectionStrings__Default, RabbitMq__Password, Gateway__ApiKey.
+          envFrom:
+            - secretRef:
+                name: payments
+          env:
+            - name: RabbitMq__Host
+              value: rabbitmq
+            - name: Gateway__BaseAddress
+              value: http://fake-gateway:8080/
+            - name: Keycloak__Authority
+              value: https://auth.donhang.localhost:18443/realms/donhang
+            - name: Keycloak__MetadataAddress
+              value: http://keycloak:8080/realms/donhang/.well-known/openid-configuration
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+---
+# The Gateway's HTTPRoute api sends /api/v1/refunds here (platform/edge).
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments
+  namespace: donhang
+spec:
+  selector:
+    app: payments
+  ports:
+    - port: 8080
+      targetPort: 8080

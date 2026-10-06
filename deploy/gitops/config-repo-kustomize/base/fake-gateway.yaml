@@ -1,0 +1,53 @@
+# The fake payment gateway, as in docker-compose.yml: only Payments calls it.
+# Its image is not pushed to ghcr.io: scripts/k8s/stateful-staging.sh builds
+# it here and loads it into the staging node (kind load docker-image).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-gateway
+  namespace: donhang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-gateway
+  template:
+    metadata:
+      labels:
+        app: fake-gateway
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: fake-gateway
+          image: donhang-fake-gateway:stage-3
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: fake-gateway
+          env:
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-gateway
+  namespace: donhang
+spec:
+  selector:
+    app: fake-gateway
+  ports:
+    - port: 8080
+      targetPort: 8080

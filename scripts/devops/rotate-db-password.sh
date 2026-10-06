@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/lib/gitops.sh
+full_layout_only
 
 # psql inside the db Pod, through the Service db with a password, as the api
 # connects (connections from 127.0.0.1 need no password in this image).

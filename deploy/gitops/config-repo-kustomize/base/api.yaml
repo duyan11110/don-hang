@@ -1,0 +1,88 @@
+# The api in every environment: the Deployment and Service of
+# config-repo/envs/staging/api.yaml, without what differs between
+# environments. Its settings come from the ConfigMap api, which
+# kustomization.yaml generates; its secrets from the Secret api, which each
+# overlay's sealed-api.yaml becomes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: donhang
+  # Wave 2: after the database, RabbitMQ and the migration hook of wave 1.
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+      annotations:
+        donhang/db-password-version: "1"
+    spec:
+      # lesson: k8s.l3.service-accounts
+      # The api never calls the API server, so its Pods get no token of their
+      # ServiceAccount: a taken-over container finds nothing to call it with.
+      automountServiceAccountToken: false
+      containers:
+        - name: api
+          # The tag and the digest come from each overlay's images field.
+          image: ghcr.io/duyan11110/donhang-api
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api
+          env:
+            - name: ConnectionStrings__Default
+              valueFrom:
+                secretKeyRef:
+                  name: api
+                  key: ConnectionStrings__Default
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: api
+                  key: RabbitMq__Password
+          # lesson: k8s.l3.security-context
+          # How the process runs: never as root (the kubelet refuses to start
+          # the container otherwise), unable to gain privileges, without any
+          # Linux capability, under the runtime's default seccomp profile. The
+          # other .NET services and the migration hooks set the same four.
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: donhang
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080

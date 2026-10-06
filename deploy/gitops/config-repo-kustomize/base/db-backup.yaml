@@ -1,0 +1,63 @@
+# Where the nightly backups go: a claim of its own, on the same node as
+# data-db-0, so it is lost with that node or with the cluster. A backup
+# counts once it is copied off the cluster (scripts/k8s/db-backup.sh).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-backups
+  namespace: donhang
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+# lesson: k8s.l2.scheduled-backups
+# Every night at 02:00 by the cluster's clock, a new Job: pg_dump -Fc of the
+# three databases into the claim db-backups. Forbid: a run is skipped while
+# the previous Job is still running, so two never write there at once. A
+# failed Pod is tried again up to backoffLimit times, then the Job fails.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup
+  namespace: donhang
+spec:
+  schedule: "0 2 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: db-backup
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          containers:
+            - name: pg-dump
+              image: postgres:17.6-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  stamp=$(date -u +%Y%m%dT%H%M%SZ)
+                  for db in donhang donhang_notifications donhang_payments; do
+                    pg_dump -Fc -h db -U donhang -d "$db" -f "/backups/$db-$stamp.dump"
+                    echo "wrote $db-$stamp.dump"
+                  done
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: db
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: db-backups

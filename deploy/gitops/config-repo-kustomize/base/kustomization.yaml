@@ -1,0 +1,40 @@
+# lesson: k8s.l2.kustomize-overlays
+# The base: every manifest of Đơn Hàng once, as every environment runs it.
+# kubectl kustomize builds the folder from this list; the overlays in
+# envs/staging and envs/production take it as one of their resources.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - api.yaml
+  - migrate-hook.yaml
+  - db.yaml
+  - db-init.yaml
+  - redis.yaml
+  - keycloak.yaml
+  - keycloak-realm.yaml
+  - mailpit.yaml
+  # lesson: k8s.l2.staging-keeps-its-data
+  # From k8s/state-and-storage: RabbitMQ with its claim, the two services
+  # that left the api with their migration hooks, the fake payment gateway,
+  # the nightly backup; then the NetworkPolicies of k8s.l3.network-policies.
+  - rabbitmq.yaml
+  - notifications.yaml
+  - payments.yaml
+  - fake-gateway.yaml
+  - db-backup.yaml
+  - network-policies.yaml
+# lesson: k8s.l2.kustomize-overlays
+# The api's ConfigMap, generated: its name gets a hash of its content
+# (api-<hash>), and the reference in api.yaml is updated to match. A changed
+# value means a new name, so the api's Pod template changes and its Pods
+# roll, which an edited ConfigMap never did.
+configMapGenerator:
+  - name: api
+    namespace: donhang
+    literals:
+      - ConnectionStrings__Redis=redis:6379,abortConnect=false
+      - RabbitMq__Host=rabbitmq
+      - Keycloak__Authority=https://auth.donhang.localhost:18443/realms/donhang
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/donhang/.well-known/openid-configuration
+      # No trace collector runs in the cluster before stage-4.
+      - OTEL_SDK_DISABLED=true

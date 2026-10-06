@@ -1,0 +1,95 @@
+# RabbitMQ in the cluster from stage-3, as in docker-compose.yml: one node,
+# the user donhang, its password from the Secret rabbitmq (each overlay's
+# sealed-rabbitmq.yaml). A StatefulSet, so that its queues and the messages
+# in them live on the claim data-rabbitmq-0, not in the Pod.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  serviceName: rabbitmq-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:4.1.8-management-alpine
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: donhang
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq
+                  key: RABBITMQ_DEFAULT_PASS
+            # lesson: k8s.l2.headless-services
+            # RabbitMQ keeps its data in a folder named after its node name.
+            # The name is built from the Pod's DNS name, which a replacement
+            # rabbitmq-0 keeps: rabbit@rabbitmq-0.rabbitmq-headless.donhang.svc.cluster.local
+            # finds the folder, and the queues, the old Pod left.
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: RABBITMQ_USE_LONGNAME
+              value: "true"
+            - name: RABBITMQ_NODENAME
+              value: "rabbit@$(POD_NAME).rabbitmq-headless.donhang.svc.cluster.local"
+          ports:
+            - containerPort: 5672
+          readinessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/rabbitmq
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+# lesson: k8s.l2.headless-services
+# Two Services for the same Pods. rabbitmq has a virtual IP address: the api,
+# Notifications and Payments use it, as any Pod would do. rabbitmq-headless
+# has none (clusterIP: None); the StatefulSet's serviceName names it, and it
+# gives each Pod a DNS name of its own.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: donhang
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - port: 5672
+      targetPort: 5672
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-headless
+  namespace: donhang
+spec:
+  clusterIP: None
+  # The node must resolve its own name while it starts, before it is ready.
+  publishNotReadyAddresses: true
+  selector:
+    app: rabbitmq
+  ports:
+    - port: 5672

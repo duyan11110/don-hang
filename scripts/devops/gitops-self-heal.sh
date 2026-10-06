@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/lib/gitops.sh
+full_layout_only
 
 replicas() { kubectl get deployment api -n donhang -o jsonpath='{.spec.replicas}'; }
 sync_status() { kubectl get application staging -n argocd -o jsonpath='{.status.sync.status}'; }

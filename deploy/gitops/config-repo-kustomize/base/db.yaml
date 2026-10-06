@@ -1,0 +1,93 @@
+# lesson: k8s.l2.statefulsets
+# PostgreSQL from stage-3: a StatefulSet with one replica. Its Pod is db-0,
+# and a replacement for it is db-0 again. volumeClaimTemplates gives db-0
+# its own claim, data-db-0, which every later db-0 mounts: the data no
+# longer goes with the Pod, as it did with emptyDir.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  serviceName: db-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:17.6-alpine
+          env:
+            - name: POSTGRES_DB
+              value: donhang
+            - name: POSTGRES_USER
+              value: donhang
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db
+                  key: POSTGRES_PASSWORD
+            - name: TZ
+              value: Asia/Ho_Chi_Minh
+            - name: PGTZ
+              value: Asia/Ho_Chi_Minh
+          ports:
+            - containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "127.0.0.1", "-U", "donhang", "-d", "donhang"]
+          # The init scripts of the ConfigMap db-init run only while the data
+          # directory is empty: once, on the first start with a new claim.
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: db-init
+  # lesson: k8s.l2.statefulsets
+  # One claim per Pod, named <template>-<Pod>: data-db-0. With no
+  # storageClassName it gets the cluster's default StorageClass.
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+# The address the api, Notifications, Payments and the backups use, as before.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: donhang
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+# The headless Service serviceName names (k8s.l2.headless-services).
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-headless
+  namespace: donhang
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+    - port: 5432

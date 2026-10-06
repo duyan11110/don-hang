@@ -1,0 +1,82 @@
+# The Notifications service, as in docker-compose.yml: its own database,
+# donhang_notifications, migrated by its own hook, then the service, which
+# reads order events from RabbitMQ and sends the emails through Mailpit.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: notifications-migrate
+  namespace: donhang
+  labels:
+    app: notifications-migrate
+  # Wave 1, like the api's migration: after the database, before the service.
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: migrate
+      image: ghcr.io/duyan11110/donhang-notifications-migrate
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: notifications
+              key: ConnectionStrings__Default
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notifications
+  template:
+    metadata:
+      labels:
+        app: notifications
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: notifications
+          image: ghcr.io/duyan11110/donhang-notifications
+          # ConnectionStrings__Default and RabbitMq__Password.
+          envFrom:
+            - secretRef:
+                name: notifications
+          env:
+            - name: RabbitMq__Host
+              value: rabbitmq
+            - name: Smtp__Host
+              value: mailpit
+            - name: Smtp__Port
+              value: "1025"
+            # No trace collector runs in the cluster before stage-4.
+            - name: OTEL_SDK_DISABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault

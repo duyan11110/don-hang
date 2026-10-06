@@ -11,8 +11,9 @@ render() {
 }
 
 status=0
-for env in staging production; do
-  dir=deploy/gitops/config-repo/envs/$env
+# The full manifests of each environment, and from stage-3 the Kustomize
+# base that both overlays share.
+for dir in deploy/gitops/config-repo/envs/staging deploy/gitops/config-repo/envs/production            deploy/gitops/config-repo-kustomize/base; do
   new_db=$(render db-init "db/schema.sql, db/seed.sql and db/migrations-baseline.sql" db-init \
     --from-file=10-schema.sql=db/schema.sql \
     --from-file=20-seed.sql=db/seed.sql \

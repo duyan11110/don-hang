@@ -322,10 +322,15 @@ jobs:
       # lesson: k8s.l2.config-repo-overlays
       # A mistake in the base or in a patch shows only in the rendered
       # manifests, so every overlay is rendered and the output validated.
+      # The SealedSecrets an overlay lists exist only in the config
+      # repository: here they are empty stand-ins.
       - name: Render each Kustomize overlay and validate it
         if: hashFiles('deploy/gitops/config-repo-kustomize/envs/*/kustomization.yaml') != ''
         run: |
           for overlay in deploy/gitops/config-repo-kustomize/envs/*/; do
+            for name in $(grep -o 'sealed-[a-z-]*[.]yaml' "$overlay/kustomization.yaml"); do
+              [ -f "$overlay/$name" ] || : > "$overlay/$name"
+            done
             echo "== $overlay"
             kubectl kustomize "$overlay" | docker run --rm -i "$KUBECONFORM" \
               -strict -summary -kubernetes-version 1.34.0 -

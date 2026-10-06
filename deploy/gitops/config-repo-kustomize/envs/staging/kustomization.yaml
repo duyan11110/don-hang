@@ -1,0 +1,39 @@
+# lesson: k8s.l2.kustomize-overlays
+# Staging: the base, plus what only staging has. Its SealedSecrets are
+# sealed with staging's key by scripts/devops/seal-secrets.sh, beside this
+# file in the config repository (never in Đơn Hàng's own repository).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+  - sealed-db.yaml
+  - sealed-api.yaml
+  - sealed-keycloak.yaml
+  - sealed-rabbitmq.yaml
+  - sealed-notifications.yaml
+  - sealed-payments.yaml
+  - sealed-fake-gateway.yaml
+# lesson: k8s.l2.kustomize-overlays
+# lesson: k8s.l3.admission-policies
+# The image of each of Đơn Hàng's services and migrations, wherever it
+# appears in the base: a tag, and the digest that tag named when it was
+# verified. The node pulls by digest, so a tag moved later changes nothing.
+images:
+  - name: ghcr.io/duyan11110/donhang-api
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:4f05067078ab4e6bca443a2af2cd6e5c01324a332423ad9350068be0135ea83d
+  - name: ghcr.io/duyan11110/donhang-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:7e57128628749abb3d83c13308b69903115e7aaeab2b0da5877c95957f1a8127
+  - name: ghcr.io/duyan11110/donhang-notifications
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:d3512be4015adcbc46bbb9d6bd5c086a834c6902c27410f2ff1b62cf7ae54604
+  - name: ghcr.io/duyan11110/donhang-notifications-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:1877ac3670a844352e8d26fca5fcfb1fe994692568d1f90075da863cc117d244
+  - name: ghcr.io/duyan11110/donhang-payments
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:5eac6efe14e8a1199d0d5cf0585765a3e3baae00c342fcee692e807d16716fbc
+  - name: ghcr.io/duyan11110/donhang-payments-migrate
+    newTag: sha-25158b4d4f7cb9a5c0b944f5ea8482221a24b4be
+    digest: sha256:a5a0e4dc959c0aad1208a6e8e5e35cccccad2670e7714e9b05dba06b5e9a428f

@@ -1,0 +1,159 @@
+# lesson: k8s.l3.network-policies
+# First, a policy that selects every Pod in donhang (an empty podSelector)
+# for ingress and allows nothing: each Pod is isolated. The policies below
+# only add the connections each service needs; the kubelet's probes from the
+# Pod's own node are always allowed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: donhang
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+---
+# lesson: k8s.l3.network-policies
+# PostgreSQL: only the services that use it, their migrations and the backup.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [api, migrate, notifications, notifications-migrate, payments, payments-migrate, db-backup]
+      ports:
+        - port: 5432
+---
+# The api and Payments: from Traefik's Pods, in the namespace traefik.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: from-the-gateway
+  namespace: donhang
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [api, payments]
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+      ports:
+        - port: 8080
+---
+# Keycloak: from Traefik (sign-in), and from the api and Payments, which
+# fetch its keys.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: keycloak
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [api, payments]
+      ports:
+        - port: 8080
+---
+# RabbitMQ: the three services that publish and consume.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rabbitmq
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: rabbitmq
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [api, notifications, payments]
+      ports:
+        - port: 5672
+---
+# Redis: the api's cache, used by nothing else.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api
+      ports:
+        - port: 6379
+---
+# Mailpit: the emails of Notifications.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mailpit
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: mailpit
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: notifications
+      ports:
+        - port: 1025
+---
+# The fake payment gateway: Payments only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fake-gateway
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: fake-gateway
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: payments
+      ports:
+        - port: 8080

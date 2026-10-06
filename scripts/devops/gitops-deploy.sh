@@ -5,6 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/lib/gitops.sh
+full_layout_only
 
 from=${1:-sha-bb184243e4cafed6ae833ca61710608366214aa5}
 to=${2:-1.0.0}

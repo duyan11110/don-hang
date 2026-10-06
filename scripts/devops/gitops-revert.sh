@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 source scripts/lib/gitops.sh
+full_layout_only
 
 good=$(sed -nE 's#^ *image: ghcr.io/duyan11110/donhang-api:(.*)$#\1#p' "$config_repo/envs/staging/api.yaml")
 bad=sha-0000000000000000000000000000000000000000

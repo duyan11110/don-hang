@@ -62,31 +62,67 @@ config_commit() {
   git_auth -C "$config_repo" push -q "$git_server/$repo_path" main
 }
 
+# The scripts of devops/gitops and devops/supply-chain edit the full
+# manifests of envs/staging and envs/production. From
+# scripts/k8s/kustomize-config-repo.sh on, those folders are Kustomize
+# overlays: full_layout_only stops such a script and says how to go back.
+full_layout_only() {
+  if [ -f "$config_repo/envs/staging/kustomization.yaml" ]; then
+    echo "the config repository uses the Kustomize layout of k8s.l2.config-repo-overlays;" >&2
+    echo "run scripts/devops/gitops-repo.sh --reset to go back to plain manifests first" >&2
+    exit 1
+  fi
+}
+
+# The Kustomize layout in this repository (k8s/ingress-helm and later).
+layout=deploy/gitops/config-repo-kustomize
+
+# config_take <path>...: copy those files of the Kustomize layout into the
+# working clone, then each kustomization.yaml of the layout, keeping only
+# the files the working clone has so far: later lessons add the others.
+config_take() {
+  local path dir
+  for path in "$@"; do
+    mkdir -p "$config_repo/$(dirname "$path")"
+    cp "$layout/$path" "$config_repo/$path"
+  done
+  for dir in base envs/staging envs/production; do
+    mkdir -p "$config_repo/$dir"
+    CLONE_DIR="$config_repo/$dir" perl -ne 'next if /^  - ([a-z-]+\.yaml)$/ && ! -e "$ENV{CLONE_DIR}/$1"; print' \
+      < "$layout/$dir/kustomization.yaml" > "$config_repo/$dir/kustomization.yaml.new"
+    mv "$config_repo/$dir/kustomization.yaml.new" "$config_repo/$dir/kustomization.yaml"
+  done
+}
+
 # The newest commit of the working clone, short and full.
 config_head() { git -C "$config_repo" rev-parse "${1:---short}" HEAD; }
 
+# The Application the helpers below look at: staging, unless a script sets
+# app to another one (traefik, edge-staging, policies-staging).
+app=staging
+
 # Ask Argo CD to compare now instead of at its next interval.
 app_refresh() {
-  kubectl annotate application staging -n argocd argocd.argoproj.io/refresh=normal --overwrite >/dev/null
+  kubectl annotate application "$app" -n argocd argocd.argoproj.io/refresh=normal --overwrite >/dev/null
 }
 
 # app_wait <sync status> <health status> [revision] [seconds]: wait until
-# staging shows both (at that commit, when given) and no sync is running;
+# the Application shows both (at that commit, when given) and no sync is running;
 # print them once it does.
 app_wait() {
   local want_sync=$1 want_health=$2 revision=${3:-} seconds=${4:-600}
   local sync health rev phase
   for _ in $(seq "$seconds"); do
-    read -r sync health rev phase < <(kubectl get application staging -n argocd \
+    read -r sync health rev phase < <(kubectl get application "$app" -n argocd \
       -o jsonpath='{.status.sync.status} {.status.health.status} {.status.sync.revision} {.status.operationState.phase}{"\n"}')
     if [ "$sync" = "$want_sync" ] && [ "$health" = "$want_health" ] && [ "$phase" != Running ] \
        && { [ -z "$revision" ] || [ "$rev" = "$revision" ]; }; then
-      echo "staging: $sync, $health"
+      echo "$app: $sync, $health"
       return 0
     fi
     sleep 1
   done
-  echo "staging is still $sync, $health after $seconds s (wanted $want_sync, $want_health)" >&2
+  echo "$app is still $sync, $health after $seconds s (wanted $want_sync, $want_health)" >&2
   return 1
 }
 
@@ -95,7 +131,7 @@ app_wait() {
 app_wait_sync() {
   local revision=$1 seconds=${2:-600} result
   for _ in $(seq "$seconds"); do
-    result=$(kubectl get application staging -n argocd \
+    result=$(kubectl get application "$app" -n argocd \
       -o jsonpath='{.status.operationState.syncResult.revision} {.status.operationState.phase}')
     case "$result" in
       "$revision Succeeded" | "$revision Failed" | "$revision Error")
