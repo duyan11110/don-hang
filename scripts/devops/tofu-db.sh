@@ -26,5 +26,5 @@ psql -At -c "SELECT count(*) FROM staging_cluster.states WHERE data LIKE '%PRIVA
 echo
 
 # And no state file in the folders.
-echo "== deploy/tofu/envs/staging/cluster"
-ls deploy/tofu/envs/staging/cluster
+echo "== state files under deploy/tofu/envs"
+find deploy/tofu/envs -name '*.tfstate' -not -path '*/.terraform/*' | grep . || echo "none"

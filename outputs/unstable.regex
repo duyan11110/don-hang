@@ -105,3 +105,4 @@ newest commit in the mirror: \K[0-9a-f]{7}
 ^    POSTGRES_PASSWORD: \K\S+(?=\.\.\.$)
 ^ *\K[0-9]+(?= s  [0-9]\. )
 ^total: \K[0-9]+(?= s from)
+^endpoint = "https://127\.0\.0\.1:\K[0-9]+(?=")

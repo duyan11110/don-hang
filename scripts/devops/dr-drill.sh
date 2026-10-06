@@ -90,8 +90,7 @@ if [ "$without_key" = yes ]; then
   echo "== Secrets in donhang"
   kubectl get secrets -n donhang -o name | grep . || echo "none"
   echo "== db's Pod, waiting"
-  kubectl get pods -n donhang -l app=db -o jsonpath='{.items[0].status.containerStatuses[0].state.waiting.reason}{"
-"}'
+  kubectl get pods -n donhang -l app=db -o jsonpath='{.items[0].status.containerStatuses[0].state.waiting.reason}{"\n"}'
   echo "== the api (wave 2): never applied, the sync stops at wave 0"
   kubectl get deployment api -n donhang -o name 2>&1 || true
   echo

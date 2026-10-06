@@ -47,21 +47,19 @@ capture() {
     return 1
   fi
 
-  # OpenTofu prints a progress line every 10 s while it works, so how many
-  # there are depends on the machine: the devops scripts run here lose them.
+  # OpenTofu prints progress lines (Creating..., Still creating... [10s
+  # elapsed], Refreshing state...); how many there are and in which order
+  # depends on timing, so the devops scripts captured here lose them.
   if is_devops_host "$script"; then
-    perl -ni -e 'print unless /: Still [a-z]+\.\.\. \[[0-9hms]+ elapsed\]$/' "$out"
+    perl -ni -e 'print unless /^\S+: (?:Still [a-z]+\.\.\. \[.*elapsed\]|(?:Creating|Destroying|Modifying|Reading)\.\.\.|(?:Creation|Destruction|Modifications|Read) complete after .*|Refreshing state\.\.\. .*)$/' "$out"
   fi
 
   # kubectl pads every table column to its widest value, so a masked Pod name
   # or age would still shift the columns after it. In the output of
-  # scripts/k8s/ (and of the devops scripts that run kubectl against
-  # donhang-staging), each run of two or more spaces between words becomes
-  # three. OpenTofu's own output lines up nothing that changes, so its
-  # scripts keep their spacing.
-  if [[ "$script" == scripts/k8s/* ]] || kubectl_tables "$script"; then
-    perl -pi -e 's/(?<=\S) {2,}(?=\S)/   /g' "$out"
-  fi
+  # scripts/k8s/, each run of two or more spaces between words becomes three.
+  case "$script" in
+    scripts/k8s/*) perl -pi -e 's/(?<=\S) {2,}(?=\S)/   /g' "$out" ;;
+  esac
 
   perl - "$out" <<'MASK'
 my ($file) = @ARGV;
@@ -82,8 +80,8 @@ close $written;
 MASK
 
   # Then line the columns up again, now that no value in them changes.
-  if [[ "$script" == scripts/k8s/* ]] || kubectl_tables "$script"; then
-    perl - "$out" <<'ALIGN'
+  case "$script" in
+    scripts/k8s/*) perl - "$out" <<'ALIGN'
 my ($file) = @ARGV;
 open my $in, '<', $file or die "$file: $!";
 my @lines = map { chomp; $_ } <$in>;
@@ -114,7 +112,8 @@ open my $written, '>', $file or die "$file: $!";
 print {$written} "$_\n" for @out;
 close $written;
 ALIGN
-  fi
+      ;;
+  esac
 
   echo "captured $out"
 }
@@ -150,8 +149,6 @@ is_devops_host() {
   done
   return 1
 }
-
-kubectl_tables() { is_devops_host "$1" && [[ "$1" != scripts/devops/tofu-* ]]; }
 
 if [ "${1:-}" = "--all" ]; then
   # scripts/lib/ holds helpers other scripts source, not lessons; scripts/k8s/
