@@ -1,0 +1,19 @@
+$ kubectl apply -f deploy/k8s/lessons/echo-loadbalancer-local.yaml
+service/echo-loadbalancer-local unchanged
+$ kubectl get services echo-loadbalancer echo-loadbalancer-local -n network-lessons -o custom-columns=NAME:.metadata.name,EXTERNAL-IP:.status.loadBalancer.ingress[0].ip,POLICY:.spec.externalTrafficPolicy
+NAME                      EXTERNAL-IP      POLICY
+echo-loadbalancer         172.22.255.202   Cluster
+echo-loadbalancer-local   172.22.255.200   Local
+the client container's address: 172.22.0.6
+
+$ docker exec donhang-lb-client wget -qO- http://<echo-loadbalancer's address>
+echo-ip-...-... saw 172.22.0.4
+$ docker exec donhang-lb-client wget -qO- http://<echo-loadbalancer-local's address>
+echo-ip-...-... saw 172.22.0.6
+
+echo-loadbalancer (announced by donhang-worker2): 10 calls, Pods that answered: 2
+echo-loadbalancer-local (announced by donhang-worker2): 10 calls, Pods that answered: 1
+
+$ kubectl scale deployment echo-ip -n network-lessons --replicas=1
+deployment.apps/echo-ip scaled
+the echo-ip Pod runs on donhang-worker; echo-loadbalancer-local is announced by donhang-worker

@@ -1,0 +1,15 @@
+$ kubectl delete secret api-tls -n operator-lessons
+secret "api-tls" deleted from operator-lessons namespace
+$ kubectl get secret api-tls -n operator-lessons
+NAME      TYPE
+api-tls   kubernetes.io/tls
+
+a new certificate: its serial number differs from the deleted one
+$ kubectl get certificaterequests -n operator-lessons -o custom-columns=NAME:.metadata.name,ISSUER:.spec.issuerRef.name,READY:.status.conditions[?(@.type=="Ready")].status
+NAME         ISSUER   READY
+api-cert-2   lab-ca   True
+
+$ kubectl auth can-i list secrets -A --as=system:serviceaccount:cert-manager:cert-manager
+yes
+$ kubectl auth can-i list secrets -A --as=system:serviceaccount:operator-lessons:default
+no

@@ -1,0 +1,47 @@
+$ kubectl get pods -n kube-system -l k8s-app=kube-dns -o custom-columns=POD:.metadata.name,IMAGE:.spec.containers[0].image
+POD               IMAGE
+coredns-...-...   registry.k8s.io/coredns/coredns:v1.12.1
+coredns-...-...   registry.k8s.io/coredns/coredns:v1.12.1
+$ kubectl get service kube-dns -n kube-system
+NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   ...
+$ kubectl exec client -n network-lessons -- grep nameserver /etc/resolv.conf
+nameserver 10.96.0.10
+
+$ kubectl get configmap coredns -n kube-system -o jsonpath='{.data.Corefile}'
+.:53 {
+    errors
+    health {
+       lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+       pods insecure
+       fallthrough in-addr.arpa ip6.arpa
+       ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf {
+       max_concurrent 1000
+    }
+    cache 30 {
+       disable success cluster.local
+       disable denial cluster.local
+    }
+    loop
+    reload
+    loadbalance
+}
+
+$ kubectl create service clusterip echo-new -n network-lessons --tcp=80:8080
+service/echo-new created
+$ kubectl exec client -n network-lessons -- getent hosts echo-new.network-lessons.svc.cluster.local
+...   echo-new.network-lessons.svc.cluster.local   echo-new.network-lessons.svc.cluster.local
+
+$ kubectl scale deployment coredns -n kube-system --replicas=0
+deployment.apps/coredns scaled
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+command terminated with exit code 2
+(no answer: exit 2)
+$ kubectl exec client -n network-lessons -- wget -qO- http://<an echo-ip Pod's address>:8080
+echo-ip-...-... saw ...

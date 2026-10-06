@@ -1,0 +1,34 @@
+$ docker pause donhang-control-plane
+$ kubectl get nodes --request-timeout=10s
+failed
+$ docker exec donhang-lb-client wget -qO- http://<donhang-worker's address>:<echo-nodeport's node port>
+echo-ip-...-... saw 172.22.0.3
+$ docker unpause donhang-control-plane
+
+$ kind create cluster --name donhang-ha --config deploy/k8s/kind-ha-config.yaml --kubeconfig secrets/donhang-ha.kubeconfig
+$ kubectl --kubeconfig secrets/donhang-ha.kubeconfig get nodes
+NAME                        STATUS
+donhang-ha-control-plane    Ready
+donhang-ha-control-plane2   Ready
+donhang-ha-control-plane3   Ready
+$ docker ps --filter name=donhang-ha --format '{{.Names}}'
+donhang-ha-control-plane
+donhang-ha-control-plane2
+donhang-ha-control-plane3
+donhang-ha-external-load-balancer
+the kubeconfig's API server: https://127.0.0.1:...
+
+$ docker pause donhang-ha-control-plane2
+$ kubectl --kubeconfig secrets/donhang-ha.kubeconfig get nodes
+NAME
+donhang-ha-control-plane
+donhang-ha-control-plane2
+donhang-ha-control-plane3
+
+$ docker pause donhang-ha-control-plane3
+$ kubectl --kubeconfig secrets/donhang-ha.kubeconfig get nodes
+failed (three tries)
+API server containers running on donhang-ha-control-plane: 1
+
+$ kind delete cluster --name donhang-ha
+Deleting cluster "donhang-ha" ...

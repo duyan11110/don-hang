@@ -1,0 +1,35 @@
+$ kubectl create secret generic lab-before --from-literal=password=written-before
+secret/lab-before created
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdctl ... get /registry/secrets/default/lab-before
+/registry/secrets/default/lab-before
+k8s.
+  (written-before is readable in it)
+
+$ docker cp secrets/encryption-config.yaml donhang-lifecycle-control-plane:/etc/kubernetes/enc/encryption-config.yaml
+$ docker exec donhang-lifecycle-control-plane grep -e encryption-provider-config -e 'path: /etc/kubernetes/enc' /etc/kubernetes/manifests/kube-apiserver.yaml
+    - --encryption-provider-config=/etc/kubernetes/enc/encryption-config.yaml
+      path: /etc/kubernetes/enc
+
+$ kubectl create secret generic lab-after --from-literal=password=written-after
+secret/lab-after created
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdctl ... get /registry/secrets/default/lab-after
+/registry/secrets/default/lab-after
+k8s:enc:secretbox:v1:key1:
+  (written-after is not in it as written)
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdctl ... get /registry/secrets/default/lab-before
+/registry/secrets/default/lab-before
+k8s.
+  (written-before is readable in it)
+
+$ kubectl get secrets -A -o json | kubectl replace -f -
+Secrets replaced: 3
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdctl ... get /registry/secrets/default/lab-before
+/registry/secrets/default/lab-before
+k8s:enc:secretbox:v1:key1:
+  (written-before is not in it as written)
+
+$ kubectl get secret lab-before -o jsonpath='{.data.password}' | base64 -d
+written-before
+
+$ kind delete cluster --name donhang-lifecycle
+Deleting cluster "donhang-lifecycle" ...

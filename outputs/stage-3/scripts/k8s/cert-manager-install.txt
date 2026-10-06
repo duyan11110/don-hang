@@ -1,0 +1,18 @@
+$ kubectl apply -f deploy/cert-manager/cert-manager.yaml
+namespace/cert-manager unchanged
+deployment.apps/cert-manager-cainjector unchanged
+deployment.apps/cert-manager unchanged
+deployment.apps/cert-manager-webhook unchanged
+$ kubectl get deployments -n cert-manager -o custom-columns=DEPLOYMENT:.metadata.name,READY:.status.readyReplicas,IMAGE:.spec.template.spec.containers[0].image
+DEPLOYMENT                READY   IMAGE
+cert-manager              1       quay.io/jetstack/cert-manager-controller:v1.20.4
+cert-manager-cainjector   1       quay.io/jetstack/cert-manager-cainjector:v1.20.4
+cert-manager-webhook      1       quay.io/jetstack/cert-manager-webhook:v1.20.4
+
+$ kubectl get crds | grep cert-manager.io
+certificaterequests.cert-manager.io
+certificates.cert-manager.io
+challenges.acme.cert-manager.io
+clusterissuers.cert-manager.io
+issuers.cert-manager.io
+orders.acme.cert-manager.io

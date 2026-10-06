@@ -1,0 +1,32 @@
+$ kubectl get crds | grep metallb.io
+bfdprofiles.metallb.io
+bgpadvertisements.metallb.io
+bgppeers.metallb.io
+communities.metallb.io
+configurationstates.metallb.io
+ipaddresspools.metallb.io
+l2advertisements.metallb.io
+servicebgpstatuses.metallb.io
+servicel2statuses.metallb.io
+
+$ kubectl apply -f deploy/k8s/lessons/backup-policy-crd.yaml
+customresourcedefinition.apiextensions.k8s.io/backuppolicies.donhang.example created
+$ kubectl api-resources --api-group=donhang.example
+NAME   SHORTNAMES   APIVERSION   NAMESPACED   KIND
+backuppolicies   donhang.example/v1alpha1   true   BackupPolicy
+$ kubectl apply -f deploy/k8s/lessons/backup-policy.yaml
+backuppolicy.donhang.example/db-nightly created
+$ kubectl get backuppolicies -n operator-lessons -o custom-columns=NAME:.metadata.name,CLAIM:.spec.claimName,SCHEDULE:.spec.schedule,DAYS:.spec.retentionDays
+NAME         CLAIM       SCHEDULE    DAYS
+db-nightly   data-db-0   0 2 * * *   7
+
+$ sed 's/retentionDays: 7/retentionDays: seven/' deploy/k8s/lessons/backup-policy.yaml | kubectl apply -f -
+The BackupPolicy "db-nightly" is invalid: spec.retentionDays: Invalid value: "string": spec.retentionDays in body must be of type integer: "string"
+
+$ kubectl get jobs,pods -n operator-lessons
+No resources found in operator-lessons namespace.
+
+$ kubectl delete -f deploy/k8s/lessons/backup-policy-crd.yaml
+customresourcedefinition.apiextensions.k8s.io "backuppolicies.donhang.example" deleted
+$ kubectl get backuppolicies -n operator-lessons
+Error from server (NotFound): Unable to list "donhang.example/v1alpha1, Resource=backuppolicies": the server could not find the requested resource (get backuppolicies.donhang.example)

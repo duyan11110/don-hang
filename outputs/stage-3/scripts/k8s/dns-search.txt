@@ -1,0 +1,32 @@
+$ kubectl exec client -n network-lessons -- cat /etc/resolv.conf
+search network-lessons.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+$ kubectl exec client -n network-lessons -- getent ahostsv4 example.com
+queries CoreDNS logged:
+  example.com.network-lessons.svc.cluster.local. NXDOMAIN
+  example.com.svc.cluster.local. NXDOMAIN
+  example.com.cluster.local. NXDOMAIN
+  example.com. NOERROR
+
+$ kubectl exec client -n network-lessons -- getent ahostsv4 example.com.
+queries CoreDNS logged:
+  example.com. NOERROR
+
+$ kubectl apply -f deploy/k8s/lessons/dns-config-pod.yaml
+pod/dns-ndots created
+pod/dns-node created
+$ kubectl exec dns-ndots -n network-lessons -- grep options /etc/resolv.conf
+options ndots:1
+$ kubectl exec dns-ndots -n network-lessons -- getent ahostsv4 example.com
+queries CoreDNS logged:
+  example.com. NOERROR
+
+$ kubectl exec dns-node -n network-lessons -- grep -v -e '^#' -e '^$' /etc/resolv.conf
+nameserver 192.168.65.254
+options ndots:0
+$ kubectl exec dns-node -n network-lessons -- getent hosts echo-ip
+(no address)
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+(resolves to echo-ip's cluster IP)

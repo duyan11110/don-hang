@@ -1,0 +1,30 @@
+$ kind create cluster --name donhang-lifecycle --config deploy/k8s/kind-lifecycle-config.yaml --kubeconfig secrets/donhang-lifecycle.kubeconfig
+$ kubectl get nodes -o custom-columns=NAME:.metadata.name,VERSION:.status.nodeInfo.kubeletVersion
+NAME                              VERSION
+donhang-lifecycle-control-plane   v1.34.11
+
+$ kubectl create configmap before --from-literal=taken=before-the-snapshot
+configmap/before created
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdctl --endpoints=https://127.0.0.1:2379 \
+    --cacert=... --cert=... --key=... snapshot save /var/lib/etcd/snapshot.db
+Snapshot saved at /var/lib/etcd/snapshot.db
+$ docker cp donhang-lifecycle-control-plane:/var/lib/etcd/snapshot.db backups/etcd/donhang-lifecycle.db
+copied: backups/etcd/donhang-lifecycle.db
+$ kubectl create configmap after --from-literal=taken=after-the-snapshot
+configmap/after created
+$ kubectl get configmaps before after
+NAME     DATA   AGE
+before   1      ...
+after    1      ...
+
+$ kubectl exec -n kube-system etcd-donhang-lifecycle-control-plane -- etcdutl snapshot restore /var/lib/etcd/snapshot.db \
+    --data-dir /var/lib/etcd/restored --name donhang-lifecycle-control-plane --initial-cluster donhang-lifecycle-control-plane=https://<node address>:2380 ...
+
+$ docker exec donhang-lifecycle-control-plane sh -c 'mkdir -p /root/stopped && mv /etc/kubernetes/manifests/etcd.yaml /etc/kubernetes/manifests/kube-apiserver.yaml /root/stopped/'
+$ docker exec donhang-lifecycle-control-plane sh -c 'mv /var/lib/etcd/member /var/lib/etcd/member.before-restore && mv /var/lib/etcd/restored/member /var/lib/etcd/member'
+$ docker exec donhang-lifecycle-control-plane sh -c 'mv /root/stopped/etcd.yaml /root/stopped/kube-apiserver.yaml /etc/kubernetes/manifests/'
+
+$ kubectl get configmaps before after
+NAME     DATA   AGE
+before   1      ...
+Error from server (NotFound): configmaps "after" not found

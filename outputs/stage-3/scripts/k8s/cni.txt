@@ -1,0 +1,16 @@
+$ kubectl get pods -n kube-system -l app=kindnet -o custom-columns=POD:.metadata.name,ADDRESS:.status.podIP,NODE:.spec.nodeName
+POD           ADDRESS      NODE
+kindnet-...   172.22.0.2   donhang-control-plane
+kindnet-...   172.22.0.4   donhang-worker...
+kindnet-...   172.22.0.3   donhang-worker...
+
+$ kubectl get nodes -o custom-columns=NODE:.metadata.name,ADDRESS:.status.addresses[0].address,POD-RANGE:.spec.podCIDR
+NODE                    ADDRESS      POD-RANGE
+donhang-control-plane   172.22.0.2   10.244.0.0/24
+donhang-worker          172.22.0.3   10.244.2.0/24
+donhang-worker2         172.22.0.4   10.244.1.0/24
+
+$ docker exec donhang-worker ip route | grep via
+default via 172.22.0.1 dev eth0 
+10.244.0.0/24 via 172.22.0.2 dev eth0 
+10.244.1.0/24 via 172.22.0.4 dev eth0 

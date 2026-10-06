@@ -1,0 +1,61 @@
+== on donhang, namespace network-lessons
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+resolves
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://echo-ip
+echo-ip-...-... saw ...
+
+$ kubectl apply -f deploy/k8s/lessons/deny-egress.yaml
+networkpolicy.networking.k8s.io/deny-egress created
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+does not resolve
+$ kubectl apply -f deploy/k8s/lessons/allow-dns-egress.yaml
+networkpolicy.networking.k8s.io/allow-dns-egress created
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+resolves
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://echo-ip
+wget: download timed out
+
+$ kubectl apply -f - (allow-echo-ip-egress: to app=echo-ip, port 80)
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://echo-ip
+wget: download timed out
+$ kubectl patch networkpolicy allow-echo-ip-egress -n network-lessons --type json -p [{"op": "replace", "path": "/spec/egress/0/ports/0/port", "value": 8080}]
+networkpolicy.networking.k8s.io/allow-echo-ip-egress patched
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://echo-ip
+echo-ip-...-... saw ...
+
+== on donhang-staging
+$ kubectl exec deployment/api -n donhang -- timeout 5 bash -c '</dev/tcp/gitea.git/3000'
+connected
+
+staging: Synced, Healthy
+$ kubectl get networkpolicies -n donhang -o custom-columns=NAME:.metadata.name,TYPES:.spec.policyTypes
+NAME                   TYPES
+api-egress             [Egress]
+db                     [Ingress]
+db-clients-egress      [Egress]
+default-deny-egress    [Egress]
+default-deny-ingress   [Ingress]
+dns-egress             [Egress]
+fake-gateway           [Ingress]
+from-the-gateway       [Ingress]
+keycloak               [Ingress]
+mailpit                [Ingress]
+notifications-egress   [Egress]
+payments-egress        [Egress]
+rabbitmq               [Ingress]
+redis                  [Ingress]
+
+$ kubectl exec deployment/api -n donhang -- timeout 5 bash -c '</dev/tcp/gitea.git/3000'
+no connection (exit 124; 124: timeout gave up waiting)
+$ kubectl delete pod -n donhang -l app in (api,payments) --wait=false
+pod "api-...-..." deleted from donhang namespace
+pod "api-...-..." deleted from donhang namespace
+pod "payments-...-..." deleted from donhang namespace
+== GET https://donhang.localhost:18443/api/v1/products (the api reads PostgreSQL and Redis)
+HTTP 200
+== GET https://donhang.localhost:18443/api/v1/orders/1 with a token (the api checks it with Keycloak's keys)
+HTTP 200
+== GET https://donhang.localhost:18443/api/v1/refunds as a member of staff (Payments)
+HTTP 404
+
+== Pods in donhang not ready: 0

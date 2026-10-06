@@ -1,0 +1,12 @@
+$ kubectl version
+Client Version: v1.34.3
+Server Version: v1.34.11
+
+$ kubectl get nodes -o custom-columns=NODE:.metadata.name,KUBELET:.status.nodeInfo.kubeletVersion,RUNTIME:.status.nodeInfo.containerRuntimeVersion
+NODE                    KUBELET    RUNTIME
+donhang-control-plane   v1.34.11   containerd://2.3.4
+donhang-worker          v1.34.11   containerd://2.3.4
+donhang-worker2         v1.34.11   containerd://2.3.4
+
+$ grep -m 1 image: deploy/k8s/kind-config.yaml
+image: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d

@@ -1,0 +1,38 @@
+$ kubectl apply -f deploy/k8s/lessons/broken-echo.yaml
+service/broken-selector created
+service/broken-port created
+pod/caller created
+networkpolicy.networking.k8s.io/caller-egress created
+
+== broken-selector
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://broken-selector
+wget: can't connect to remote host (...): Connection refused
+$ kubectl get endpointslices -n network-lessons -l kubernetes.io/service-name=broken-selector -o custom-columns=NAME:.metadata.labels.kubernetes\.io/service-name,ADDRESSES:.endpoints[*].addresses[0],PORT:.ports[0].port
+NAME              ADDRESSES   PORT
+broken-selector   <none>      <none>
+$ kubectl get service broken-selector -n network-lessons -o jsonpath={.spec.selector}{"\n"}
+{"app":"echo-pi"}
+$ kubectl get pods -n network-lessons -l app=echo-ip -o custom-columns=POD:.metadata.name,LABELS:.metadata.labels.app
+POD               LABELS
+echo-ip-...-...   echo-ip
+echo-ip-...-...   echo-ip
+
+== broken-port
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://broken-port
+wget: can't connect to remote host (...): Connection refused
+$ kubectl get endpointslices -n network-lessons -l kubernetes.io/service-name=broken-port -o custom-columns=NAME:.metadata.labels.kubernetes\.io/service-name,ADDRESSES:.endpoints[*].addresses[0],PORT:.ports[0].port
+NAME          ADDRESSES   PORT
+broken-port   ...,...     80
+$ kubectl exec client -n network-lessons -- wget -T 5 -qO- http://...:8080
+echo-ip-...-... saw ...
+
+== caller
+$ kubectl exec client -n network-lessons -- getent hosts echo-ip
+(resolves)
+$ kubectl debug caller -n network-lessons --profile=general --image=caddy:2.10.0 --target=caller -c debug \
+    -- sh -c 'getent hosts echo-ip || echo "echo-ip: no address"; wget -T 5 -qO- http://<echo-ip's cluster IP>'
+$ kubectl logs caller -n network-lessons -c debug
+echo-ip: no address
+echo-ip-...-... saw ...
+$ kubectl get networkpolicy caller-egress -n network-lessons -o jsonpath={.spec.egress}{"\n"}
+[{"ports":[{"port":8080,"protocol":"TCP"}],"to":[{"podSelector":{"matchLabels":{"app":"echo-ip"}}}]}]

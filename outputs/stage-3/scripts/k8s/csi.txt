@@ -1,0 +1,9 @@
+$ kubectl get storageclasses -o custom-columns=NAME:.metadata.name,PROVISIONER:.provisioner
+NAME       PROVISIONER
+standard   rancher.io/local-path
+
+$ kubectl get pods -n local-path-storage -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName
+POD                              NODE
+local-path-provisioner-...-...   donhang-control-plane
+$ kubectl get csidrivers
+No resources found

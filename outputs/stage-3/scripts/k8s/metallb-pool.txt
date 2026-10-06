@@ -1,0 +1,15 @@
+the network kind: 172.22.0.0/16
+$ sed 's/x\.y\./172.22./g' deploy/k8s/lessons/metallb-pool.yaml | kubectl apply -f -
+ipaddresspool.metallb.io/lab-pool created
+l2advertisement.metallb.io/lab-pool created
+$ kubectl get ipaddresspools -n metallb-system
+NAME       AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
+lab-pool   true          false             ["172.22.255.200-172.22.255.250"]
+
+$ kubectl get service echo-loadbalancer -n network-lessons
+NAME                TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)      AGE
+echo-loadbalancer   LoadBalancer   ...          172.22.255.202   80:.../TCP   ...
+
+$ docker run -d --name donhang-lb-client --network kind caddy:2.10.0 sleep infinity
+$ docker exec donhang-lb-client wget -qO- http://172.22.255.202
+echo-ip-...-... saw 172.22.0.3

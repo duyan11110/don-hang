@@ -1,0 +1,22 @@
+$ kubectl apply -f deploy/k8s/lessons/echo-nodeport.yaml
+service/echo-nodeport created
+$ kubectl get service echo-nodeport -n network-lessons
+NAME            TYPE       CLUSTER-IP   EXTERNAL-IP   PORT(S)      AGE
+echo-nodeport   NodePort   ...          <none>        80:.../TCP   ...
+
+$ kubectl get pods -n network-lessons -l app=echo-ip -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName
+POD               NODE
+echo-ip-...-...   donhang-worker...
+echo-ip-...-...   donhang-worker...
+$ kubectl exec client -n network-lessons -- wget -qO- http://<donhang-control-plane's address>:<node port>
+echo-ip-...-... saw 172.22.0.2
+
+$ kubectl apply -f deploy/k8s/lessons/echo-loadbalancer.yaml
+service/echo-loadbalancer created
+$ kubectl get service echo-loadbalancer -n network-lessons
+NAME                TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)      AGE
+echo-loadbalancer   LoadBalancer   ...          <pending>     80:.../TCP   ...
+$ kubectl exec client -n network-lessons -- wget -qO- http://echo-loadbalancer
+echo-ip-...-... saw ...
+$ kubectl exec client -n network-lessons -- wget -qO- http://<donhang-control-plane's address>:<its node port>
+echo-ip-...-... saw 172.22.0.2

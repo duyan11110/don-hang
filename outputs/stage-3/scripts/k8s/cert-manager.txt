@@ -1,0 +1,27 @@
+$ kubectl create secret tls lab-ca -n operator-lessons --cert=secrets/lab-ca.crt --key=secrets/lab-ca.key
+secret/lab-ca created
+$ kubectl apply -f deploy/k8s/lessons/lab-ca-issuer.yaml
+issuer.cert-manager.io/lab-ca created
+$ kubectl wait --for=condition=Ready issuer/lab-ca -n operator-lessons --timeout=120s
+issuer.cert-manager.io/lab-ca condition met
+
+$ kubectl apply -f deploy/k8s/lessons/api-certificate.yaml
+certificate.cert-manager.io/api-cert created
+$ kubectl wait --for=condition=Ready certificate/api-cert -n operator-lessons --timeout=120s
+certificate.cert-manager.io/api-cert condition met
+$ kubectl get certificate api-cert -n operator-lessons
+NAME       READY   SECRET    AGE
+api-cert   True    api-tls   ...
+
+$ kubectl get secret api-tls -n operator-lessons -o go-template='{{.type}}:{{range $key, $value := .data}} {{$key}}{{end}}'
+kubernetes.io/tls: ca.crt tls.crt tls.key
+$ kubectl get secret api-tls -n operator-lessons -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -issuer -ext subjectAltName
+issuer=CN=Don Hang lab CA, O=donhang-dev
+X509v3 Subject Alternative Name: critical
+    DNS:donhang.localhost
+
+$ kubectl get certificate api-cert -n operator-lessons -o jsonpath='notBefore: {.status.notBefore}{"\n"}notAfter: {.status.notAfter}{"\n"}renewalTime: {.status.renewalTime}'
+notBefore: ...
+notAfter: ...
+renewalTime: ...
+valid for 90 days; renewed 60 days after it was issued

@@ -3,6 +3,7 @@ base/api.yaml
 base/db.yaml
 base/db-backup.yaml
 base/db-init.yaml
+base/egress-policies.yaml
 base/fake-gateway.yaml
 base/keycloak.yaml
 base/keycloak-realm.yaml
@@ -17,13 +18,13 @@ base/redis.yaml
 envs/production/kustomization.yaml
 envs/staging/kustomization.yaml
 
-== kubectl kustomize envs/staging: 35 objects
-== kubectl kustomize envs/production: 35 objects
+== kubectl kustomize envs/staging: 41 objects
+== kubectl kustomize envs/production: 41 objects
 $ kubectl kustomize envs/staging | grep -e '^kind:' | sort | uniq -c
       3 kind: ConfigMap
       1 kind: CronJob
       7 kind: Deployment
-      8 kind: NetworkPolicy
+     14 kind: NetworkPolicy
       1 kind: PersistentVolumeClaim
       3 kind: Pod
      10 kind: Service
@@ -31,6 +32,7 @@ $ kubectl kustomize envs/staging | grep -e '^kind:' | sort | uniq -c
 
 == the api's ConfigMap in staging, and the reference to it
 name: api-...
+      1 name: api-egress
       2 name: api-...
 
 $ diff <(kubectl kustomize envs/staging) <(kubectl kustomize envs/production)
