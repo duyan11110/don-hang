@@ -3,6 +3,8 @@ using DonHang.Payments;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -16,13 +18,11 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default is not set");
 builder.Services.AddDbContext<PaymentsDbContext>(options => options.UseNpgsql(connectionString));
 
+// lesson: backend.l3.resilience-pipeline
+// The HttpClient that GatewayRefundClient uses, with its resilience pipeline
+// (AddGatewayRefundClient, at the end of this file).
 var gateway = builder.Configuration.GetSection("Gateway").Get<GatewaySettings>() ?? new GatewaySettings();
-builder.Services.AddHttpClient<GatewayRefundClient>(http =>
-{
-    http.BaseAddress = new Uri(gateway.BaseAddress);
-    http.DefaultRequestHeaders.Authorization = new("Bearer", gateway.ApiKey);
-    http.Timeout = TimeSpan.FromSeconds(10);
-});
+builder.Services.AddGatewayRefundClient(gateway);
 
 // lesson: backend.l3.payments-service
 // Refund requests arrive the way order events reach Notifications: through
@@ -66,6 +66,53 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => fa
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
 app.Run();
+
+// lesson: backend.l3.resilience-pipeline
+// lesson: backend.l3.circuit-breaker
+// Every call through this HttpClient passes the pipeline named "gateway".
+// Its strategies run in the order they are added, the first wrapping the
+// rest: the circuit breaker sees every call and its outcome, including a
+// call that the timeout inside it ended. There is no retry strategy, unlike
+// AddStandardResilienceHandler: RefundSender already tries each refund again
+// on a later round, and retries in both places would multiply the calls.
+// A public static method, so that GatewayCircuitBreakerTests builds the same.
+public static class GatewayPipeline
+{
+    public static IHttpClientBuilder AddGatewayRefundClient(this IServiceCollection services, GatewaySettings gateway)
+    {
+        var client = services.AddHttpClient<GatewayRefundClient>(http =>
+        {
+            http.BaseAddress = new Uri(gateway.BaseAddress);
+            http.DefaultRequestHeaders.Authorization = new("Bearer", gateway.ApiKey);
+        });
+        client.AddResilienceHandler("gateway", (pipeline, context) =>
+        {
+            var logger = context.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DonHang.Payments.GatewayCircuit");
+            // lesson: backend.l3.circuit-breaker
+            // Counts as failed: an exception (no connection, the timeout) or a
+            // 5xx, 408 or 429 answer. A 422 refusal is an answer like 200.
+            pipeline.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+            {
+                FailureRatio = gateway.FailureRatio,
+                MinimumThroughput = gateway.MinimumThroughput,
+                SamplingDuration = gateway.SamplingDuration,
+                BreakDuration = gateway.BreakDuration,
+                OnOpened = args => Log(() => logger.LogWarning(
+                    "Circuit to the gateway opened: no calls for {BreakSeconds} s", args.BreakDuration.TotalSeconds)),
+                OnHalfOpened = _ => Log(() => logger.LogInformation("Circuit to the gateway half-open: one trial call")),
+                OnClosed = _ => Log(() => logger.LogInformation("Circuit to the gateway closed: calls go through again")),
+            });
+            pipeline.AddTimeout(gateway.Timeout);
+        });
+        return client;
+    }
+
+    private static ValueTask Log(Action write)
+    {
+        write();
+        return ValueTask.CompletedTask;
+    }
+}
 
 // .NET 10 makes the Program class of a web project public, so that tests can
 // start it; DonHang.Api's tests do (ApiFactory). DonHang.Tests references this

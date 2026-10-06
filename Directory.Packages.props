@@ -12,6 +12,10 @@
     </PackageVersion>
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+    <!-- lesson: backend.l3.resilience-pipeline -->
+    <!-- From stage-3, DonHang.Payments only: AddResilienceHandler, and Polly's
+         strategies under it (Polly.Core comes with it). -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="StackExchange.Redis" Version="3.3.1" />
     <PackageVersion Include="Npgsql" Version="9.0.4" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />

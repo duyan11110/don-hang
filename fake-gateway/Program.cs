@@ -21,7 +21,21 @@ var paymentMethods = new Dictionary<int, string>
 var answers = new Dictionary<string, IResult>();
 var refunds = new List<Refund>();
 
-app.MapPost("/v1/refunds", (HttpRequest request, RefundRequest body) =>
+// lesson: backend.l3.resilience-pipeline
+// A switch for the lab's scripts, not part of any real gateway:
+//   PUT /lab/delay?seconds=15   every refund call waits 15 s, then is handled
+//   PUT /lab/delay?seconds=0    back to answering at once
+// The call is handled after the wait even if the caller has stopped waiting:
+// a timeout in Payments ends Payments' wait, not the gateway's work.
+var delay = TimeSpan.Zero;
+app.MapPut("/lab/delay", (int seconds) =>
+{
+    delay = TimeSpan.FromSeconds(seconds);
+    app.Logger.LogInformation("Refund calls now wait {Seconds} s before an answer", seconds);
+    return Results.Ok(new { delaySeconds = seconds });
+});
+
+app.MapPost("/v1/refunds", async (HttpRequest request, RefundRequest body) =>
 {
     if (request.Headers.Authorization != $"Bearer {apiKey}")
         return Results.Json(new { reason = "unknown api key" }, statusCode: StatusCodes.Status401Unauthorized);
@@ -29,6 +43,8 @@ app.MapPost("/v1/refunds", (HttpRequest request, RefundRequest body) =>
     var key = request.Headers["Idempotency-Key"].ToString();
     if (key.Length == 0)
         return Results.Json(new { reason = "Idempotency-Key is required" }, statusCode: StatusCodes.Status400BadRequest);
+
+    if (delay > TimeSpan.Zero) await Task.Delay(delay);
 
     // A key seen before gets the answer it got then, and nothing is refunded again.
     lock (answers)

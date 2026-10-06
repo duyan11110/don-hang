@@ -304,6 +304,11 @@ services:
       # tries; the lab waits seconds, so the scripts finish in a minute.
       Refunds__FirstRetryDelay: "00:00:02"
       Refunds__MaxRetryDelay: "00:00:10"
+      # lesson: backend.l3.resilience-pipeline
+      # The gateway pipeline's timeout is 10 s and an open circuit waits 30 s
+      # (GatewaySettings); the lab makes both short for the same reason.
+      Gateway__Timeout: "00:00:03"
+      Gateway__BreakDuration: "00:00:10"
       Keycloak__Authority: "http://localhost:8180/realms/donhang"
       Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"
       Logging__Console__FormatterName: "json"
