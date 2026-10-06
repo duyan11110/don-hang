@@ -1,0 +1,31 @@
+== order 3's items on db
+ order_id | product_id | quantity | unit_price_vnd 
+----------+------------+----------+----------------
+        3 |          4 |        1 |        3200000
+        3 |          5 |        1 |         320000
+(2 rows)
+
+recovery_target_time = ...
+== the mistake, a second later
+DELETE 2
+== recover into db-pitr, up to the moment before the DELETE
+db-pitr stopped replaying the WAL at recovery_target_time: paused
+== order 3's items, on db then on db-pitr
+ order_id | product_id | quantity | unit_price_vnd 
+----------+------------+----------+----------------
+(0 rows)
+
+ order_id | product_id | quantity | unit_price_vnd 
+----------+------------+----------+----------------
+        3 |          4 |        1 |        3200000
+        3 |          5 |        1 |         320000
+(2 rows)
+
+== copy them from db-pitr back into db
+COPY 2
+ order_id | product_id | quantity | unit_price_vnd 
+----------+------------+----------+----------------
+        3 |          4 |        1 |        3200000
+        3 |          5 |        1 |         320000
+(2 rows)
+

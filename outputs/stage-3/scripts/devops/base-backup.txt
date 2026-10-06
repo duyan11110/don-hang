@@ -1,0 +1,12 @@
+/backups/base:
+  backup_manifest
+  base.tar.gz
+  pg_wal.tar.gz
+its backup_label:
+  START WAL LOCATION: ...
+  START TIME: ...
+  LABEL: pg_basebackup base backup
+db's WAL archive:
+  archive_mode on
+  archive_timeout 1min
+  last archived segment ...

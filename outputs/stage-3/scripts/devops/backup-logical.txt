@@ -1,0 +1,19 @@
+pg_dump donhang -> donhang.dump
+pg_dump donhang_notifications -> donhang_notifications.dump
+pg_dump donhang_payments -> donhang_payments.dump
+pg_dump donhang_tofu -> donhang_tofu.dump
+pg_dump keycloak -> keycloak.dump
+pg_dumpall --globals-only -> globals.sql
+
+in /backups/logical/...:
+  counts.txt
+  donhang.dump
+  donhang_notifications.dump
+  donhang_payments.dump
+  donhang_tofu.dump
+  globals.sql
+  keycloak.dump
+counts.txt:
+  orders ...
+  order_items ...
+  customers 5

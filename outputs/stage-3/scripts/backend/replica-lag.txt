@@ -1,0 +1,36 @@
+== db-replica answers queries
+-- on db-replica
+SELECT pg_is_in_recovery() AS replica, count(*) AS products FROM products
+ replica | products 
+---------+----------
+ t       |        8
+
+== but refuses writes
+-- on db-replica
+UPDATE products SET price_vnd = 1300000 WHERE id = 1
+ERROR:  cannot execute UPDATE in a read-only transaction
+
+== a new price for product 1 on db, then the same read on both servers
+-- on db
+UPDATE products SET price_vnd = 1300000 WHERE id = 1
+UPDATE 1
+-- on db
+SELECT price_vnd FROM products WHERE id = 1
+ price_vnd 
+-----------
+   1300000
+
+-- on db-replica
+SELECT price_vnd FROM products WHERE id = 1
+ price_vnd 
+-----------
+   1250000
+
+== 6 seconds later, on db-replica
+-- on db-replica
+SELECT price_vnd FROM products WHERE id = 1
+ price_vnd 
+-----------
+   1300000
+
+(product 1 gets its old price back on db when this script ends)

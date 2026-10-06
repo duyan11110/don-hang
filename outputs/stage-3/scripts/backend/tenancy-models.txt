@@ -1,0 +1,38 @@
+== shared tables: every query names its shop
+SELECT id, customer_id, status FROM orders WHERE shop_id = 2 ORDER BY id
+ id | customer_id | status 
+----+-------------+--------
+  1 |           1 | paid
+  2 |           2 | new
+
+== a schema per shop: search_path picks the shop
+SET search_path TO shop_2
+SET
+SELECT id, customer_id, status FROM orders ORDER BY id
+ id | customer_id | status 
+----+-------------+--------
+  1 |           1 | paid
+  2 |           2 | new
+
+== a database per shop: the connection picks the shop
+SELECT id, customer_id, status FROM orders ORDER BY id
+ id | customer_id | status 
+----+-------------+--------
+  1 |           1 | paid
+  2 |           2 | new
+
+== one query over two shops' databases
+SELECT count(*) FROM orders JOIN donhang_shop_2.public.orders AS other USING (id)
+ERROR:  cross-database references are not implemented: "donhang_shop_2.public.orders"
+LINE 1: SELECT count(*) FROM orders JOIN donhang_shop_2.public.order...
+                                         ^
+
+== add a gift_note column to the orders of every shop
+shared tables, 1 ALTER TABLE:
+  donhang_tenancy: ALTER TABLE public.orders ADD COLUMN gift_note text
+a schema per shop, 1 ALTER TABLE per shop:
+  donhang_tenancy: ALTER TABLE shop_1.orders ADD COLUMN gift_note text
+  donhang_tenancy: ALTER TABLE shop_2.orders ADD COLUMN gift_note text
+a database per shop, 1 ALTER TABLE per shop:
+  donhang_shop_1: ALTER TABLE orders ADD COLUMN gift_note text
+  donhang_shop_2: ALTER TABLE orders ADD COLUMN gift_note text

@@ -1,0 +1,11 @@
+donhang_shard_0: 20000 orders
+donhang_shard_1: 180000 orders
+
+customer 7 is on shard 1; its 3 newest orders:
+  order 199986, shard 1
+  order 199886, shard 1
+  order 199786, shard 1
+the 30 newest orders of all customers (each shard returned 30):
+  orders 199971 to 200000
+  10 from shard 0, 20 from shard 1
+with 15 from each shard instead: 5 of the 30 are not among the newest
