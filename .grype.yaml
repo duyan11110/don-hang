@@ -1,0 +1,11 @@
+# lesson: devops.l3.vulnerability-scanning
+# Grype reads this file from the directory it runs in. Every vulnerability
+# accepted here says why it does not apply to Đơn Hàng, so the next reader
+# sees a decision instead of a finding that silently disappeared. Remove an
+# entry once the reason stops being true.
+ignore:
+  # PAM (Medium, no fix planned for Ubuntu 24.04): a program that is
+  # authenticating a user can leak passwords such as those in /etc/shadow.
+  # Đơn Hàng's images run one dotnet process (or one migration bundle) and
+  # no login, so nothing in them authenticates a user through PAM.
+  - vulnerability: CVE-2024-10041

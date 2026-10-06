@@ -1,0 +1,3 @@
+# SBOMs written by scripts/devops/sbom.sh: made from an image, never committed.
+*
+!.gitignore
