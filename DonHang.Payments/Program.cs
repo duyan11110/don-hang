@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
+using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Polly;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,6 +57,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization(options =>
     options.AddPolicy("StaffOnly", policy => policy.RequireRole("staff")));
+
+// lesson: backend.l3.opentelemetry-sdk
+// The same tracing as DonHang.Api's, under this service's own name. The
+// HttpClient instrumentation records GatewayRefundClient's calls and writes
+// a traceparent header on each (backend.l3.trace-context-propagation).
+var sampleRatio = builder.Configuration.GetValue("Telemetry:SampleRatio", 0.1);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("donhang-payments"))
+    .WithTracing(tracing => tracing
+        .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(sampleRatio)))
+        .AddAspNetCoreInstrumentation(options => options.Filter = context =>
+            !context.Request.Path.StartsWithSegments("/health") && !context.Request.Path.StartsWithSegments("/metrics"))
+        .AddHttpClientInstrumentation()
+        .AddNpgsql()
+        .AddSource(MessageTracing.SourceName)
+        .AddOtlpExporter());
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<PaymentsDbContext>(tags: ["ready"]);

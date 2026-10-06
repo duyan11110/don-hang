@@ -7,6 +7,8 @@ namespace DonHang.Messaging;
 // donhang.payments for DonHang.Payments. Only OutboxRelay calls it.
 public sealed class RabbitMqPublisher(RabbitMqConnection connection, string exchange) : IAsyncDisposable
 {
+    public string Exchange => exchange;
+
     private IChannel? channel;
 
     // lesson: backend.l3.exchanges-and-bindings
@@ -25,6 +27,12 @@ public sealed class RabbitMqPublisher(RabbitMqConnection connection, string exch
             ContentType = "application/json",
             Persistent = true,
         };
+        // lesson: backend.l3.tracing-through-the-outbox
+        // The relay's publish span is current here; its traceparent travels in
+        // the message headers. Without one (no tracing), the row's own goes.
+        var traceParent = MessageTracing.CurrentTraceParent() ?? message.TraceParent;
+        if (traceParent is not null)
+            properties.Headers = new Dictionary<string, object?> { [MessageTracing.TraceParentHeader] = traceParent };
         await open.BasicPublishAsync(exchange, message.RoutingKey, mandatory: false, properties,
             Encoding.UTF8.GetBytes(message.Body), cancellationToken);
     }

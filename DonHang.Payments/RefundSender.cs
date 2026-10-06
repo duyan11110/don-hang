@@ -50,6 +50,11 @@ public sealed class RefundSender(IServiceScopeFactory scopeFactory, RefundSettin
 
         foreach (var refund in await ClaimDueAsync(db, stoppingToken))
         {
+            // lesson: backend.l3.trace-context-propagation
+            // Each attempt is a span in the trace the refund row saved, so the
+            // gateway call below, and the message saved after it, belong to it.
+            using var activity = MessageTracing.StartChildOf(refund.TraceParent, "refund attempt");
+            activity?.SetTag("donhang.order_id", refund.OrderId);
             var result = await gateway.RefundAsync(refund, stoppingToken);
             var message = RecordResult(refund, result, DateTimeOffset.UtcNow);
             if (message is not null) db.OutboxMessages.Add(message);

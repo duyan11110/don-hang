@@ -1,0 +1,14 @@
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+== the trace in Tempo, one line per span (service: span name)
+donhang-api: POST api/v1/orders/{id:int}/refund  (5 SQL)
+  donhang-api: publish order.refund-requested
+    donhang-notifications: process notifications.order-events  (1 SQL)
+    donhang-payments: process payments.refund-requests  (2 SQL)
+      donhang-payments: refund attempt
+        donhang-payments: POST
+          fake-gateway: POST /v1/refunds
+        donhang-payments: publish payment.refunded
+          donhang-api: process orders.payment-events  (4 SQL)
+            donhang-api: publish order.refunded
+              donhang-notifications: process notifications.order-events  (1 SQL)

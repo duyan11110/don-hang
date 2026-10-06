@@ -20,6 +20,17 @@
     <PackageVersion Include="Npgsql" Version="9.0.4" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <!-- lesson: backend.l3.opentelemetry-sdk -->
+    <!-- From stage-3 every service sends spans over OTLP: the SDK with its
+         hosting integration, the OTLP exporter, and the instrumentation for
+         incoming requests (ASP.NET Core), outgoing calls (HttpClient) and
+         SQL commands (Npgsql). 1.15.3 is the first release without the
+         advisories that NuGet reports for the 1.13 and 1.14 lines. -->
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
   </ItemGroup>
   <ItemGroup Label="Testing">

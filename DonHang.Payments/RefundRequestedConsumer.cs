@@ -50,6 +50,9 @@ public sealed class RefundRequestedConsumer(
 
     private async Task OnReceivedAsync(IChannel channel, BasicDeliverEventArgs delivery)
     {
+        // lesson: backend.l3.tracing-through-the-outbox
+        // A span for this delivery, a child of the publish span in its header.
+        using var activity = MessageTracing.StartConsume(delivery.BasicProperties, RabbitMqTopology.Queue);
         try
         {
             await HandleAsync(delivery.BasicProperties.MessageId, delivery.Body.ToArray());
@@ -107,6 +110,8 @@ public sealed class RefundRequestedConsumer(
         RequestedBy = request.CustomerEmail,
         RequestedAt = request.OccurredAt,
         NextAttemptAt = DateTimeOffset.UtcNow,
+        // This consumer's span, which continues the trace of the refund request.
+        TraceParent = MessageTracing.CurrentTraceParent(),
     };
 
     private static bool IsSecondRefund(DbUpdateException ex) =>

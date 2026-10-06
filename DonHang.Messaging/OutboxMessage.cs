@@ -20,4 +20,11 @@ public sealed class OutboxMessage
 
     // Empty until RabbitMQ has confirmed the message; only OutboxRelay sets it.
     public DateTimeOffset? PublishedAt { get; set; }
+
+    // lesson: backend.l3.tracing-through-the-outbox
+    // From stage-3: the traceparent of the span current when the row was
+    // created, such as the request that placed the order, so that the relay
+    // can publish it later as part of that trace. Null when no span was
+    // current, and in every row saved before the column existed.
+    public string? TraceParent { get; init; } = MessageTracing.CurrentTraceParent();
 }

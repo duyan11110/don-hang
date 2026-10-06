@@ -23,4 +23,9 @@ public sealed class Payment
     public int Attempts { get; set; }
     public DateTimeOffset? NextAttemptAt { get; set; }
     public string? FailureReason { get; set; }
+
+    // lesson: backend.l3.trace-context-propagation
+    // From stage-3, a refund only: the trace of the request that asked for
+    // it, so that RefundSender's gateway calls, made later, join that trace.
+    public string? TraceParent { get; set; }
 }

@@ -33,6 +33,7 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
             e.Property(p => p.Attempts).HasColumnName("attempts");
             e.Property(p => p.NextAttemptAt).HasColumnName("next_attempt_at");
             e.Property(p => p.FailureReason).HasColumnName("failure_reason");
+            e.Property(p => p.TraceParent).HasColumnName("trace_parent");
             e.HasIndex(p => p.OrderId).IsUnique().HasFilter("kind = 'refund'").HasDatabaseName(OneRefundPerOrder);
             e.ToTable(t =>
             {
@@ -52,6 +53,7 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
             e.Property(m => m.Body).HasColumnName("body").HasColumnType("jsonb");
             e.Property(m => m.CreatedAt).HasColumnName("created_at");
             e.Property(m => m.PublishedAt).HasColumnName("published_at");
+            e.Property(m => m.TraceParent).HasColumnName("trace_parent");
             e.HasIndex(m => m.CreatedAt).HasFilter("published_at IS NULL");
         });
 

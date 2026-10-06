@@ -52,6 +52,9 @@ public sealed class OutboxRelay<TDbContext>(
         {
             foreach (var message in due)
             {
+                // lesson: backend.l3.tracing-through-the-outbox
+                // One publish span per message, in the trace its row saved.
+                using var activity = MessageTracing.StartPublish(message, publisher.Exchange);
                 await publisher.PublishAsync(message, stoppingToken);
                 message.PublishedAt = DateTimeOffset.UtcNow;
                 published++;

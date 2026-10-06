@@ -18,3 +18,12 @@ datasources:
     type: loki
     access: proxy
     url: http://loki:3100
+
+  # lesson: backend.l3.traces-and-spans
+  # From stage-3, the third data source: Tempo, for traces. Explore → Tempo
+  # finds a trace by its id and draws its spans as a tree on a timeline.
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200

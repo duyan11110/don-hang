@@ -1,0 +1,13 @@
+== GET /api/v1/products/3 with the header
+traceparent: 00-...-01
+  -> 200
+== spans Tempo has under trace id ...
+donhang-api: GET api/v1/products/{id:int}
+== the api's span names the header's span id as its parent: yes
+
+== POST /api/v1/orders/10/refund, with a new traceparent
+  -> 202
+== Payments' call to the gateway, and the gateway's span, in that trace
+  donhang-payments: POST
+    fake-gateway: POST /v1/refunds
+  the gateway span's parent is Payments' call: yes

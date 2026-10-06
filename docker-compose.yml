@@ -134,6 +134,20 @@ services:
       # Only this setting changed, no log call in the code; without it the
       # same build prints the usual readable lines (as `dotnet run` does).
       Logging__Console__FormatterName: "json"
+      # lesson: backend.l3.opentelemetry-sdk
+      # From stage-3 each service sends its spans over OTLP to Alloy, which
+      # passes them on to Tempo (both in the monitoring profile). Without
+      # that profile nothing listens at alloy:4317: the spans are dropped,
+      # and the service works the same.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      # lesson: backend.l3.trace-sampling
+      # Program.cs keeps 1 trace in 10 that start in the api; the lab keeps all.
+      Telemetry__SampleRatio: "1.0"
+      # lesson: backend.l3.trace-ids-in-logs
+      # Each JSON log line also gets "Scopes": the TraceId and SpanId of the
+      # span current when it was written, among others. Only this setting
+      # changed, no log call.
+      Logging__Console__FormatterOptions__IncludeScopes: "true"
       # lesson: backend.l3.rate-limiting
       # 10 orders per customer per minute (Program.cs); the lab counts in
       # windows of 10 s, so that scripts/backend/rate-limit.sh waits seconds.
@@ -259,6 +273,10 @@ services:
       Smtp__Host: "mailpit"
       Smtp__Port: "1025"
       Logging__Console__FormatterName: "json"
+      # Tracing and log scopes as in the api.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      Telemetry__SampleRatio: "1.0"
+      Logging__Console__FormatterOptions__IncludeScopes: "true"
     depends_on:
       notifications-migrate:
         condition: service_completed_successfully
@@ -316,6 +334,10 @@ services:
       Keycloak__Authority: "http://localhost:8180/realms/donhang"
       Keycloak__MetadataAddress: "http://keycloak:8080/realms/donhang/.well-known/openid-configuration"
       Logging__Console__FormatterName: "json"
+      # Tracing and log scopes as in the api.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      Telemetry__SampleRatio: "1.0"
+      Logging__Console__FormatterOptions__IncludeScopes: "true"
     depends_on:
       payments-migrate:
         condition: service_completed_successfully
@@ -342,6 +364,10 @@ services:
     environment:
       Gateway__ApiKey: "${GATEWAY_API_KEY}"
       Logging__Console__FormatterName: "json"
+      # Tracing and log scopes as in the api.
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      Telemetry__SampleRatio: "1.0"
+      Logging__Console__FormatterOptions__IncludeScopes: "true"
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q ok <&3"]
       interval: 3s
@@ -457,6 +483,9 @@ services:
       donhang:
         ipv4_address: 172.28.0.23
 
+  # lesson: backend.l3.opentelemetry-sdk
+  # From stage-3 Alloy also receives the services' spans over OTLP, on port
+  # 4317, and forwards them to Tempo: the services know only Alloy's address.
   alloy:
     image: grafana/alloy:v1.20.0
     container_name: donhang-alloy
@@ -468,9 +497,27 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - loki
+      - tempo
     networks:
       donhang:
         ipv4_address: 172.28.0.24
+
+  # lesson: backend.l3.traces-and-spans
+  # Tempo stores traces, from stage-3: what Alloy forwards (OTLP on 4317) is
+  # kept on its own disk (the tempo-data volume); Grafana and the lab's
+  # scripts ask for a trace by its id on port 3200. No port is published.
+  tempo:
+    image: grafana/tempo:2.8.4
+    container_name: donhang-tempo
+    hostname: tempo
+    profiles: [monitoring]
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./deploy/monitoring/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    networks:
+      donhang:
+        ipv4_address: 172.28.0.29
 
 networks:
   donhang:
@@ -488,3 +535,4 @@ volumes:
   caddy-config:
   lab-config:
   loki-data:
+  tempo-data:

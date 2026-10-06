@@ -3,9 +3,26 @@
 // real one does: at once, in the answer to the refund call, and once per
 // Idempotency-Key. It speaks its own language (refundId, reason, 422), which
 // GatewayRefundClient translates; nothing else in Đơn Hàng sees it.
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 var builder = WebApplication.CreateBuilder(args);
 var apiKey = builder.Configuration["Gateway:ApiKey"]
     ?? throw new InvalidOperationException("Gateway:ApiKey is not set");
+
+// lesson: backend.l3.trace-context-propagation
+// A real gateway would not send its spans to Đơn Hàng; this one does, so the
+// lab can show that ASP.NET Core instrumentation reads the traceparent header
+// Payments' HttpClient wrote: the gateway's span joins the refund's trace.
+var sampleRatio = builder.Configuration.GetValue("Telemetry:SampleRatio", 0.1);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("fake-gateway"))
+    .WithTracing(tracing => tracing
+        .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(sampleRatio)))
+        .AddAspNetCoreInstrumentation(options => options.Filter = context =>
+            !context.Request.Path.StartsWithSegments("/health"))
+        .AddOtlpExporter());
+
 var app = builder.Build();
 
 // The payments this gateway took, by order: the card and bank transfer

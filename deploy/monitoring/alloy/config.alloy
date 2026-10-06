@@ -32,3 +32,33 @@ loki.write "loki" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+// lesson: backend.l3.opentelemetry-sdk
+// From stage-3: spans. Every service sends its spans here over OTLP (gRPC,
+// port 4317)...
+otelcol.receiver.otlp "services" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  output {
+    traces = [otelcol.processor.batch.spans.input]
+  }
+}
+
+// ...Alloy groups them into batches...
+otelcol.processor.batch "spans" {
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// ...and sends them on to Tempo. Storing traces somewhere else would change
+// only this block, not the services.
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

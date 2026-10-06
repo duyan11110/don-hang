@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +89,31 @@ builder.Services.AddScoped<IAuthorizationHandler, OrderOwnerHandler>();
 // runs; MapOpenApi below serves it at /openapi/v1.json. "v1" is the
 // document's name, not the /api/v1 prefix of the URLs it describes.
 builder.Services.AddOpenApi();
+
+// lesson: backend.l3.opentelemetry-sdk
+// From stage-3 the api records spans and sends them on. Instrumentation
+// makes them, with no change to controllers: ASP.NET Core for each request
+// (except health checks and /metrics, asked for every few seconds), HttpClient
+// for each outgoing call, Npgsql for each SQL command; and Đơn Hàng's own
+// ActivitySource for messages. The OTLP exporter sends them in batches, in
+// the background, to OTEL_EXPORTER_OTLP_ENDPOINT: Alloy, in the lab.
+// Metrics stay with prometheus-net (/metrics); logs stay on the console.
+// lesson: backend.l3.trace-sampling
+// Which traces are kept: a span with a parent follows the parent's decision,
+// the sampled flag of the traceparent it came with, so a trace is kept or
+// dropped whole. A trace that starts here is kept with the probability
+// Telemetry:SampleRatio, 0.1 unless configured; the lab keeps every trace.
+var sampleRatio = builder.Configuration.GetValue("Telemetry:SampleRatio", 0.1);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("donhang-api"))
+    .WithTracing(tracing => tracing
+        .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(sampleRatio)))
+        .AddAspNetCoreInstrumentation(options => options.Filter = context =>
+            !context.Request.Path.StartsWithSegments("/health") && !context.Request.Path.StartsWithSegments("/metrics"))
+        .AddHttpClientInstrumentation()
+        .AddNpgsql()
+        .AddSource(MessageTracing.SourceName)
+        .AddOtlpExporter());
 
 // lesson: k8s.l1.health-endpoints
 // One check: can EF Core open a connection to PostgreSQL? Tagged "ready" so

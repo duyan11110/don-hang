@@ -128,6 +128,7 @@ public sealed class DonHangDbContext(DbContextOptions<DonHangDbContext> options)
             e.Property(m => m.Body).HasColumnName("body").HasColumnType("jsonb");
             e.Property(m => m.CreatedAt).HasColumnName("created_at");
             e.Property(m => m.PublishedAt).HasColumnName("published_at");
+            e.Property(m => m.TraceParent).HasColumnName("trace_parent");
             e.HasIndex(m => m.CreatedAt).HasFilter("published_at IS NULL");
         });
 

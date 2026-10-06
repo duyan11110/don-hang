@@ -2,6 +2,9 @@ using DonHang.Messaging;
 using DonHang.Notifications;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +29,18 @@ var smtp = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>() ?? new S
 builder.Services.AddSingleton<IEmailSender>(new MailKitEmailSender(smtp));
 builder.Services.AddScoped<NotificationQueue>();
 builder.Services.AddHostedService<NotificationSender>();
+
+// lesson: backend.l3.opentelemetry-sdk
+// The same tracing as DonHang.Api's, under this service's own name. Its
+// spans are the consumer's and the SQL it runs; nothing calls it over HTTP.
+var sampleRatio = builder.Configuration.GetValue("Telemetry:SampleRatio", 0.1);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("donhang-notifications"))
+    .WithTracing(tracing => tracing
+        .SetSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(sampleRatio)))
+        .AddNpgsql()
+        .AddSource(MessageTracing.SourceName)
+        .AddOtlpExporter());
 
 // Ready once the database answers; RabbitMQ is left out, as in the api.
 builder.Services.AddHealthChecks()
