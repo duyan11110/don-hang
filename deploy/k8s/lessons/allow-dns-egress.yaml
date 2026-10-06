@@ -1,0 +1,24 @@
+# lesson: k8s.l3.egress-policies
+# DNS back for every Pod in network-lessons: port 53, over UDP and TCP, to
+# the CoreDNS Pods (label k8s-app: kube-dns) in the namespace kube-system.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: network-lessons
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

@@ -1,0 +1,17 @@
+# lesson: k8s.l3.service-types
+# The same Pods behind a LoadBalancer Service. It is a NodePort Service that
+# also asks for an outside address; without a controller to hand one out,
+# EXTERNAL-IP stays <pending>. No externalTrafficPolicy is given, so it is
+# Cluster.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-loadbalancer
+  namespace: network-lessons
+spec:
+  type: LoadBalancer
+  selector:
+    app: echo-ip
+  ports:
+    - port: 80
+      targetPort: 8080

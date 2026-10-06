@@ -1,0 +1,16 @@
+# lesson: k8s.l3.service-types
+# The same Pods as the Service echo-ip, behind a NodePort Service: no
+# nodePort is given, so Kubernetes picks one from its range and opens it on
+# every node.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-nodeport
+  namespace: network-lessons
+spec:
+  type: NodePort
+  selector:
+    app: echo-ip
+  ports:
+    - port: 80
+      targetPort: 8080

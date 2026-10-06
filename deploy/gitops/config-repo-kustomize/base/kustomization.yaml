@@ -23,6 +23,9 @@ resources:
   - fake-gateway.yaml
   - db-backup.yaml
   - network-policies.yaml
+  # lesson: k8s.l3.egress-policies
+  # Then the egress policies: what each service may connect to.
+  - egress-policies.yaml
 # lesson: k8s.l2.kustomize-overlays
 # The api's ConfigMap, generated: its name gets a hash of its content
 # (api-<hash>), and the reference in api.yaml is updated to match. A changed

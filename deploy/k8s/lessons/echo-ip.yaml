@@ -1,0 +1,81 @@
+# lesson: k8s.l3.pod-network-model
+# A Caddy server that answers every request with two things: the name of the
+# Pod that answered and the address the connection came from. The namespace
+# network-lessons holds every networking lesson's objects on donhang.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: network-lessons
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-ip
+  namespace: network-lessons
+data:
+  Caddyfile: |
+    :8080 {
+      # The quoted text runs on to the next line, so it ends with a newline.
+      respond "{system.hostname} saw {remote_host}
+    "
+    }
+---
+# lesson: k8s.l3.pod-network-model
+# Two replicas; the spread constraint keeps them on different nodes, so one
+# answers from each worker (k8s.l3.highly-available-entry-point explains it).
+# Honor: the control-plane node, where no Pod of this kind may run, does not
+# count as a place to spread to.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-ip
+  namespace: network-lessons
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: echo-ip
+  template:
+    metadata:
+      labels:
+        app: echo-ip
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app: echo-ip
+      containers:
+        - name: echo-ip
+          image: caddy:2.10.0
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /etc/caddy
+      volumes:
+        - name: config
+          configMap:
+            name: echo-ip
+---
+# lesson: k8s.l3.kube-proxy
+# A ClusterIP Service in front of both Pods: port 80 of the cluster IP goes
+# to port 8080 of one of them.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-ip
+  namespace: network-lessons
+spec:
+  selector:
+    app: echo-ip
+  ports:
+    - port: 80
+      targetPort: 8080

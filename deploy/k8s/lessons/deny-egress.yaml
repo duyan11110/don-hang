@@ -1,0 +1,12 @@
+# lesson: k8s.l3.egress-policies
+# Every Pod in network-lessons (an empty podSelector), isolated for the
+# connections it opens: Egress in policyTypes and no egress rule, so no
+# outgoing connection is allowed, DNS included.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress
+  namespace: network-lessons
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]

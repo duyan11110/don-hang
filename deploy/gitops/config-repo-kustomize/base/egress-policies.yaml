@@ -1,0 +1,119 @@
+# lesson: k8s.l3.egress-policies
+# The connections donhang's Pods open, limited the same way as those coming
+# in (network-policies.yaml): first every Pod isolated for egress, then DNS
+# for all of them, then one policy per service naming what it calls, by the
+# target Pods' labels and the ports the Pods listen on.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: donhang
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+---
+# lesson: k8s.l3.egress-policies
+# Every Pod in donhang may ask CoreDNS for names.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dns-egress
+  namespace: donhang
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# lesson: k8s.l3.egress-policies
+# The api: PostgreSQL, Redis, RabbitMQ, and Keycloak, from which it fetches
+# the keys that sign tokens (Keycloak__MetadataAddress, port 8080).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-egress
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes: ["Egress"]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: db } } }]
+      ports: [{ port: 5432 }]
+    - to: [{ podSelector: { matchLabels: { app: redis } } }]
+      ports: [{ port: 6379 }]
+    - to: [{ podSelector: { matchLabels: { app: rabbitmq } } }]
+      ports: [{ port: 5672 }]
+    - to: [{ podSelector: { matchLabels: { app: keycloak } } }]
+      ports: [{ port: 8080 }]
+---
+# Payments: PostgreSQL, RabbitMQ, Keycloak's keys, the fake payment gateway.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: payments-egress
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: payments
+  policyTypes: ["Egress"]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: db } } }]
+      ports: [{ port: 5432 }]
+    - to: [{ podSelector: { matchLabels: { app: rabbitmq } } }]
+      ports: [{ port: 5672 }]
+    - to: [{ podSelector: { matchLabels: { app: keycloak } } }]
+      ports: [{ port: 8080 }]
+    - to: [{ podSelector: { matchLabels: { app: fake-gateway } } }]
+      ports: [{ port: 8080 }]
+---
+# Notifications: PostgreSQL, RabbitMQ, and Mailpit for its emails.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: notifications-egress
+  namespace: donhang
+spec:
+  podSelector:
+    matchLabels:
+      app: notifications
+  policyTypes: ["Egress"]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: db } } }]
+      ports: [{ port: 5432 }]
+    - to: [{ podSelector: { matchLabels: { app: rabbitmq } } }]
+      ports: [{ port: 5672 }]
+    - to: [{ podSelector: { matchLabels: { app: mailpit } } }]
+      ports: [{ port: 1025 }]
+---
+# The three migration hooks and the nightly backup: PostgreSQL only. db,
+# redis, rabbitmq, keycloak, mailpit and fake-gateway open no connection of
+# their own, so the deny-all policy above leaves them DNS only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-clients-egress
+  namespace: donhang
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [migrate, notifications-migrate, payments-migrate, db-backup]
+  policyTypes: ["Egress"]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: db } } }]
+      ports: [{ port: 5432 }]

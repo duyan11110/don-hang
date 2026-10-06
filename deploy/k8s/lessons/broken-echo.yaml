@@ -1,0 +1,59 @@
+# lesson: k8s.l3.debugging-pod-networking
+# Three ways to break echo-ip, for scripts/k8s/network-debug.sh to find.
+# First, a typo in the selector: no Pod is labelled app: echo-pi, so the
+# Service has no endpoints.
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-selector
+  namespace: network-lessons
+spec:
+  selector:
+    app: echo-pi
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+# lesson: k8s.l3.debugging-pod-networking
+# Second, the right Pods behind the wrong port: echo-ip listens on 8080.
+apiVersion: v1
+kind: Service
+metadata:
+  name: broken-port
+  namespace: network-lessons
+spec:
+  selector:
+    app: echo-ip
+  ports:
+    - port: 80
+      targetPort: 80
+---
+# lesson: k8s.l3.debugging-pod-networking
+# Third, a Pod that calls echo-ip, and an egress policy for it that allows
+# echo-ip's Pods on 8080 and forgets DNS.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: caller
+  namespace: network-lessons
+  labels:
+    app: caller
+spec:
+  containers:
+    - name: caller
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: caller-egress
+  namespace: network-lessons
+spec:
+  podSelector:
+    matchLabels:
+      app: caller
+  policyTypes: ["Egress"]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: echo-ip } } }]
+      ports: [{ port: 8080 }]

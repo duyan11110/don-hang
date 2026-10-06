@@ -1,0 +1,16 @@
+# lesson: k8s.l3.external-traffic-policy
+# echo-loadbalancer with one change: Local. A node sends outside traffic only
+# to echo-ip Pods on that same node and keeps the client's address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-loadbalancer-local
+  namespace: network-lessons
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app: echo-ip
+  ports:
+    - port: 80
+      targetPort: 8080

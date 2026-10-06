@@ -1,0 +1,18 @@
+# lesson: k8s.l3.pod-network-model
+# Two containers in one Pod. web serves on port 80; client has no server of
+# its own and reaches web on localhost, because both share the Pod's address
+# and its ports.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: two-containers
+  namespace: network-lessons
+spec:
+  containers:
+    - name: web
+      image: caddy:2.10.0
+      ports:
+        - containerPort: 80
+    - name: client
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]

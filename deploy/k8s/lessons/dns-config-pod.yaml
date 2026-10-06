@@ -1,0 +1,33 @@
+# lesson: k8s.l3.dns-search-and-ndots
+# The default dnsPolicy, ClusterFirst, with one option changed: ndots 1. A
+# name with at least one dot, such as example.com, is tried as written first,
+# before any search domain is appended.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-ndots
+  namespace: network-lessons
+spec:
+  dnsConfig:
+    options:
+      - name: ndots
+        value: "1"
+  containers:
+    - name: client
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]
+---
+# lesson: k8s.l3.dns-search-and-ndots
+# dnsPolicy Default is not the default: the Pod gets its node's resolver
+# settings, which know nothing of the cluster's Services.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dns-node
+  namespace: network-lessons
+spec:
+  dnsPolicy: Default
+  containers:
+    - name: client
+      image: caddy:2.10.0
+      command: ["sleep", "3600"]
