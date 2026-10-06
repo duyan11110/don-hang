@@ -17,10 +17,14 @@ public static class CatalogModule
         services.AddDbContext<CatalogDbContext>(options => options.UseNpgsql(connectionString));
 
         // lesson: backend.l2.cache-aside
+        // lesson: backend.l3.slow-dependencies
         // One ConnectionMultiplexer for the whole app: it is built to be shared
         // by every request. abortConnect=false (in redisConfiguration) lets the
         // app start, and keep trying to connect, while Redis is down; FailFast
-        // makes each command fail at once meanwhile, instead of waiting.
+        // makes each command fail at once meanwhile, instead of waiting. Only
+        // while the connection is known to be down: a Redis that keeps the
+        // connection open and never answers makes each command wait for its
+        // timeout instead (scripts/backend/slow-dependency.sh).
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
             var options = ConfigurationOptions.Parse(redisConfiguration);

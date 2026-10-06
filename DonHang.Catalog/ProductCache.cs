@@ -68,12 +68,19 @@ internal sealed class ProductCache(IProductRepository inner, IConnectionMultiple
             var json = await redis.GetDatabase().StringGetAsync(key);
             return json.IsNull ? null : JsonSerializer.Deserialize<Product>(json.ToString(), JsonSerializerOptions.Web);
         }
-        catch (Exception ex) when (ex is RedisException or RedisTimeoutException)
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
             logger.LogWarning(ex, "Redis read of {Key} failed; reading PostgreSQL instead", key);
             return null;
         }
     }
+
+    // lesson: backend.l3.slow-dependencies
+    // What a failed Redis command throws: an error, a timeout, or, when the
+    // connection is torn down while the command waits, a cancelled task (no
+    // cancellation token is passed here, so nothing else cancels it).
+    private static bool IsRedisFailure(Exception ex) =>
+        ex is RedisException or RedisTimeoutException or TaskCanceledException;
 
     private async Task SetAsync(string key, Product product)
     {
@@ -82,7 +89,7 @@ internal sealed class ProductCache(IProductRepository inner, IConnectionMultiple
             var json = JsonSerializer.Serialize(product, JsonSerializerOptions.Web);
             await redis.GetDatabase().StringSetAsync(key, json, Ttl);
         }
-        catch (Exception ex) when (ex is RedisException or RedisTimeoutException)
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
             logger.LogWarning(ex, "Redis write of {Key} failed; the next read queries PostgreSQL again", key);
         }
@@ -94,7 +101,7 @@ internal sealed class ProductCache(IProductRepository inner, IConnectionMultiple
         {
             await redis.GetDatabase().KeyDeleteAsync(key);
         }
-        catch (Exception ex) when (ex is RedisException or RedisTimeoutException)
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
             logger.LogWarning(ex, "Redis delete of {Key} failed; the old copy lives until its TTL ends", key);
         }
