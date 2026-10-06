@@ -1,0 +1,26 @@
+# lesson: k8s.l3.metallb-address-pools
+# The addresses MetalLB may give LoadBalancer Services. They must be on the
+# nodes' own network and used by nothing else: kind's nodes sit on Docker's
+# network kind, and scripts/k8s/metallb-pool.sh replaces x.y with the first
+# two numbers of that network's subnet on your machine, which Docker does
+# not use this high in the range.
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: lab-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - x.y.255.200-x.y.255.250
+---
+# lesson: k8s.l3.metallb-address-pools
+# Without an L2Advertisement naming the pool, addresses are handed out but
+# no speaker announces them: nothing on the network would reach them.
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: lab-pool
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - lab-pool

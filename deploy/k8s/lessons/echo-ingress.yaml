@@ -1,0 +1,20 @@
+# lesson: k8s.l3.highly-available-entry-point
+# echo-ip behind the Traefik of traefik-ha.sh: every path of every host, to
+# the Service echo-ip, port 80.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo-ip
+  namespace: network-lessons
+spec:
+  ingressClassName: traefik-ha
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-ip
+                port:
+                  number: 80

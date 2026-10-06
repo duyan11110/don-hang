@@ -1,0 +1,35 @@
+# lesson: k8s.l3.highly-available-entry-point
+# Values for Traefik's chart, the version staging pins (41.6.1), installed
+# on donhang by scripts/k8s/traefik-ha.sh. Two replicas, each on its own
+# node: losing one node leaves the other answering.
+deployment:
+  replicas: 2
+# maxSkew 1 with DoNotSchedule: the scheduler never puts a Pod where it
+# would make one node hold two more than another, so two replicas land on
+# two nodes. Honor: the control-plane node, which takes no such Pods, does
+# not count.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    nodeTaintsPolicy: Honor
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: traefik
+# lesson: k8s.l3.highly-available-entry-point
+# Each replica must carry all the traffic while the other is down, so its
+# requests are sized for the whole load, not for half of it.
+resources:
+  requests:
+    cpu: 200m
+    memory: 128Mi
+# Ingress objects of the class traefik-ha go to these Pods; staging's
+# Traefik keeps its own class.
+ingressClass:
+  name: traefik-ha
+  isDefaultClass: false
+# One address for both replicas: a LoadBalancer Service, which MetalLB
+# gives an address from its pool and announces in layer 2 mode.
+service:
+  spec:
+    type: LoadBalancer

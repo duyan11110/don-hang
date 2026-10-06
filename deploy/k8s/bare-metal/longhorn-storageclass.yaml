@@ -1,0 +1,20 @@
+# lesson: k8s.l3.replicated-volumes
+# Read, not installed: Longhorn 1.9 needs an iSCSI initiator on every node,
+# which kind's nodes lack. A claim that names this class gets a Longhorn
+# volume: three replicas, each on a different node's disk; a write counts
+# as done once every healthy replica has it.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: longhorn-replicated
+# Longhorn's CSI driver, installed with Longhorn itself.
+provisioner: driver.longhorn.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
+parameters:
+  # How many copies of each volume, on as many nodes.
+  numberOfReplicas: "3"
+  # Minutes a failed replica is kept before Longhorn gives up on it and
+  # rebuilds it elsewhere.
+  staleReplicaTimeout: "2880"

@@ -1,0 +1,15 @@
+# lesson: k8s.l3.control-plane-ha
+# The cluster donhang-ha that scripts/k8s/control-plane-ha.sh creates and
+# deletes: three control-plane nodes, each running the API server, etcd,
+# the scheduler and the controller manager, and no worker. With more than
+# one control-plane node, kind also starts a load balancer container in
+# front of the API servers. Same node image as kind-config.yaml.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d
+  - role: control-plane
+    image: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d
+  - role: control-plane
+    image: kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d

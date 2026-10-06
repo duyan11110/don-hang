@@ -34,3 +34,30 @@ client_up() {
   fi
   kubectl wait --for=condition=Ready "pod/$name" -n network-lessons --timeout=180s >/dev/null
 }
+
+# The address MetalLB gave a Service in network-lessons, and a call to it
+# from donhang-lb-client, a container on Docker's network kind
+# (scripts/k8s/metallb-pool.sh starts it).
+lb_ip() { kubectl get service "$1" -n network-lessons -o jsonpath='{.status.loadBalancer.ingress[0].ip}'; }
+lb_get() { docker exec donhang-lb-client wget -T "${2:-5}" -qO- "http://$1" 2>/dev/null; }
+# The node whose speaker announces an address (layer 2 mode), as the client
+# container sees it: the node whose MAC its ARP table holds for the address.
+mac_of() { docker inspect -f '{{(index .NetworkSettings.Networks "kind").MacAddress}}' "$1"; }
+arp_of() { docker exec donhang-lb-client cat /proc/net/arp | awk -v ip="$1" '$1 == ip { print $4 }'; }
+lb_node() { lb_node_ip "$(lb_ip "$1")"; }
+lb_node_ip() {
+  local ip=$1 mac node
+  lb_get "$ip" 2 >/dev/null || true
+  mac=$(arp_of "$ip")
+  for node in $(kind get nodes --name donhang); do
+    if [ "$(mac_of "$node")" = "$mac" ]; then echo "$node"; fi
+  done
+}
+# MetalLB with its pool, and the client container, if an earlier script of
+# k8s/bare-metal has not set them up yet.
+metallb_up() {
+  if ! kubectl get ipaddresspool lab-pool -n metallb-system >/dev/null 2>&1 \
+     || ! docker inspect donhang-lb-client >/dev/null 2>&1; then
+    scripts/k8s/metallb-pool.sh >/dev/null
+  fi
+}
