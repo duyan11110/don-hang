@@ -1,0 +1,3 @@
+== tofu destroy in deploy/tofu/lessons/moved-into-module
+Destroy complete! Resources: 1 destroyed.
+donhang

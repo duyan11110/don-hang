@@ -1,0 +1,16 @@
+== a commit that sets the api's tag to sha-0000000000000000000000000000000000000000
+staging: Synced, Progressing
+      2 1.0.0 true 
+      1 sha-0000000000000000000000000000000000000000 false ErrImagePull
+
+== kubectl rollout undo
+deployment.apps/api rolled back
+right after: the Deployment names 1.0.0
+shortly after: the Deployment names sha-0000000000000000000000000000000000000000
+
+== git revert
+staging: Synced, Healthy
+      2 1.0.0 true 
+... gitops-revert.sh: Revert "Deploy api sha-0000000000000000000000000000000000000000 to staging"
+... gitops-revert.sh: Deploy api sha-0000000000000000000000000000000000000000 to staging
+... gitops-self-heal.sh: Remove the ConfigMap prune-demo

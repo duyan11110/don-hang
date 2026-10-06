@@ -1,0 +1,25 @@
+== backup: mirror clone of the config repository
+newest commit in the mirror: ... Rotate the database password of staging
+
+== disaster: donhang-staging is destroyed, both layers
+Destroy complete! Resources: 1 destroyed.
+Destroy complete! Resources: 1 destroyed.
+== 1. OpenTofu: the cluster layer, then the platform layer
+Plan: 1 to add, 0 to change, 0 to destroy.
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+Plan: 2 to add, 0 to change, 0 to destroy.
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+== 2. controllers: Sealed Secrets, then Argo CD
+both running
+== 3. Git server, and the repository pushed back from the mirror
+pushed ...
+== 4. Argo CD: the Application from apps/staging.yaml, until Healthy
+application.argoproj.io/staging
+staging: Synced, Healthy
+
+== timings
+... s  1. OpenTofu: the cluster layer, then the platform layer
+... s  2. controllers: Sealed Secrets, then Argo CD
+... s  3. Git server, and the repository pushed back from the mirror
+... s  4. Argo CD: the Application from apps/staging.yaml, until Healthy
+total: ... s from losing the cluster to Healthy

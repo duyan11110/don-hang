@@ -1,0 +1,100 @@
+== staging, cluster layer
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+OpenTofu will perform the following actions:
+
+  # module.cluster.kind_cluster.this will be created
+  + resource "kind_cluster" "this" {
+      + client_certificate     = (known after apply)
+      + client_key             = (known after apply)
+      + cluster_ca_certificate = (known after apply)
+      + completed              = (known after apply)
+      + endpoint               = (known after apply)
+      + id                     = (known after apply)
+      + kubeconfig             = (known after apply)
+      + kubeconfig_path        = (known after apply)
+      + name                   = "donhang-staging"
+      + node_image             = "kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d"
+      + wait_for_ready         = true
+
+      + kind_config {
+          + api_version = "kind.x-k8s.io/v1alpha4"
+          + kind        = "Cluster"
+
+          + node {
+              + role = "control-plane"
+            }
+        }
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + client_certificate     = (sensitive value)
+  + client_key             = (sensitive value)
+  + cluster_ca_certificate = (sensitive value)
+  + endpoint               = (known after apply)
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+client_certificate = <sensitive>
+client_key = <sensitive>
+cluster_ca_certificate = <sensitive>
+endpoint = "https://127.0.0.1:..."
+
+== staging, platform layer
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+OpenTofu will perform the following actions:
+
+  # module.platform.kubernetes_namespace_v1.donhang will be created
+  + resource "kubernetes_namespace_v1" "donhang" {
+      + id                               = (known after apply)
+      + wait_for_default_service_account = false
+
+      + metadata {
+          + generation       = (known after apply)
+          + name             = "donhang"
+          + resource_version = ...
+          + uid              = (known after apply)
+        }
+    }
+
+  # module.platform.kubernetes_secret_v1.sealing_key will be created
+  + resource "kubernetes_secret_v1" "sealing_key" {
+      + data                           = (sensitive value)
+      + id                             = (known after apply)
+      + type                           = "kubernetes.io/tls"
+      + wait_for_service_account_token = true
+
+      + metadata {
+          + generation       = (known after apply)
+          + labels           = {
+              + "sealedsecrets.bitnami.com/sealed-secrets-key" = "active"
+            }
+          + name             = "sealing-key"
+          + namespace        = "kube-system"
+          + resource_version = ...
+          + uid              = (known after apply)
+        }
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.
+
+== production, cluster layer: plan only
+  # module.cluster.kind_cluster.this will be created
+      + name                   = "donhang-production"
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+donhang
+donhang-staging

@@ -1,0 +1,8 @@
+== terminal 1: tofu apply, waiting for an answer
+== terminal 2: tofu plan
+Error: Error acquiring the state lock
+Error message: Workspace is already locked: default
+
+== terminal 2: tofu plan -lock-timeout=60s
+Plan: 0 to add, 1 to change, 0 to destroy.
+it waited about ... s, until terminal 1's apply ended

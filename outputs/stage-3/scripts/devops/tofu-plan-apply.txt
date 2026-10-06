@@ -1,0 +1,29 @@
+21c21
+<   node_image     = "kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d"
+---
+>   node_image     = "kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
+
+$ tofu plan
+  # kind_cluster.this must be replaced
+      ~ node_image             = "kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d" -> "kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040" # forces replacement
+Plan: 1 to add, 0 to change, 1 to destroy.
+
+$ tofu plan -out=first-cluster.tfplan -no-color
+
+No changes. Your infrastructure matches the configuration.
+
+OpenTofu has compared your real infrastructure against your configuration and
+found no differences, so no changes are needed.
+
+$ tofu apply -no-color first-cluster.tfplan
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+$ tofu apply   (answered: yes)
+
+No changes. Your infrastructure matches the configuration.
+
+OpenTofu has compared your real infrastructure against your configuration and
+found no differences, so no changes are needed.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.

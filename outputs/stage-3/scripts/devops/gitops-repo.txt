@@ -1,0 +1,30 @@
+== the Git server
+namespace/git
+deployment.apps/gitea
+service/gitea
+
+== pushed to donhang/donhang-config
+== what Argo CD will read: http://gitea.git.svc:3000/donhang/donhang-config.git
+... gitops-repo.sh: Staging and production as Đơn Hàng runs them
+  apps/staging.yaml
+  envs/production/api-configmap.yaml
+  envs/production/api.yaml
+  envs/production/db-init.yaml
+  envs/production/db.yaml
+  envs/production/keycloak-realm.yaml
+  envs/production/keycloak.yaml
+  envs/production/mailpit.yaml
+  envs/production/migrate-hook.yaml
+  envs/production/redis.yaml
+  envs/staging/api-configmap.yaml
+  envs/staging/api.yaml
+  envs/staging/db-init.yaml
+  envs/staging/db.yaml
+  envs/staging/keycloak-realm.yaml
+  envs/staging/keycloak.yaml
+  envs/staging/mailpit.yaml
+  envs/staging/migrate-hook.yaml
+  envs/staging/redis.yaml
+  envs/staging/sealed-api.yaml
+  envs/staging/sealed-db.yaml
+  envs/staging/sealed-keycloak.yaml

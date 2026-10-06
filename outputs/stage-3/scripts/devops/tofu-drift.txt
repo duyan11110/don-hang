@@ -1,0 +1,54 @@
+== kubectl label namespace donhang owner=by-hand
+namespace/donhang labeled
+
+== tofu plan -detailed-exitcode
+  # module.platform.kubernetes_namespace_v1.donhang will be updated in-place
+  ~ resource "kubernetes_namespace_v1" "donhang" {
+        id                               = "donhang"
+        # (1 unchanged attribute hidden)
+
+      ~ metadata {
+          ~ generation       = 0 -> (known after apply)
+          - labels           = {
+              - "owner" = "by-hand"
+            } -> null
+            name             = "donhang"
+          ~ resource_version = ...
+            # (1 unchanged attribute hidden)
+        }
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+exit code: 2
+
+== tofu plan -refresh-only
+  # module.platform.kubernetes_namespace_v1.donhang has changed
+  ~ resource "kubernetes_namespace_v1" "donhang" {
+        id                               = "donhang"
+        # (1 unchanged attribute hidden)
+
+      ~ metadata {
+          + labels           = {
+              + "owner" = "by-hand"
+            }
+            name             = "donhang"
+          ~ resource_version = ...
+            # (2 unchanged attributes hidden)
+        }
+    }
+  # module.platform.kubernetes_secret_v1.sealing_key has changed
+  ~ resource "kubernetes_secret_v1" "sealing_key" {
+        id                             = "kube-system/sealing-key"
+        # (4 unchanged attributes hidden)
+
+      ~ metadata {
+          + annotations      = {}
+            name             = "sealing-key"
+            # (5 unchanged attributes hidden)
+        }
+    }
+
+== tofu apply
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+labels now: {"kubernetes.io/metadata.name":"donhang"}
+tofu plan -detailed-exitcode: exit code 0
