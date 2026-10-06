@@ -80,3 +80,11 @@ TraceId"?: ?"?\K[0-9a-f]{32}
 # fetches Keycloak's keys at most once every 5 minutes.
 adding a key with priority \K[0-9]+
 new token -> 200 \(after \K[0-9]+
+# Stage-3 supply chain: the Grype database is rebuilt every day and the
+# findings change with it; the newest published commit, and its digests.
+^== vulnerability database built: \K.*$
+^(?:Critical|High|Medium|Low|Negligible|Unknown) +\K[0-9]+$
+^== ghcr\.io/duyan11110/donhang-[a-z-]+:sha-\K[0-9a-f]{40}
+^== ghcr\.io/duyan11110/donhang-[a-z-]+:sha-.* -> ghcr\.io/duyan11110/donhang-[a-z-]+@sha256:\K[0-9a-f]{64}
+^Verification for ghcr\.io/duyan11110/donhang-[a-z-]+@sha256:\K[0-9a-f]{64}(?= --)
+^built by .* at commit \K[0-9a-f]{40}
