@@ -1,0 +1,19 @@
+USER of donhang-api:1.0.0: ""
+USER of the api image staging runs: "1654"
+$ kubectl exec deployment/api -n donhang -- id
+uid=1654(app) gid=1654(app) groups=1654(app)
+
+$ kubectl get deployment api -n donhang -o jsonpath='{...securityContext}'
+{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}}
+
+$ kubectl apply -f deploy/k8s/lessons/root-caddy-pod.yaml
+pod/root-caddy created
+pod/prometheus-by-name created
+pod/prometheus-by-number created
+$ kubectl get pods root-caddy prometheus-by-name prometheus-by-number -n security-lessons
+NAME                   READY   STATUS                       RESTARTS   AGE
+root-caddy             0/1     CreateContainerConfigError   0          ...
+prometheus-by-name     0/1     CreateContainerConfigError   0          ...
+prometheus-by-number   1/1     Running                      0          ...
+root-caddy: container has runAsNonRoot and image will run as root
+prometheus-by-name: container has runAsNonRoot and image has non-numeric user (nobody), cannot verify user is non-root

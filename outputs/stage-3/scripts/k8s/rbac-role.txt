@@ -1,0 +1,17 @@
+$ kubectl apply -f deploy/k8s/lessons/pod-reader-role.yaml
+role.rbac.authorization.k8s.io/pod-reader created
+rolebinding.rbac.authorization.k8s.io/pod-reader created
+$ kubectl auth can-i list pods -n security-lessons --as=junior-dev
+yes
+$ kubectl auth can-i list pods -n donhang --as=junior-dev
+no
+$ kubectl auth can-i list secrets -n security-lessons --as=junior-dev
+no
+$ kubectl auth can-i delete pods -n security-lessons --as=junior-dev
+no
+$ kubectl auth can-i create pods -n security-lessons --as=junior-dev
+no
+
+$ kubectl get secrets -n security-lessons -o jsonpath='{.items[*].data}'
+{"password":"bm90LWEtcmVhbC1wYXNzd29yZA=="}
+the value, base64-decoded: not-a-real-password

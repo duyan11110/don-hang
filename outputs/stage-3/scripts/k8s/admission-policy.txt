@@ -1,0 +1,20 @@
+$ kubectl apply -f .gitops/donhang-config/apps/policies-staging.yaml
+application.argoproj.io/policies-staging created
+policies-staging: Synced, Healthy
+$ kubectl get validatingadmissionpolicies,validatingadmissionpolicybindings
+NAME                                                                                             VALIDATIONS   PARAMKIND   AGE
+validatingadmissionpolicy.admissionregistration.k8s.io/require-image-digest                      1             <unset>     ...
+validatingadmissionpolicy.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io   2             <unset>     ...
+
+NAME                                                                                                    POLICYNAME                                PARAMREF   AGE
+validatingadmissionpolicybinding.admissionregistration.k8s.io/require-image-digest                      require-image-digest                      <unset>    ...
+validatingadmissionpolicybinding.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io   safe-upgrades.gateway.networking.k8s.io   <unset>    ...
+
+== running Pods in donhang that the policy warns about
+0 of 10 Pods
+
+policies-staging: Synced, Healthy
+$ kubectl run api-by-tag -n donhang --image=ghcr.io/duyan11110/donhang-api:1.0.0 --dry-run=server
+The pods "api-by-tag" is invalid: : ValidatingAdmissionPolicy 'require-image-digest' with binding 'require-image-digest' denied request: an image from ghcr.io/duyan11110/ must be named by digest (@sha256:...)
+$ kubectl run api-by-digest -n donhang --image=ghcr.io/duyan11110/donhang-api@sha256:0000000000000000000000000000000000000000000000000000000000000000 --dry-run=server
+pod/api-by-digest created (server dry run)

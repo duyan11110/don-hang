@@ -34,7 +34,7 @@ name: api-...
       2 name: api-...
 
 $ diff <(kubectl kustomize envs/staging) <(kubectl kustomize envs/production)
-443c443
+445c445
 <   replicas: 2
 ---
 >   replicas: 3

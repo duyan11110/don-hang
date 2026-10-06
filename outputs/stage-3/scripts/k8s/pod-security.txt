@@ -1,0 +1,38 @@
+$ kubectl apply -f deploy/k8s/lessons/restricted-namespace.yaml
+namespace/pod-security-lessons created
+$ kubectl run web --image=caddy:2.10.0 -n pod-security-lessons
+Error from server (Forbidden): pods "web" is forbidden: violates PodSecurity "restricted:latest": 
+allowPrivilegeEscalation != false (container "web" must set securityContext.allowPrivilegeEscalation=false), 
+unrestricted capabilities (container "web" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true 
+(pod or container "web" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "web" must set 
+securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+
+$ kubectl create deployment web --image=caddy:2.10.0 -n pod-security-lessons
+deployment.apps/web created
+$ kubectl get deployment,replicaset,pods -n pod-security-lessons
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/web   0/1     0            0           ...
+
+NAME                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/web-...   1         0         0       ...
+== the ReplicaSet's events
+pods "web-...-..." is forbidden: violates PodSecurity "restricted:latest": allowPrivilegeEscalation != false 
+(container "caddy" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container 
+"caddy" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "caddy" must set 
+securityContext.runAsNonRoot=true), seccompProfile (pod or container "caddy" must set 
+securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+
+$ kubectl label --dry-run=server --overwrite namespace donhang pod-security.kubernetes.io/enforce=restricted
+existing pods in namespace "donhang" violate the new PodSecurity enforce level "restricted:latest"
+db-0 (and 5 other pods): allowPrivilegeEscalation != false, unrestricted capabilities, runAsNonRoot != true, seccompProfile
+namespace/donhang labeled (server dry run)
+$ kubectl label --dry-run=server --overwrite namespace donhang pod-security.kubernetes.io/enforce=baseline
+namespace/donhang not labeled (server dry run)
+
+== the labels of donhang
+{"kubernetes.io/metadata.name":"donhang"
+"pod-security.kubernetes.io/audit":"restricted"
+"pod-security.kubernetes.io/enforce":"baseline"
+"pod-security.kubernetes.io/warn":"restricted"}
+$ scripts/devops/tofu-env.sh staging platform plan
+No changes. Your infrastructure matches the configuration.

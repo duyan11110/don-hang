@@ -1,0 +1,18 @@
+$ kubectl auth whoami
+ATTRIBUTE                                           VALUE
+Username                                            kubernetes-admin
+Groups                                              [kubeadm:cluster-admins system:authenticated]
+Extra: authentication.kubernetes.io/credential-id   [X509SHA256=...]
+
+$ kubectl get pods --token=not-a-real-token   (no certificate)
+error: You must be logged in to the server (Unauthorized)
+
+$ kubectl auth can-i create deployments -n security-lessons
+yes
+$ kubectl auth can-i create deployments -n security-lessons --as=junior-dev
+no
+$ kubectl auth can-i list pods -n security-lessons --as=junior-dev
+no
+
+$ kubectl get pods -n security-lessons --as=junior-dev
+Error from server (Forbidden): pods is forbidden: User "junior-dev" cannot list resource "pods" in API group "" in the namespace "security-lessons"

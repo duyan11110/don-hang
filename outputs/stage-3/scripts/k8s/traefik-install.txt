@@ -1,0 +1,42 @@
+== the Gateway API kinds (v1.6.2, standard channel)
+customresourcedefinition backendtlspolicies.gateway.networking.k8s.io
+customresourcedefinition gatewayclasses.gateway.networking.k8s.io
+customresourcedefinition gateways.gateway.networking.k8s.io
+customresourcedefinition grpcroutes.gateway.networking.k8s.io
+customresourcedefinition httproutes.gateway.networking.k8s.io
+customresourcedefinition listenersets.gateway.networking.k8s.io
+customresourcedefinition referencegrants.gateway.networking.k8s.io
+customresourcedefinition tcproutes.gateway.networking.k8s.io
+customresourcedefinition tlsroutes.gateway.networking.k8s.io
+customresourcedefinition udproutes.gateway.networking.k8s.io
+validatingadmissionpolicy safe-upgrades.gateway.networking.k8s.io
+validatingadmissionpolicybinding safe-upgrades.gateway.networking.k8s.io
+
+$ kubectl apply -f .gitops/donhang-config/apps/traefik.yaml
+application.argoproj.io/traefik created
+traefik: Synced, Healthy
+
+== what the chart created in traefik
+NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/traefik   1/1     1            1           ...
+
+NAME              TYPE       CLUSTER-IP   EXTERNAL-IP   PORT(S)                      AGE
+service/traefik   NodePort   ...          <none>        80:30080/TCP,443:30443/TCP   ...
+== the classes Ingress and Gateway objects can name
+NAME                                     CONTROLLER                      PARAMETERS   AGE
+ingressclass.networking.k8s.io/traefik   traefik.io/ingress-controller   <none>       ...
+
+NAME                                             CONTROLLER                      ACCEPTED   AGE
+gatewayclass.gateway.networking.k8s.io/traefik   traefik.io/gateway-controller   True       ...
+
+== Helm releases in the cluster
+$ helm list --all-namespaces
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+
+== helm show values: 56 top-level keys, 1697 lines
+
+== helm template 41.4.0 against 41.6.1
+      8 < helm.sh/chart: traefik-41.4.0
+      1 < image: docker.io/traefik:v3.7.12
+      8 > helm.sh/chart: traefik-41.6.1
+      1 > image: docker.io/traefik:v3.7.13

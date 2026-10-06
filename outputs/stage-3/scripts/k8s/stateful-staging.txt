@@ -1,0 +1,38 @@
+   M base/kustomization.yaml
+   M platform/edge/httproutes.yaml
+  ?? base/fake-gateway.yaml
+  ?? base/notifications.yaml
+  ?? base/payments.yaml
+staging: Synced, Healthy
+edge-staging: Synced, Healthy
+
+== the hooks of the last sync, and the services after them
+NAME                    STATUS
+migrate                 Succeeded
+notifications-migrate   Succeeded
+payments-migrate        Succeeded
+NAME                    READY
+api                     2
+fake-gateway            1
+keycloak                1
+mailpit                 1
+notifications           1
+payments                1
+redis                   1
+
+== GET https://donhang.localhost:18443/api/v1/refunds as a member of staff
+[]
+HTTP 200
+
+$ kubectl scale deployment notifications -n donhang --replicas=0
+deployment.apps/notifications scaled
+placed order 13
+messages waiting for Notifications: 1
+
+$ kubectl delete pod db-0 rabbitmq-0 -n donhang
+pod "db-0" deleted from donhang namespace
+pod "rabbitmq-0" deleted from donhang namespace
+order 13: new
+messages waiting for Notifications: 1
+
+Notifications back: messages waiting 0
