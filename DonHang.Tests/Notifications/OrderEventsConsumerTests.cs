@@ -108,7 +108,8 @@ public sealed class OrderEventsConsumerTests(NotificationsDatabase database, Rab
         await consumer.StartAsync(CancellationToken.None);
         await using var connection = await rabbitMq.ConnectAsync();
         await using var channel = await connection.CreateChannelAsync();
-        await WaitForAsync(async () => await QueueExistsAsync(connection));
+        // The dead-letter queue is declared after the main one: wait for it too.
+        await WaitForAsync(async () => await QueueExistsAsync(connection, RabbitMqTopology.DeadLetterQueue));
         await channel.QueuePurgeAsync(RabbitMqTopology.DeadLetterQueue);
 
         await PublishAsync(channel, "order.placed", Encoding.UTF8.GetBytes("this is not JSON"));
@@ -127,12 +128,12 @@ public sealed class OrderEventsConsumerTests(NotificationsDatabase database, Rab
 
     // The consumer declares its queue when it connects; a passive declare on
     // a channel of its own fails (and closes that channel) until it exists.
-    private static async Task<bool> QueueExistsAsync(IConnection connection)
+    private static async Task<bool> QueueExistsAsync(IConnection connection, string queue = RabbitMqTopology.Queue)
     {
         await using var probe = await connection.CreateChannelAsync();
         try
         {
-            await probe.QueueDeclarePassiveAsync(RabbitMqTopology.Queue);
+            await probe.QueueDeclarePassiveAsync(queue);
             return true;
         }
         catch (RabbitMQ.Client.Exceptions.OperationInterruptedException)
