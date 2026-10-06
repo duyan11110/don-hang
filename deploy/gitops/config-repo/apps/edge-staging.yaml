@@ -1,0 +1,21 @@
+# lesson: k8s.l2.gateway-api
+# The Application for platform/edge: staging's Gateway and its HTTPRoutes,
+# synced from the config repository like envs/staging, into donhang.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: edge-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: platform/edge
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: donhang
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Seal the Secrets db, api and keycloak from .env with the certificate in secrets/, offline, into envs/staging of the config repository, then commit and push them.
+# Seal staging's Secrets from .env and secrets/ with the certificate in secrets/, offline, into the config repository (envs/staging, and platform/edge once it exists), then commit and push them.
 # Runs on the host: it reads .env and secrets/ here and pushes to the Git server in donhang-staging through a port-forward.
 # --no-commit only writes the files (scripts/devops/gitops-repo.sh and rotate-db-password.sh commit them with other changes).
 set -euo pipefail
@@ -27,8 +27,31 @@ seal() {
 # scripts/devops/rotate-db-password.sh gives staging one of its own.
 db_password=${STAGING_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}
 seal db --from-literal=POSTGRES_PASSWORD="$db_password"
-seal api --from-literal=ConnectionStrings__Default="Host=db;Database=donhang;Username=donhang;Password=$db_password"
+seal api --from-literal=ConnectionStrings__Default="Host=db;Database=donhang;Username=donhang;Password=$db_password" \
+  --from-literal=RabbitMq__Password="$RABBITMQ_PASSWORD"
 seal keycloak --from-literal=KC_BOOTSTRAP_ADMIN_PASSWORD="$KEYCLOAK_ADMIN_PASSWORD"
+# From stage-3: RabbitMQ, Notifications, Payments and the fake gateway;
+# Notifications and Payments each have a database of their own.
+seal rabbitmq --from-literal=RABBITMQ_DEFAULT_PASS="$RABBITMQ_PASSWORD"
+seal notifications \
+  --from-literal=ConnectionStrings__Default="Host=db;Database=donhang_notifications;Username=donhang;Password=$db_password" \
+  --from-literal=RabbitMq__Password="$RABBITMQ_PASSWORD"
+seal payments \
+  --from-literal=ConnectionStrings__Default="Host=db;Database=donhang_payments;Username=donhang;Password=$db_password" \
+  --from-literal=RabbitMq__Password="$RABBITMQ_PASSWORD" --from-literal=Gateway__ApiKey="$GATEWAY_API_KEY"
+seal fake-gateway --from-literal=Gateway__ApiKey="$GATEWAY_API_KEY"
+
+# lesson: k8s.l2.tls-at-the-gateway
+# The Gateway's certificate and key from secrets/ (scripts/dev-secrets.sh)
+# as a Secret of type kubernetes.io/tls, with the keys tls.crt and tls.key.
+# It holds a private key, so it is sealed like the others, beside the
+# Gateway in platform/edge once scripts/k8s/gateway.sh has put it there.
+if [ -d "$config_repo/platform/edge" ]; then
+  kubectl create secret tls donhang-tls -n donhang --cert=secrets/donhang-tls.crt --key=secrets/donhang-tls.key \
+      --dry-run=client -o yaml \
+    | kubeseal --cert secrets/sealing.crt --format yaml > "$config_repo/platform/edge/sealed-donhang-tls.yaml"
+  echo "sealed donhang-tls into platform/edge/sealed-donhang-tls.yaml"
+fi
 [ "${1:-}" = --no-commit ] && exit 0
 echo
 
@@ -37,7 +60,7 @@ echo "== envs/staging/sealed-db.yaml"
 sed -E 's/^(    POSTGRES_PASSWORD: .{24}).*/\1.../' "$config_repo/envs/staging/sealed-db.yaml"
 echo
 
-config_commit seal-secrets.sh "Seal the Secrets db, api and keycloak again"
+config_commit seal-secrets.sh "Seal staging's Secrets again"
 echo "pushed $(config_head)"
 app_refresh
 app_wait_sync "$(config_head --verify)" >/dev/null

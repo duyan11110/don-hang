@@ -1,0 +1,49 @@
+# lesson: k8s.l2.charts-through-argo-cd
+# Traefik, from the chart its own project publishes: a chart repository, a
+# chart name and an exact chart version. 41.6.1 is the chart's version; the
+# Traefik it installs is the chart's appVersion (v3.7.13 for this one).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 41.6.1
+    # lesson: k8s.l2.charts-through-argo-cd
+    # Only the values Đơn Hàng changes; every other key keeps the chart's
+    # default (helm show values traefik/traefik --version 41.6.1 lists them).
+    helm:
+      valuesObject:
+        # Route by Gateway API objects too, not only by Ingress objects.
+        providers:
+          kubernetesGateway:
+            enabled: true
+        # No Gateway from the chart: Đơn Hàng writes its own (platform/edge).
+        gateway:
+          enabled: false
+        # A NodePort Service: the staging node publishes these two ports on
+        # the host (deploy/tofu/envs/staging/cluster/main.tf).
+        service:
+          spec:
+            type: NodePort
+        ports:
+          web:
+            nodePort: 30080
+          websecure:
+            nodePort: 30443
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    # The chart's own kinds of objects (IngressRoute and others) have
+    # definitions too big for a client-side apply.
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

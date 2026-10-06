@@ -68,6 +68,21 @@ if [ ! -f secrets/sealing.key ]; then
   echo "created secrets/sealing.key and secrets/sealing.crt"
 fi
 
+# lesson: k8s.l2.tls-at-the-gateway
+# From stage-3: a certificate authority of the lab's own (lab-ca.crt and its
+# key) and, signed by it, the certificate of staging's two hosts behind the
+# Gateway. curl --cacert secrets/lab-ca.crt trusts it; a browser only once
+# told to trust lab-ca.crt. Nothing renews it: it expires after 825 days.
+if [ ! -f secrets/donhang-tls.key ]; then
+  MSYS_NO_PATHCONV=1 openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj '/CN=Don Hang lab CA/O=donhang-dev'     -addext 'basicConstraints=critical,CA:TRUE' -addext 'keyUsage=critical,keyCertSign,cRLSign'     -keyout secrets/lab-ca.key -out secrets/lab-ca.crt 2>/dev/null
+  MSYS_NO_PATHCONV=1 openssl req -newkey rsa:2048 -nodes -subj '/CN=donhang.localhost/O=donhang-dev'     -keyout secrets/donhang-tls.key -out secrets/donhang-tls.csr 2>/dev/null
+  printf '%s
+' 'subjectAltName=DNS:donhang.localhost,DNS:auth.donhang.localhost'     'extendedKeyUsage=serverAuth' > secrets/donhang-tls.ext
+  openssl x509 -req -in secrets/donhang-tls.csr -CA secrets/lab-ca.crt -CAkey secrets/lab-ca.key     -CAcreateserial -days 825 -extfile secrets/donhang-tls.ext -out secrets/donhang-tls.crt 2>/dev/null
+  rm -f secrets/donhang-tls.csr secrets/donhang-tls.ext secrets/lab-ca.srl
+  echo "created secrets/lab-ca.crt and secrets/donhang-tls.crt, with their keys"
+fi
+
 if [ ! -f secrets/lab_key ]; then
   ssh-keygen -t ed25519 -N '' -C 'donhang-lab-dev' -f secrets/lab_key >/dev/null
   echo "created secrets/lab_key and secrets/lab_key.pub"

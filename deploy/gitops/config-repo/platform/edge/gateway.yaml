@@ -1,0 +1,47 @@
+# lesson: k8s.l2.gateway-api
+# Đơn Hàng's entry point, owned by whoever runs the platform: one Gateway of
+# the class traefik, with a listener per port. Each port is one of Traefik's
+# own (8000 for HTTP, 8443 for HTTPS); the staging node publishes them on
+# this machine as localhost:18080 and localhost:18443.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: donhang
+  namespace: donhang
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      port: 8000
+      protocol: HTTP
+    # lesson: k8s.l2.tls-at-the-gateway
+    # HTTPS ends here: Traefik decrypts each request with the certificate and
+    # key of the Secret donhang-tls, and the Pods behind it get plain HTTP.
+    # The Secret comes from sealed-donhang-tls.yaml, beside this file.
+    - name: https
+      port: 8443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: donhang-tls
+---
+# lesson: k8s.l2.tls-at-the-gateway
+# The only route on the http listener: it answers every request there with
+# a redirect to the same host and path over HTTPS, on port 18443.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: redirect-to-https
+  namespace: donhang
+spec:
+  parentRefs:
+    - name: donhang
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            port: 18443
+            statusCode: 301
