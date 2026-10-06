@@ -40,6 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /migrate
 COPY --from=bundle /bundle/efbundle .
+# Not root either: the same non-root user as the image below.
+USER $APP_UID
 ENTRYPOINT ["./efbundle"]
 
 # The api's image: the default target, because it is the last stage.
@@ -52,4 +54,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-
 COPY --from=build /app .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# lesson: k8s.l3.security-context
+# From stage-3 the api runs as the non-root user the .NET images include. By
+# its number, APP_UID, not its name: Kubernetes' runAsNonRoot can check only
+# a number. Without this line the process runs as root.
+USER $APP_UID
 ENTRYPOINT ["dotnet", "DonHang.Api.dll"]

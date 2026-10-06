@@ -12,4 +12,7 @@ WORKDIR /app
 COPY --from=build /app .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# Not root: the non-root user the .NET images include, by its number
+# (see DonHang.Api/Dockerfile).
+USER $APP_UID
 ENTRYPOINT ["dotnet", "FakeGateway.dll"]

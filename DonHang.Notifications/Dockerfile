@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /migrate
 COPY --from=bundle /bundle/efbundle .
+# Not root either: the same non-root user as the service's image below.
+USER $APP_UID
 ENTRYPOINT ["./efbundle"]
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4 AS final
@@ -37,4 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-
 COPY --from=build /app .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# Not root: the non-root user the .NET images include, by its number
+# (see DonHang.Api/Dockerfile).
+USER $APP_UID
 ENTRYPOINT ["dotnet", "DonHang.Notifications.dll"]
