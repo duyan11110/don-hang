@@ -55,7 +55,8 @@ Keycloak, Redis, Mailpit and the lab box.
 - **Kubernetes**: Helm, Ingress and the Gateway API with TLS on staging,
   StatefulSets with claims, RBAC, Pod Security, NetworkPolicies and an
   admission policy; on the cluster `donhang` the networking internals,
-  MetalLB, a CRD, etcd snapshots, encryption at rest and draining nodes.
+  MetalLB, a CRD, cert-manager issuing a certificate with the lab CA, etcd
+  snapshots, encryption at rest and draining nodes.
 - **Team docs**: ADRs in `docs/adr/`, a tech debt register, a vendor
   evaluation, the list of components the team runs itself, the refund and
   order history designs.
@@ -115,8 +116,8 @@ of memory to keep the lab, `donhang` and `donhang-staging` up together.
 
 - `donhang` (one control plane, two workers, about 3.5 GB): the `stage-2`
   lessons and, from stage-3, the storage, networking, bare-metal and
-  lifecycle lessons. Those leave MetalLB, the namespaces `network-lessons`
-  and `ha-lessons` and the container `donhang-lb-client` behind. Docker Desktop does not route from the host
+  lifecycle lessons. Those leave MetalLB, cert-manager 1.20.4, the namespaces
+  `network-lessons`, `ha-lessons` and `operator-lessons` and the container `donhang-lb-client` behind. Docker Desktop does not route from the host
   to the `kind` network: a LoadBalancer address is reached from
   `donhang-lb-client`, a container attached to that network.
 - `donhang-staging` (one node, about 4 GB with Argo CD, the Git server,
@@ -232,7 +233,7 @@ learner's machine; CI does not check their outputs.
 | `.github/workflows/*`, `.github/dependabot.yml`, `**/packages.lock.json`, `.grype.yaml` | pinning by content, dependency updates, SBOMs, scanning, signing, provenance |
 | `deploy/tofu/*` | OpenTofu resources, state, modules, environments, drift |
 | `deploy/argocd/`, `deploy/gitops/*`, `deploy/sealed-secrets/` | pull-based deployment, sync order, self-heal, promotion, sealed secrets, overlays |
-| `deploy/helm/lessons/`, `deploy/gateway-api/`, `deploy/metallb/`, `deploy/k8s/lessons/*`, `deploy/k8s/bare-metal/` | Helm, Ingress and the Gateway API, storage, RBAC, Pod Security, policies, networking internals, bare-metal load balancing, CRDs, lifecycle |
+| `deploy/helm/lessons/`, `deploy/gateway-api/`, `deploy/metallb/`, `deploy/cert-manager/`, `deploy/k8s/lessons/*`, `deploy/k8s/bare-metal/` | Helm, Ingress and the Gateway API, storage, RBAC, Pod Security, policies, networking internals, bare-metal load balancing, CRDs, lifecycle |
 | `scripts/backend/*`, `scripts/design/*`, `scripts/frontend/*`, `scripts/devops/*`, `scripts/k8s/*`, `scripts/management/*` | every command the stage-3 lessons show |
 | `docs/adr/*` | ADRs: structure, options, proposing, superseding, TCO, lock-in, an exit plan |
 | `docs/team/tech-debt-register.md` | a technical debt register, its interest, what was repaid |

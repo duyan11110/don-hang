@@ -138,3 +138,6 @@ KUBE-SEP-\K[A-Z0-9]{16}\b
 ^calls: \K[0-9]+, failed: [0-9]+, the last one about [0-9]+(?= s after the pause)
 \b[A-Z][a-z]{2} [0-9]{2}, [0-9]{4} [0-9]{2}:[0-9]{2} UTC\b
 ^the kubeconfig's API server: https://127\.0\.0\.1:\K[0-9]+$
+# cert-manager.sh: the times in the Certificate's status (the number of
+# days between them stays).
+^(?:notBefore|notAfter|renewalTime): \K[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$

@@ -159,7 +159,7 @@ k8s_host_scripts=(
   network-policy egress-policy admission-policy
   pod-network cni kube-proxy service-types coredns dns-search network-debug
   metallb-install metallb-pool metallb-l2 external-traffic-policy traefik-ha csi control-plane-ha
-  custom-resources kubeadm etcd-snapshot encryption-at-rest drain version-skew
+  custom-resources cert-manager-install cert-manager operator kubeadm etcd-snapshot encryption-at-rest drain version-skew
 )
 
 is_devops_host() {
