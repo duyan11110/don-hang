@@ -1,0 +1,14 @@
+# lesson: k8s.l3.cert-manager
+# How certificates get signed: with the lab's own certificate authority.
+# Its certificate and key sit in the Secret lab-ca, in the Issuer's own
+# namespace; scripts/k8s/cert-manager.sh creates that Secret from
+# secrets/lab-ca.crt and secrets/lab-ca.key (dev-secrets.sh made them),
+# so the key never reaches Git.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: lab-ca
+  namespace: operator-lessons
+spec:
+  ca:
+    secretName: lab-ca
