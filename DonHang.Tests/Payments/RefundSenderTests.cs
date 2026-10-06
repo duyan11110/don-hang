@@ -50,7 +50,7 @@ public sealed class RefundSenderTests
 
     // lesson: backend.l3.safe-to-repeat-saga-steps
     // An error or no answer: still pending, one more attempt counted, the
-    // next one 1 minute later, and nothing announced yet.
+    // next one within 1 minute (jitter picks the moment), nothing announced yet.
     [Fact]
     public void RecordResult_TryAgainLater_StaysPendingAndWaits()
     {
@@ -61,7 +61,7 @@ public sealed class RefundSenderTests
 
         Assert.Null(message);
         Assert.Equal(("pending", 1), (refund.Status, refund.Attempts));
-        Assert.Equal(now.AddMinutes(1), refund.NextAttemptAt);
+        Assert.InRange(refund.NextAttemptAt!.Value, now.AddSeconds(30), now.AddMinutes(1));
     }
 
     [Fact]
@@ -81,9 +81,29 @@ public sealed class RefundSenderTests
     [InlineData(4, 8)]
     [InlineData(7, 60)]
     [InlineData(20, 60)]
-    public void NextDelay_DoublesUpToOneHour(int attempts, int expectedMinutes)
+    public void BackoffDelay_DoublesUpToOneHour(int attempts, int expectedMinutes)
     {
-        Assert.Equal(TimeSpan.FromMinutes(expectedMinutes), NewSender().NextDelay(attempts));
+        Assert.Equal(TimeSpan.FromMinutes(expectedMinutes), NewSender().BackoffDelay(attempts));
+    }
+
+    // lesson: backend.l3.retry-jitter
+    // A random wait has no one right value to compare with, so the test asks
+    // many times and checks that every answer falls inside the range: from
+    // half the backoff delay up to the whole of it. And that the answers do
+    // differ, or the jitter would spread nothing.
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(3, 4)]
+    [InlineData(20, 60)]
+    public void NextDelay_IsBetweenHalfAndAllOfTheBackoff(int attempts, int backoffMinutes)
+    {
+        var sender = NewSender();
+        var backoff = TimeSpan.FromMinutes(backoffMinutes);
+
+        var delays = Enumerable.Range(0, 1000).Select(_ => sender.NextDelay(attempts)).ToList();
+
+        Assert.All(delays, delay => Assert.InRange(delay, backoff / 2, backoff));
+        Assert.True(delays.Distinct().Count() > 1);
     }
 
     // Every call for one row sends the same key, whichever attempt it is.

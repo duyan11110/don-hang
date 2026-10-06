@@ -78,8 +78,8 @@ public sealed class RefundSender(IServiceScopeFactory scopeFactory, RefundSettin
     // Refunded: done, and payment.refunded lets DonHang.Api cancel the order.
     // Refused: `failed` with the gateway's reason, and payment.refund-failed
     // starts the compensation. Try again later: one more attempt is counted
-    // and the next one waits twice as long, until GiveUpAfter has passed
-    // since the request, which then counts as failed too.
+    // and the next one waits about twice as long, until GiveUpAfter has
+    // passed since the request, which then counts as failed too.
     public OutboxMessage? RecordResult(Payment refund, GatewayRefundResult result, DateTimeOffset now)
     {
         refund.Attempts++;
@@ -102,17 +102,28 @@ public sealed class RefundSender(IServiceScopeFactory scopeFactory, RefundSettin
         var delay = NextDelay(refund.Attempts);
         refund.NextAttemptAt = now + delay;
         logger.LogWarning("Refund {RefundId} for order {OrderId}: attempt {Attempt} failed ({Reason}); next attempt in {DelaySeconds} s",
-            refund.Id, refund.OrderId, refund.Attempts, result.Reason, delay.TotalSeconds);
+            refund.Id, refund.OrderId, refund.Attempts, result.Reason, Math.Round(delay.TotalSeconds, 1));
         return null;
     }
 
     // lesson: backend.l3.safe-to-repeat-saga-steps
     // Exponential backoff: FirstRetryDelay after the first failed attempt,
     // then twice as long each time, never more than MaxRetryDelay.
-    public TimeSpan NextDelay(int attempts)
+    public TimeSpan BackoffDelay(int attempts)
     {
         var delay = settings.FirstRetryDelay * Math.Pow(2, attempts - 1);
         return delay < settings.MaxRetryDelay ? delay : settings.MaxRetryDelay;
+    }
+
+    // lesson: backend.l3.retry-jitter
+    // The wait actually used: a random point between half the backoff delay
+    // and all of it. Refunds that failed in the same round would otherwise
+    // all come due at the same moment and reach a recovering gateway as one
+    // burst. The range doubles with every attempt, so the waits still grow.
+    public TimeSpan NextDelay(int attempts)
+    {
+        var backoff = BackoffDelay(attempts);
+        return backoff * (0.5 + Random.Shared.NextDouble() * 0.5);
     }
 
     private static OutboxMessage Message(string routingKey, Payment refund, string? reason, DateTimeOffset now) => new()

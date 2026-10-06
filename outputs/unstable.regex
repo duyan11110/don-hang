@@ -48,3 +48,8 @@ pod-template-hash=\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
 "requestedAt":"\K[^"]*(?=")
 message id \K[0-9a-f-]{36}$
 attempt [0-9]+ failed \(\K.*(?=\); next attempt)
+# Stage-3 resilience scripts: a wait with jitter is random by design.
+next attempt in \K[0-9.]+(?= s)
+^for order [0-9]+ waits \K[0-9.]+(?= s$)
+# How many attempts a refund took depends on when the circuit breaker opened.
+^refunded \| \K[0-9]+$

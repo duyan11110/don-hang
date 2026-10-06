@@ -26,8 +26,9 @@ echo "  -> $(curl -sS -w '\n%{http_code}' -X POST http://localhost:8080/api/v1/o
 
 # lesson: backend.l3.safe-to-repeat-saga-steps
 # No answer from the gateway is not a refusal: the row stays pending, each
-# failed call counts one more attempt, and the next waits twice as long
-# (2, 4, 8 s in the lab; 1, 2, 4 minutes by refund-design.md).
+# failed call counts one more attempt, and the next waits about twice as
+# long (up to 2, 4, 8 s in the lab, 1, 2, 4 minutes by refund-design.md;
+# from stage-3 a random part of each wait is cut off: backend.l3.retry-jitter).
 for _ in $(seq 60); do
   [ "$(refund_row)" = "pending | 3" ] && break
   sleep 0.5
@@ -38,7 +39,7 @@ echo "== what RefundSender logged about this refund row"
 refund_id=$(payments_sql --tuples-only --no-align --command \
   "SELECT id FROM payments WHERE order_id = 10 AND kind = 'refund'")
 docker compose logs --no-log-prefix payments \
-  | grep -oE "Refund $refund_id for order 10: attempt [0-9]+ failed .*; next attempt in [0-9]+ s" \
+  | grep -oE "Refund $refund_id for order 10: attempt [0-9]+ failed .*; next attempt in [0-9.]+ s" \
   | sed -E 's/^Refund [0-9]+ //' | uniq
 echo
 
