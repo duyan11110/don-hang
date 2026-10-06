@@ -13,26 +13,38 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      # lesson: devops.l3.pinning-by-content
+      # From stage-3 every uses: in Đơn Hàng's workflows names a full commit
+      # id, with the version it had when pinned in the comment: a tag such as
+      # v4 is a Git tag its owner can move to other code.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
 
       # lesson: devops.l2.dependency-cache
-      # The key changes exactly when a declared package changes. With no exact
+      # The key changes exactly when a locked package changes. With no exact
       # match, the newest cache whose key starts with the restore-keys prefix
       # is restored, and dotnet restore downloads only what is still missing.
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      # lesson: devops.l3.pinning-by-content
+      # Locked mode restores exactly what each project's packages.lock.json
+      # names and fails if a project asks for anything else, so a change to
+      # the packages arrives as a reviewed change to a lock file. NuGet's
+      # warnings about known vulnerabilities still fail the build below.
+      - name: Restore the packages the lock files name
+        run: dotnet restore DonHang.slnx --locked-mode
+
       - name: Build the solution
-        run: dotnet build DonHang.slnx --warnaserror
+        run: dotnet build DonHang.slnx --no-restore --warnaserror
 
       - name: Test the solution
         run: dotnet test DonHang.slnx --no-build
@@ -43,12 +55,18 @@ jobs:
       run:
         working-directory: DonHang.App
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.x
+
+      # lesson: devops.l3.pinning-by-content
+      # pubspec.lock already records each package's version and sha256;
+      # --enforce-lockfile fails instead of resolving anything it does not name.
+      - name: Get the packages pubspec.lock names
+        run: flutter pub get --enforce-lockfile
 
       - name: Analyze DonHang.App
         run: flutter analyze
@@ -61,34 +79,71 @@ jobs:
 
       - name: Keep the golden test failures
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: golden-failures
           path: DonHang.App/test/**/failures/
           if-no-files-found: ignore
 
   # lesson: devops.l2.building-images-in-ci
-  # Built once per run, from the Dockerfile the lab uses, under the names
-  # docker-compose.yml gives the migrate and api services. Later jobs run
-  # these exact images; none of them builds again.
+  # Built once per run, from the Dockerfiles the lab uses, under the names
+  # docker-compose.yml gives the services. Later jobs run these exact images;
+  # none of them builds again.
   image:
     needs: test
     runs-on: ubuntu-24.04
+    env:
+      IMAGES: >-
+        donhang-api:stage-2 donhang-migrate:stage-2
+        donhang-notifications:stage-3 donhang-notifications-migrate:stage-3
+        donhang-payments:stage-3 donhang-payments-migrate:stage-3
+        donhang-fake-gateway:stage-3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - name: Build the api and migrate images
+      - name: Build the images
         run: |
           docker build --file DonHang.Api/Dockerfile --tag donhang-api:stage-2 .
           docker build --file DonHang.Api/Dockerfile --target migrate --tag donhang-migrate:stage-2 .
+          docker build --file DonHang.Notifications/Dockerfile --tag donhang-notifications:stage-3 .
+          docker build --file DonHang.Notifications/Dockerfile --target migrate --tag donhang-notifications-migrate:stage-3 .
+          docker build --file DonHang.Payments/Dockerfile --tag donhang-payments:stage-3 .
+          docker build --file DonHang.Payments/Dockerfile --target migrate --tag donhang-payments-migrate:stage-3 .
+          docker build --file fake-gateway/Dockerfile --tag donhang-fake-gateway:stage-3 .
+
+      # lesson: devops.l3.software-bill-of-materials
+      # One SBOM per image, made by Syft from the image this job just built,
+      # so it lists what will run, not what the project files declare. The
+      # SBOMs are kept as an artifact of the run, and publish attests them.
+      - name: Write an SBOM of each image
+        run: |
+          for image in $IMAGES; do
+            scripts/devops/sbom.sh "$image"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sboms
+          path: sbom/*.cdx.json
+
+      # lesson: devops.l3.vulnerability-scanning
+      # Grype scans each SBOM, and this step fails on a High or Critical
+      # vulnerability that has a fixed version (.grype.yaml lists the ones
+      # accepted, each with its reason). A failure stops the run before the
+      # images are saved, so no later job can deploy or push them.
+      - name: Scan each SBOM for known vulnerabilities
+        run: |
+          for sbom in sbom/*.cdx.json; do
+            scripts/devops/scan-image.sh "$sbom"
+          done
 
       # lesson: devops.l2.workflow-artifacts
       # This runner, and the images on it, are gone when the job ends. The
       # images leave as one file, an artifact of this run, for later jobs.
-      - name: Save both images to one file
-        run: docker save --output images.tar donhang-api:stage-2 donhang-migrate:stage-2
+      - name: Save the images to one file
+        run: docker save --output images.tar $IMAGES
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: images
           path: images.tar
@@ -103,9 +158,9 @@ jobs:
     runs-on: ubuntu-24.04
     environment: staging
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: images
 
@@ -142,17 +197,40 @@ jobs:
   # Only master's green commits reach the registry. The job logs in with the
   # GITHUB_TOKEN GitHub creates for this run, which may push packages only
   # because `permissions:` says so. It pushes the images the tests passed
-  # with: loaded from the artifact, never rebuilt.
+  # with: loaded from the artifact, never rebuilt. From stage-3 it runs once
+  # per image; fake-gateway, the lab's stand-in for a payment gateway, is
+  # never pushed.
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [test, image]
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        image:
+          - donhang-api:stage-2
+          - donhang-migrate:stage-2
+          - donhang-notifications:stage-3
+          - donhang-notifications-migrate:stage-3
+          - donhang-payments:stage-3
+          - donhang-payments-migrate:stage-3
+    # lesson: devops.l3.build-provenance
+    # id-token: write lets a step ask GitHub for an ID token that names this
+    # workflow run; attestations: write lets it store attestations.
     permissions:
       packages: write
+      id-token: write
+      attestations: write
+    env:
+      LOCAL: ${{ matrix.image }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: images
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: sboms
+          path: sbom
 
       - name: Load the images
         run: docker load --input images.tar
@@ -167,26 +245,143 @@ jobs:
       # every image in the registry leads back to the code that built it.
       # docker tag only adds a name to the loaded image; it builds nothing.
       # Never `latest`: a deployment always names the commit it runs.
-      - name: Tag the images with this commit and push them
+      - name: Tag the image with this commit and push it
+        id: push
         run: |
-          api="ghcr.io/duyan11110/donhang-api:sha-$GITHUB_SHA"
-          migrate="ghcr.io/duyan11110/donhang-migrate:sha-$GITHUB_SHA"
-          docker tag donhang-api:stage-2 "$api"
-          docker tag donhang-migrate:stage-2 "$migrate"
-          docker push "$api"
-          docker push "$migrate"
+          name="ghcr.io/duyan11110/${LOCAL%%:*}"
+          docker tag "$LOCAL" "$name:sha-$GITHUB_SHA"
+          docker push "$name:sha-$GITHUB_SHA"
+          digest=$(docker inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$name:sha-$GITHUB_SHA" \
+            | grep "^$name@" | cut -d@ -f2)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "sbom=sbom/${LOCAL%%:*}.cdx.json" >> "$GITHUB_OUTPUT"
+          echo "pushed $name@$digest"
+
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      # lesson: devops.l3.signing-images
+      # Keyless: cosign trades this job's GitHub ID token for a short-lived
+      # certificate that names ci.yml on this branch, signs the digest (never
+      # a tag), records the signature in the public transparency log and
+      # discards the private key. The signature is stored beside the image.
+      - name: Sign the pushed digest
+        env:
+          IMAGE: ${{ steps.push.outputs.name }}@${{ steps.push.outputs.digest }}
+        run: cosign sign --yes "$IMAGE"
+
+      # lesson: devops.l3.build-provenance
+      # Provenance for the same digest: the repository, commit, workflow and
+      # event that built it, signed through the same ID token and pushed to
+      # the registry beside the image. Then the image job's SBOM of this
+      # image, attested the same way.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ steps.push.outputs.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ steps.push.outputs.name }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          sbom-path: ${{ steps.push.outputs.sbom }}
+          push-to-registry: true
+          create-storage-record: false
 
   # The Kubernetes manifests under deploy/k8s/ (lessons/ and migrate/ too)
   # must be valid objects of the Kubernetes version the course teaches, with
-  # no unknown field. kind-config.yaml configures kind, not Kubernetes.
+  # no unknown field. kind-config.yaml configures kind, not Kubernetes. From
+  # stage-3 the same holds for the config repository's environments, for
+  # each Kustomize overlay as rendered, and for each Helm chart as rendered.
   manifests:
     runs-on: ubuntu-24.04
+    env:
+      KUBECONFORM: ghcr.io/yannh/kubeconform:v0.8.0@sha256:faffaf43f95aa6425306e1ab8d6fcad72acb9049158f38e574c085ea1ec0f64e
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Validate the Kubernetes manifests with kubeconform
         run: |
-          docker run --rm --volume "$PWD/deploy/k8s:/k8s:ro" ghcr.io/yannh/kubeconform:v0.8.0             -strict -summary -kubernetes-version 1.34.0             -ignore-filename-pattern 'kind-config[.]yaml' /k8s
+          docker run --rm --volume "$PWD/deploy/k8s:/k8s:ro" "$KUBECONFORM" \
+            -strict -summary -kubernetes-version 1.34.0 \
+            -ignore-filename-pattern 'kind-config[.]yaml' /k8s
+
+      - name: Validate the config repository's environments
+        if: hashFiles('deploy/gitops/config-repo/envs/**') != ''
+        run: |
+          docker run --rm --volume "$PWD/deploy/gitops/config-repo/envs:/envs:ro" "$KUBECONFORM" \
+            -strict -summary -kubernetes-version 1.34.0 /envs
+
+      # lesson: k8s.l2.config-repo-overlays
+      # A mistake in the base or in a patch shows only in the rendered
+      # manifests, so every overlay is rendered and the output validated.
+      - name: Render each Kustomize overlay and validate it
+        if: hashFiles('deploy/gitops/config-repo-kustomize/envs/*/kustomization.yaml') != ''
+        run: |
+          for overlay in deploy/gitops/config-repo-kustomize/envs/*/; do
+            echo "== $overlay"
+            kubectl kustomize "$overlay" | docker run --rm -i "$KUBECONFORM" \
+              -strict -summary -kubernetes-version 1.34.0 -
+          done
+
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        if: hashFiles('deploy/helm/**/Chart.yaml') != ''
+        with:
+          version: v3.19.5
+
+      # Templates are text, not YAML: helm lint checks a chart, and only the
+      # rendered output shows whether its manifests are valid objects.
+      - name: Lint each Helm chart, render it and validate the output
+        if: hashFiles('deploy/helm/**/Chart.yaml') != ''
+        run: |
+          for chart in $(find deploy/helm -name Chart.yaml -exec dirname {} \; | sort); do
+            echo "== $chart"
+            helm lint "$chart"
+            helm template "$chart" | docker run --rm -i "$KUBECONFORM" \
+              -strict -summary -kubernetes-version 1.34.0 -
+          done
+
+  # lesson: devops.l3.opentofu-resources
+  # Every OpenTofu configuration under deploy/tofu must be formatted and
+  # valid. validate checks syntax and references without contacting the
+  # systems a configuration describes; init -backend=false downloads the
+  # providers .terraform.lock.hcl names and leaves the state backend alone.
+  iac:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Say if there is nothing to check yet
+        if: hashFiles('deploy/tofu/**/*.tf') == ''
+        run: echo "no OpenTofu configuration under deploy/tofu"
+
+      - if: hashFiles('deploy/tofu/**/*.tf') != ''
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: 1.10.10
+          tofu_wrapper: false
+
+      # The platform layers read the sealing key pair from secrets/.
+      - name: Create the fake dev secrets
+        if: hashFiles('deploy/tofu/**/*.tf') != ''
+        run: ./scripts/dev-secrets.sh
+
+      - name: Check the format of every configuration
+        if: hashFiles('deploy/tofu/**/*.tf') != ''
+        run: tofu fmt -check -recursive deploy/tofu
+
+      - name: Validate every configuration
+        if: hashFiles('deploy/tofu/**/*.tf') != ''
+        run: |
+          for dir in $(find deploy/tofu -name '*.tf' ! -path '*/modules/*' -exec dirname {} \; | sort -u); do
+            echo "== $dir"
+            tofu -chdir="$dir" init -backend=false -input=false >/dev/null
+            tofu -chdir="$dir" validate
+          done
 
   # Runs the scripts of the k8s track, in the order of the lessons, on a kind
   # cluster created on this runner, and fails when an output differs from the
@@ -202,12 +397,16 @@ jobs:
     env:
       TAG: stage-2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install kind and kubectl
         run: |
           curl -fsSL --output kind https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
           curl -fsSL --output kubectl https://dl.k8s.io/release/v1.34.3/bin/linux/amd64/kubectl
+          sha256sum --check --strict <<'SUMS'
+          aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d  kind
+          ab60ca5f0fd60c1eb81b52909e67060e3ba0bd27e55a8ac147cbc2172ff14212  kubectl
+          SUMS
           sudo install kind kubectl /usr/local/bin/
           kind version
           kubectl version --client
@@ -254,14 +453,14 @@ jobs:
       # Alloy, which Compose starts only with the monitoring profile.
       COMPOSE_PROFILES: monitoring
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Some scripts run on the runner itself and need dotnet or Flutter.
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           global-json-file: global.json
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
           flutter-version: 3.47.x

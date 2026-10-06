@@ -16,7 +16,7 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # Before anything is pushed: a version with no CHANGELOG.md section
       # stops here.
@@ -36,12 +36,29 @@ jobs:
         run: |
           commit=$(git rev-parse HEAD)
           version="${GITHUB_REF_NAME#v}"
-          docker pull "ghcr.io/duyan11110/donhang-api:sha-$commit"
-          docker pull "ghcr.io/duyan11110/donhang-migrate:sha-$commit"
-          docker tag "ghcr.io/duyan11110/donhang-api:sha-$commit" "ghcr.io/duyan11110/donhang-api:$version"
-          docker tag "ghcr.io/duyan11110/donhang-migrate:sha-$commit" "ghcr.io/duyan11110/donhang-migrate:$version"
-          docker push "ghcr.io/duyan11110/donhang-api:$version"
-          docker push "ghcr.io/duyan11110/donhang-migrate:$version"
+          for image in donhang-api donhang-migrate donhang-notifications                        donhang-notifications-migrate donhang-payments donhang-payments-migrate; do
+            name="ghcr.io/duyan11110/$image"
+            docker pull "$name:sha-$commit"
+            docker tag "$name:sha-$commit" "$name:$version"
+            docker push "$name:$version"
+          done
+
+      # lesson: devops.l3.signing-images
+      # Signatures and attestations belong to a digest, not to a tag. The
+      # version tag must name the very digest ci.yml signed and attested
+      # under sha-; then the release carries them without signing again.
+      - name: Check that each version tag names the signed digest
+        run: |
+          commit=$(git rev-parse HEAD)
+          version="${GITHUB_REF_NAME#v}"
+          digest_of() { docker buildx imagetools inspect "$1" | sed -n 's/^Digest: *//p'; }
+          for image in donhang-api donhang-migrate donhang-notifications                        donhang-notifications-migrate donhang-payments donhang-payments-migrate; do
+            name="ghcr.io/duyan11110/$image"
+            signed=$(digest_of "$name:sha-$commit")
+            released=$(digest_of "$name:$version")
+            echo "$image: sha-$commit $signed, $version $released"
+            [ "$signed" = "$released" ] || { echo "::error::$image:$version is not the digest CI signed"; exit 1; }
+          done
 
       - name: Create the GitHub release
         env:
