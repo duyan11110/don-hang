@@ -17,7 +17,7 @@
          strategies under it (Polly.Core comes with it). -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
     <PackageVersion Include="StackExchange.Redis" Version="3.3.1" />
-    <PackageVersion Include="Npgsql" Version="9.0.5" />
+    <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
     <!-- lesson: backend.l3.opentelemetry-sdk -->
@@ -35,11 +35,11 @@
   </ItemGroup>
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.RabbitMq" Version="4.15.0" />
     <PackageVersion Include="Testcontainers.Redis" Version="4.15.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
   </ItemGroup>
 </Project>
