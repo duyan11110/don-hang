@@ -202,7 +202,7 @@ jobs:
   # because `permissions:` says so. It pushes the images the tests passed
   # with: loaded from the artifact, never rebuilt. From stage-3 it runs once
   # per image; fake-gateway, the lab's stand-in for a payment gateway, is
-  # never pushed.
+  # pushed by publish-fake-gateway, unsigned.
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [test, image]
@@ -294,6 +294,34 @@ jobs:
           sbom-path: ${{ steps.push.outputs.sbom }}
           push-to-registry: true
           create-storage-record: false
+
+  # fake-gateway only stands in for a payment gateway in the lab, so it is
+  # pushed with the commit's tag like the others but not signed or attested:
+  # nothing that runs in production trusts it.
+  publish-fake-gateway:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: [test, image]
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: images
+
+      - name: Load the images
+        run: docker load --input images.tar
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Tag the image with this commit and push it
+        run: |
+          name="ghcr.io/duyan11110/donhang-fake-gateway"
+          docker tag donhang-fake-gateway:stage-3 "$name:sha-$GITHUB_SHA"
+          docker push "$name:sha-$GITHUB_SHA"
 
   # The Kubernetes manifests under deploy/k8s/ (lessons/ and migrate/ too)
   # must be valid objects of the Kubernetes version the course teaches, with
