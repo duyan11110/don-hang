@@ -30,11 +30,15 @@ span_id_base64() {
 
 # wait_for_spans <trace id> <at least>: until Tempo has that many spans for
 # the trace and the count has stopped growing (spans arrive in batches).
+# "Stopped" means the same count three polls in a row, 6 s: longer than the
+# 5 s a service's batch of spans may wait before it is sent, so a service
+# still holding its batch is not mistaken for one with nothing left to send.
 wait_for_spans() {
-  local last=-1 now
+  local last=-1 same=0 now
   for _ in $(seq 60); do
     now=$(span_count "$1")
-    [ "$now" -ge "$2" ] && [ "$now" = "$last" ] && return 0
+    if [ "$now" = "$last" ]; then same=$((same + 1)); else same=0; fi
+    [ "$now" -ge "$2" ] && [ "$same" -ge 2 ] && return 0
     last=$now
     sleep 2
   done

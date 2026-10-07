@@ -33,6 +33,7 @@ wait_for_status 10 cancelled
 # (publish, then process in another service), RefundSender's attempt and its
 # call to the gateway. The consumers' spans start after the request has
 # answered 202, so they end long after their parent.
-wait_for_spans "$(trace_id "$traceparent")" 20
+# 24: the 11 spans printed below and the 13 SQL commands counted on them.
+wait_for_spans "$(trace_id "$traceparent")" 24
 echo "== the trace in Tempo, one line per span (service: span name)"
 print_trace_tree "$(trace_id "$traceparent")"
