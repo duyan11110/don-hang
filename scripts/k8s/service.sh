@@ -7,11 +7,11 @@ show() { echo "\$ $*"; "$@"; }
 web_pod_ips() { kubectl get pods -n donhang -l app=web -o jsonpath='{range .items[*]}{.status.podIP}{"\n"}{end}' | sort; }
 cluster_ip() { kubectl get service web -n donhang -o jsonpath='{.spec.clusterIP}'; }
 # Asks, from a short-lived Pod inside the cluster, for the page at $1.
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
 fetch_title() {
-  kubectl run fetch --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
-    sh -c "wget -q -O - $1 | grep -o '<title>.*</title>'" 2>&1 | sed "/^warning: couldn't attach/d"
+  echo | kubectl run fetch --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
+    sh -c "read -r -t 60 _; wget -q -O - $1 | grep -o '<title>.*</title>'" 2>&1
 }
 
 kubectl apply -f deploy/k8s/namespace.yaml >/dev/null

@@ -27,10 +27,10 @@ echo
 echo "\$ kubectl describe service api -n donhang | grep Endpoints"
 kubectl describe service api -n donhang | grep Endpoints
 echo "== GET http://api:8080/api/v1/products, from a temporary Pod in donhang"
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
-kubectl run readiness-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
-  sh -c 'wget -q -O /dev/null http://api:8080/api/v1/products && echo "answered 2xx"' 2>&1 | sed "/^warning: couldn't attach/d"
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
+echo | kubectl run readiness-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
+  sh -c 'read -r -t 60 _; wget -q -O /dev/null http://api:8080/api/v1/products && echo "answered 2xx"' 2>&1
 echo
 # A Pod counts as available only once it is ready: the update never finishes.
 show kubectl rollout status deployment/api -n donhang --timeout=10s || true

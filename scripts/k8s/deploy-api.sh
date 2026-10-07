@@ -5,9 +5,9 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 show() { echo "\$ $*"; "$@"; }
 # Runs a shell command in a short-lived Pod in donhang (Alpine: BusyBox wget).
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
-in_pod() { kubectl run http-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- sh -c "$1" 2>&1 | sed "/^warning: couldn't attach/d"; }
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
+in_pod() { echo | kubectl run http-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- sh -c "read -r -t 60 _; $1" 2>&1; }
 
 kubectl apply -f deploy/k8s/namespace.yaml >/dev/null
 kubectl delete deployment api -n donhang --ignore-not-found >/dev/null

@@ -18,8 +18,8 @@ echo
 # Service api by name; wget exits non-zero (and so does this script) unless
 # the answer is a 2xx.
 echo "== GET http://api:8080/api/v1/products, from a temporary Pod in donhang"
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
-kubectl run smoke-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
-  wget -q -O - http://api:8080/api/v1/products 2>&1 | sed "/^warning: couldn't attach/d"
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
+echo | kubectl run smoke-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
+  sh -c 'read -r -t 60 _; wget -q -O - http://api:8080/api/v1/products' 2>&1
 echo

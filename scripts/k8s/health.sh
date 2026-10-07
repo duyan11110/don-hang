@@ -8,10 +8,10 @@ image=ghcr.io/duyan11110/donhang-api:1.0.0
 # (for any other status, BusyBox's wget saves no body).
 get() {
   local url="http://$1:8080$2"
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
-  kubectl run health-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
-    sh -c "wget -S -q -O /tmp/body $url 2>/tmp/headers; grep '^  HTTP/' /tmp/headers | sed 's/^ *//'; [ -s /tmp/body ] && cat /tmp/body && echo; true" 2>&1 | sed "/^warning: couldn't attach/d"
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
+  echo | kubectl run health-test --rm -i --restart=Never --quiet -n donhang --image=caddy:2.10.0 -- \
+    sh -c "read -r -t 60 _; wget -S -q -O /tmp/body $url 2>/tmp/headers; grep '^  HTTP/' /tmp/headers | sed 's/^ *//'; [ -s /tmp/body ] && cat /tmp/body && echo; true" 2>&1
 }
 
 if ! kubectl get service api -n donhang >/dev/null 2>&1; then

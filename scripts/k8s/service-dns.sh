@@ -6,10 +6,10 @@ cd "$(dirname "$0")/../.."
 show() { echo "\$ $*"; "$@"; }
 # Runs a shell command in a short-lived Pod in namespace $1; caddy:2.10.0 is
 # built on Alpine, so it has BusyBox's wget and nslookup.
-# (When the Pod ends before kubectl attaches to it, kubectl warns and reads
-# its log instead: the same output, so the warning is dropped.)
+# (The Pod's shell first reads a line from stdin, which reaches it only once
+# kubectl has attached: otherwise its first output could come too early.)
 in_pod() {
-  kubectl run dns-test --rm -i --restart=Never --quiet -n "$1" --image=caddy:2.10.0 -- sh -c "$2" 2>&1 | sed "/^warning: couldn't attach/d"
+  echo | kubectl run dns-test --rm -i --restart=Never --quiet -n "$1" --image=caddy:2.10.0 -- sh -c "read -r -t 60 _; $2" 2>&1
 }
 
 kubectl apply -f deploy/k8s/namespace.yaml >/dev/null
