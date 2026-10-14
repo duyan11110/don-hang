@@ -7,7 +7,7 @@
 # what is pulled, the tag only says which line it came from. Each project's
 # packages.lock.json comes in with its .csproj, and --locked-mode makes the
 # restore fail instead of choosing a version the lock file does not name.
-FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS build
 WORKDIR /src
 
 COPY global.json Directory.Packages.props Directory.Build.props ./
