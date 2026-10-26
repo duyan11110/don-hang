@@ -1,0 +1,11 @@
+{
+  "id": 13,
+  "status": "new",
+  "items": [
+    {
+      "productId": 3,
+      "quantity": 2,
+      "unitPriceVnd": 890000
+    }
+  ]
+}
