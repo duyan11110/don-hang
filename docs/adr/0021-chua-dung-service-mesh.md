@@ -8,9 +8,9 @@ Hạn góp ý: hết thứ Năm tuần thứ hai Sprint 21
 ### Bối cảnh
 
 Phát hiện P5 của `threat-model.md` chấp nhận rằng Gateway gọi các Pod api
-bằng HTTP thường: NetworkPolicy quyết định ai được kết nối, nhưng dữ liệu đi
-qua mạng giữa các node không mã hóa, và api chỉ biết bên gọi qua địa chỉ của
-nó. Một service mesh đặt một proxy cạnh mỗi Pod; các proxy đó mã hóa mọi lời
+và Payments bằng HTTP thường: NetworkPolicy quyết định ai được kết nối, nhưng
+dữ liệu đi qua mạng giữa các node không mã hóa, và api chỉ biết bên gọi qua
+địa chỉ của nó. Một service mesh đặt một proxy cạnh mỗi Pod; các proxy đó mã hóa mọi lời
 gọi bằng mutual TLS và còn làm nhiều việc khác. Câu hỏi là Đơn Hàng có cần
 mesh không.
 
