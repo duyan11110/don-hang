@@ -1,0 +1,23 @@
+Product 3 in the API: Tai nghe
+
+GET http://localhost:8081/products/3, the <body> app-web sends:
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+
+product name in the HTML: no
+
+GET http://localhost:8080/, the text in its HTML:
+Đơn Hàng
+Trang tĩnh của phòng lab stage-0.
+Đăng nhập
+Trang có cache
+Chuyển hướng

@@ -1,0 +1,11 @@
+Files under lib/ (without lib/l10n/) that import each dependency:
+ 20  flutter (Flutter SDK)
+ 16  flutter_riverpod
+  6  go_router
+  3  http: lib/features/auth/keycloak_sign_in.dart lib/features/ordering/orders_api.dart lib/shared/api_client.dart
+  2  web: lib/features/auth/browser_web.dart lib/shared/browser_web.dart
+  1  crypto: lib/features/auth/keycloak_sign_in.dart
+  1  flutter_web_plugins (Flutter SDK): lib/main.dart
+  0  cupertino_icons
+  0  flutter_localizations (Flutter SDK)
+  0  intl
