@@ -43,7 +43,8 @@ cleanup() { touch "$work/stop"; [ -z "${load_pid:-}" ] || wait "$load_pid" 2>/de
 trap cleanup EXIT
 load &
 load_pid=$!
-echo "$alert before the change: $(alert_state | sed 's/^$/inactive/')"
+state=$(alert_state)
+echo "$alert before the change: ${state:-inactive}"
 echo
 
 # lesson: devops.l4.runbooks
@@ -70,7 +71,7 @@ patches:
 YAML
 echo "== commit to envs/staging: catalog-reads one read at a time"
 config_commit incident-drill.sh "api: catalog-reads one read at a time, none waiting"
-git -C "$config_repo" show --format= HEAD | grep -E '^\+ .*(name|value)'
+git -C "$config_repo" show --format= HEAD | grep -E '^\+ .*RateLimiting'
 sync_app staging
 kubectl rollout status deployment/api -n donhang --timeout=300s >/dev/null
 echo
@@ -87,10 +88,11 @@ echo
 # The runbook's first step (docs/runbooks/product-reads-burn.md): the
 # newest change to envs/staging, reverted, before anyone looks for a cause.
 echo "== runbook step 1: the newest commits that changed envs/staging"
-git -C "$config_repo" log --format='%h %an: %s' -n 3 -- envs/staging
+git -C "$config_repo" log --format='%h %an: %s' "$run_start..HEAD" -- envs/staging
 change=$(git -C "$config_repo" log --format=%H -n 1 -- envs/staging)
 config_revert incident-drill.sh "$change"
-echo "reverted: $(git -C "$config_repo" log --format='%h %an: %s' -n 1 --author=incident-drill.sh)"
+echo "reverted:"
+git -C "$config_repo" log --format='%h %an: %s' -n 1 --author=incident-drill.sh
 sync_app staging
 kubectl rollout status deployment/api -n donhang --timeout=300s >/dev/null
 echo
@@ -108,5 +110,8 @@ echo "bad share over 5 minutes: $(percent "$five"), above $(percent $threshold):
 echo "bad share over 1 hour: $(percent "$hour"), above $(percent $threshold): $(above "$hour" && echo yes || echo no)"
 echo
 echo "== product reads sent during the drill, by status code"
-sort "$work/codes" | uniq -c | awk '{print "  HTTP " $2 ": " $1 " requests"}'
+# 503: catalog-reads refused the read; other 5xx: the Gateway found no ready
+# Pod while the api's Pods were replaced.
+awk '{c[$1 == 503 ? "HTTP 503" : $1 ~ /^5/ ? "other 5xx" : $1 ~ /^2/ ? "HTTP 2xx" : "other"]++}
+     END {for (k in c) print "  " k ": " c[k] " requests"}' "$work/codes" | sort
 above "$hour"

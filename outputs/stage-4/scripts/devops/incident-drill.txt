@@ -1,0 +1,26 @@
+ProductReadsFastBurn before the change: inactive
+
+== commit to envs/staging: catalog-reads one read at a time
++        value: {name: RateLimiting__CatalogReads__PermitLimit, value: "1"}
++        value: {name: RateLimiting__CatalogReads__QueueLimit, value: "0"}
+
+== reading products until the alert fires
+ProductReadsFastBurn: pending
+ProductReadsFastBurn: firing
+bad share of product reads over 5 minutes above 6.7%: yes
+bad share of product reads over 1 hour above 6.7%: yes
+
+== runbook step 1: the newest commits that changed envs/staging
+... incident-drill.sh: api: catalog-reads one read at a time, none waiting
+reverted:
+... incident-drill.sh: Revert "api: catalog-reads one read at a time, none waiting"
+
+== reading products until the alert resolves
+ProductReadsFastBurn: inactive
+bad share over 5 minutes: ...%, above 6.7%: no
+bad share over 1 hour: ...%, above 6.7%: yes
+
+== product reads sent during the drill, by status code
+  HTTP 2xx: ... requests
+  HTTP 503: ... requests
+  other 5xx: ... requests
