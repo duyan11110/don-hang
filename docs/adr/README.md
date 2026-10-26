@@ -30,6 +30,7 @@ làm này được chọn trong ADR 0001.
 | 0021 | [Chưa dùng service mesh](0021-chua-dung-service-mesh.md) | Đã chấp nhận |
 | 0022 | [Production chạy trên Kubernetes managed](0022-production-tren-kubernetes-managed.md) | Đã chấp nhận |
 | 0023 | [Khóa ký hóa đơn nằm trong dịch vụ HSM của nhà cung cấp](0023-khoa-ky-hoa-don-trong-hsm-cua-nha-cung-cap.md) | Đã chấp nhận |
+| 0024 | [Gửi email cho khách qua Dịch vụ A, bằng SMTP](0024-dich-vu-gui-email-ben-ngoai.md) | Đã chấp nhận |
 
 ### Khi nào viết một ADR
 
