@@ -168,9 +168,18 @@ k8s_host_scripts=(
   autoscale node-capacity
 )
 
+# From stage-4 the release scripts of devops/platform-and-release-strategy
+# and the drill of devops/incidents commit to staging's config repository in
+# its Kustomize layout and send requests through the Gateway, with the
+# policies of the k8s track in place: --release-host runs them after
+# --devops-host and --k8s-host, on the same donhang-staging, and starts
+# staging's Prometheus (platform/monitoring) on the way. incident-drill.sh
+# alone takes about 15 minutes: its alert must fire, then resolve.
+release_host_scripts=(blue-green canary canary-steps "canary-steps --bad" incident-drill)
+
 is_devops_host() {
   local name
-  for name in "${devops_host_scripts[@]}" tofu-env gitops-render; do
+  for name in "${devops_host_scripts[@]}" "${release_host_scripts[@]}" tofu-env gitops-render; do
     [ "$1" = "scripts/devops/${name%% *}.sh" ] && return 0
   done
   return 1
@@ -207,10 +216,15 @@ elif [ "${1:-}" = "--devops-host" ]; then
     read -r -a words <<< "$entry"
     capture "scripts/devops/${words[0]}.sh" "${words[@]:1}"
   done
+elif [ "${1:-}" = "--release-host" ]; then
+  for entry in "${release_host_scripts[@]}"; do
+    read -r -a words <<< "$entry"
+    capture "scripts/devops/${words[0]}.sh" "${words[@]:1}"
+  done
 elif [ "${1:-}" = "--k8s-host" ]; then
   for name in "${k8s_host_scripts[@]}"; do
     capture "scripts/k8s/$name.sh"
   done
 else
-  capture "${1:?usage: scripts/capture-output.sh <path to a script> [arguments] | --all | --k8s | --devops-host | --k8s-host}" "${@:2}"
+  capture "${1:?usage: scripts/capture-output.sh <path to a script> [arguments] | --all | --k8s | --devops-host | --k8s-host | --release-host}" "${@:2}"
 fi
