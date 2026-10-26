@@ -1,0 +1,14 @@
+== rendered for invoices
+  deployment.yaml
+  kustomization.yaml
+  migrate-hook.yaml
+  network-policies.yaml
+  service.yaml
+
+== kubectl kustomize | kubeconform
+Summary: 5 resources found parsing stdin - Valid: 5, Invalid: 0, Errors: 0, Skipped: 0
+
+== images in the rendered Pods
+  ghcr.io/duyan11110/donhang-invoices@sha256:<placeholder>
+  ghcr.io/duyan11110/donhang-invoices-migrate@sha256:<placeholder>
+every image of Đơn Hàng named by digest: require-image-digest admits these Pods

@@ -1,0 +1,12 @@
+# The service's name inside the cluster, port 8080 like the others.
+apiVersion: v1
+kind: Service
+metadata:
+  name: __SERVICE__
+  namespace: donhang
+spec:
+  selector:
+    app: __SERVICE__
+  ports:
+    - port: 8080
+      targetPort: 8080

@@ -1,0 +1,54 @@
+# lesson: devops.l4.golden-path
+# The service's Deployment with the platform's defaults: probes on the two
+# health endpoints every Đơn Hàng service maps, the api's security context,
+# no ServiceAccount token, and small requests to start from (the team
+# measures, then changes them). Wave 2: after the migration hook.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __SERVICE__
+  namespace: donhang
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: __SERVICE__
+  template:
+    metadata:
+      labels:
+        app: __SERVICE__
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: __SERVICE__
+          image: ghcr.io/duyan11110/donhang-__SERVICE__
+          ports:
+            - containerPort: 8080
+          # ConnectionStrings__Default and the service's other secrets, from
+          # the Secret its SealedSecret becomes.
+          envFrom:
+            - secretRef:
+                name: __SERVICE__
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi

@@ -1,0 +1,33 @@
+# The service's migration, a hook of Argo CD in wave 1 like the api's and
+# Payments': the Deployment, in wave 2, is applied only once it succeeded.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: __SERVICE__-migrate
+  namespace: donhang
+  labels:
+    app: __SERVICE__-migrate
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  containers:
+    - name: migrate
+      image: ghcr.io/duyan11110/donhang-__SERVICE__-migrate
+      args: ["--connection", "$(ConnectionStrings__Default)"]
+      env:
+        - name: ConnectionStrings__Default
+          valueFrom:
+            secretKeyRef:
+              name: __SERVICE__
+              key: ConnectionStrings__Default
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seccompProfile:
+          type: RuntimeDefault

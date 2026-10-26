@@ -1,0 +1,22 @@
+# lesson: devops.l4.golden-path
+# The golden path's Kustomize files for one .NET service, as
+# scripts/devops/new-service.sh renders them: __SERVICE__ becomes the
+# service's name, the two digests those of the images CI published for it.
+# What a service needs that this folder cannot give (its Secret, its
+# database, its place in the shared policies, CI jobs) is listed in
+# docs/team/platform-capabilities.md under "Chưa tự phục vụ".
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+  - migrate-hook.yaml
+  - network-policies.yaml
+# lesson: devops.l4.golden-path
+# Images by digest, as the overlays name Đơn Hàng's images: the admission
+# policy require-image-digest refuses a Pod that names one by tag only.
+images:
+  - name: ghcr.io/duyan11110/donhang-__SERVICE__
+    digest: sha256:__DIGEST__
+  - name: ghcr.io/duyan11110/donhang-__SERVICE__-migrate
+    digest: sha256:__MIGRATE_DIGEST__
