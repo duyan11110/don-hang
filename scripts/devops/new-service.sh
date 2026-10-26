@@ -37,6 +37,8 @@ echo
 kubeconform=$(sed -n 's/^ *KUBECONFORM: //p' .github/workflows/ci.yml)
 echo "== kubectl kustomize | kubeconform"
 kubectl kustomize "$out" > "$out.rendered.yaml"
+# Pulled first and quietly, so a first run prints no download progress.
+docker pull --quiet "$kubeconform" >/dev/null
 docker run --rm -i "$kubeconform" -strict -summary -kubernetes-version 1.34.0 - < "$out.rendered.yaml"
 echo
 
