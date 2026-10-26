@@ -523,7 +523,10 @@ jobs:
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           channel: stable
-          flutter-version: 3.47.x
+          # From stage-4 an exact version: web-bundle.sh's captured sizes are
+          # those of the web build, the same on any OS for one Flutter release
+          # but not from one release to the next.
+          flutter-version: 3.47.2
 
       - name: Make scripts executable
         run: chmod +x ./scripts/*.sh ./scripts/*/*.sh

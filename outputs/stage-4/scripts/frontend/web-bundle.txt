@@ -1,0 +1,22 @@
+Largest files under DonHang.App/build/web:
+  canvaskit/canvaskit.wasm               raw 7284602   gzip 2916585
+  canvaskit/chromium/canvaskit.wasm      raw 5428806   gzip 2063289
+  canvaskit/skwasm_heavy.wasm            raw 5216217   gzip 2287232
+  canvaskit/webparagraph/canvaskit.wasm  raw 3729129   gzip 1404032
+  canvaskit/skwasm.wasm                  raw 3593715   gzip 1537083
+  canvaskit/wimp.wasm                    raw 3581677   gzip 1446121
+  main.dart.js                           raw 3044279   gzip 879216
+  canvaskit/wimp.js.symbols              raw 1813030   gzip 204116
+  all files together: raw ...
+
+Engine: served by app-web (useLocalCanvasKit in flutter_bootstrap.js)
+
+What app-web sends for them, with Accept-Encoding: zstd, gzip
+  main.dart.js                           raw 3044279   sent 929127 (zstd)
+  canvaskit/chromium/canvaskit.js        raw 86226   sent 29312 (zstd)
+  canvaskit/chromium/canvaskit.wasm      raw 5428806   sent 2135951 (zstd)
+  canvaskit/canvaskit.js                 raw 86987   sent 29524 (zstd)
+  canvaskit/canvaskit.wasm               raw 7284602   sent 3025856 (zstd)
+
+Fonts in the build: assets/fonts/MaterialIcons-Regular.otf assets/fonts/fallback/Roboto-Regular.ttf assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
+Fonts for missing characters come from: https://fonts.gstatic.com/s/
