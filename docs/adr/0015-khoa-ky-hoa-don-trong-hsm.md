@@ -48,7 +48,8 @@ xin ký được ghi vào nhật ký kiểm toán (`docs/design/audit-log.md`).
   xin chứng chỉ mới cho khóa đó, và các hóa đơn đã ký vẫn kiểm được bằng
   chứng chỉ cũ.
 - HSM chạy ở đâu (phần cứng của Đơn Hàng hay dịch vụ của nhà cung cấp hạ
-  tầng) để quyết định về nơi chạy hệ thống quyết.
+  tầng) để quyết định về nơi chạy hệ thống quyết, đã quyết ở ADR 0023 (dịch
+  vụ HSM của nhà cung cấp).
 - Khóa phần mềm trong sample chỉ dùng cho lab.
 - Ở stage-4 chưa có hóa đơn, chưa có HSM: chỉ có sample và ADR này.
 
