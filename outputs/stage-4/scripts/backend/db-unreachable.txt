@@ -1,0 +1,7 @@
+== db is up: read product 3, which puts a copy of it in Redis
+  GET /api/v1/products/3 -> 200
+  copy in Redis: yes
+== db is stopped
+  GET /api/v1/products/3 (the copy in Redis) -> 200
+  GET /api/v1/products (no copy, needs db) -> 500
+  POST /api/v1/orders (must be saved in db) -> 500
