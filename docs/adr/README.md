@@ -19,6 +19,8 @@ làm này được chọn trong ADR 0001.
 | 0008 | [Xóa hai bảng cũ trong database `donhang`](0008-xoa-bang-cu-trong-donhang.md) | Đã chấp nhận |
 | 0009 | [Dùng Keycloak thay vì tự làm đăng nhập](0009-dung-keycloak-thay-vi-tu-lam-dang-nhap.md) | Đã chấp nhận |
 | 0010 | [Cổng thanh toán bên ngoài cho hoàn tiền](0010-cong-thanh-toan-ben-ngoai.md) | Đã chấp nhận |
+| 0011 | [Không bọc RabbitMQ sau một lớp trung lập](0011-khong-boc-message-broker-sau-lop-chung.md) | Bị từ chối |
+| 0012 | [Phục vụ mọi cửa hàng từ một bản triển khai chung](0012-phuc-vu-moi-cua-hang-tu-mot-ban-trien-khai.md) | Đã chấp nhận |
 | 0019 | [Mỗi thành phần phát hành theo cách đường đi của nó cho phép](0019-chien-luoc-phat-hanh-theo-thanh-phan.md) | Đã chấp nhận |
 | 0020 | [Chạy ở một region, phục hồi ở region thứ hai từ bản sao lưu](0020-mot-region-phuc-hoi-tu-ban-sao-luu.md) | Đã chấp nhận |
 | 0021 | [Chưa dùng service mesh](0021-chua-dung-service-mesh.md) | Đã chấp nhận |
