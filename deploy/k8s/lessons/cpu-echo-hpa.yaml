@@ -1,0 +1,27 @@
+# lesson: k8s.l4.horizontal-pod-autoscaler
+# Keep cpu-echo between 1 and 5 replicas, aiming at a CPU use of 50% of
+# each Pod's request. The Deployment above sets no replicas: the HPA
+# owns the count. After the load drops, it waits 30 s (not the default
+# 300 s) before it lowers the count.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cpu-echo
+  namespace: autoscale-lessons
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cpu-echo
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30

@@ -1,0 +1,45 @@
+# lesson: k8s.l4.horizontal-pod-autoscaler
+# The workload the HPA scales, in its own namespace: Caddy answering every
+# request, so the CPU it uses grows with the requests sent to it. Its CPU
+# request (50m) is what the HPA's target is a percentage of.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: autoscale-lessons
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpu-echo
+  namespace: autoscale-lessons
+spec:
+  selector:
+    matchLabels:
+      app: cpu-echo
+  template:
+    metadata:
+      labels:
+        app: cpu-echo
+    spec:
+      containers:
+        - name: echo
+          image: caddy:2.10.0
+          command: ["caddy", "respond", "--listen", ":8080", "--body", "cpu-echo"]
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cpu-echo
+  namespace: autoscale-lessons
+spec:
+  selector:
+    app: cpu-echo
+  ports:
+    - port: 80
+      targetPort: 8080

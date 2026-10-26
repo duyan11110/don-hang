@@ -1,0 +1,18 @@
+$ kubectl set resources deployment cpu-echo -n autoscale-lessons --requests=cpu=<60% of a worker's allocatable CPU>
+
+$ kubectl patch hpa cpu-echo -n autoscale-lessons --type=merge -p '{"spec":{"minReplicas":4}}'
+horizontalpodautoscaler.autoscaling/cpu-echo patched
+$ kubectl get hpa cpu-echo -n autoscale-lessons
+NAME       REFERENCE             TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+cpu-echo   Deployment/cpu-echo   cpu: <unknown>/50%   4         5         4          ...
+$ kubectl get deployment cpu-echo -n autoscale-lessons
+NAME       READY   UP-TO-DATE   AVAILABLE   AGE
+cpu-echo   2/4     4            2           ...
+$ kubectl get pods -n autoscale-lessons -l app=cpu-echo (how many in each phase)
+Pending: 2
+Running: 2
+
+== FailedScheduling of a Pending cpu-echo Pod
+0/3 nodes are available: 1 node(s) had untolerated taint(s), 2 Insufficient cpu. no new claims to deallocate, preemption: 0/3 nodes are available: 1 Preemption is not helpful for scheduling, 2 No preemption victims found for incoming pod.
+
+minReplicas and the request put back; namespace autoscale-lessons deleted
