@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sign in, list products, place an order, and read it back — the same three
-# calls DonHang.App makes (lib/api_client.dart), from the terminal instead.
+# calls DonHang.App makes (lib/features/*/*_api.dart), from the terminal instead.
 set -euo pipefail
 # Everything below runs inside the lab box; this line puts it there.
 [ -f /.dockerenv ] || exec "$(dirname "$0")/../lab-run.sh" "$0" "$@"
