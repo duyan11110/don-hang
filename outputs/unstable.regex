@@ -143,3 +143,7 @@ KUBE-SEP-\K[A-Z0-9]{16}\b
 ^(?:notBefore|notAfter|renewalTime): \K[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z$
 # Stage-4 shared-credentials.sh: payments grow as the refund scripts run.
 ^rows it can read in donhang_payments\.payments: \K[0-9]+$
+# Stage-4 slo-report.sh: request counts over the last hour depend on every
+# script run before it.
+^  S[1-4] .* good \K[0-9]+, total [0-9]+, ratio \S+$
+^  S1 budget left: \K\S+(?= requests$)
