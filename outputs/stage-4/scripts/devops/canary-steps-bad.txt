@@ -1,0 +1,18 @@
+== commit api-canary, one Pod, no traffic yet
++            - name: RateLimiting__CatalogReads__PermitLimit
++              value: "1"
++            - name: RateLimiting__CatalogReads__QueueLimit
++              value: "0"
+deployment "api-canary" successfully rolled out
+
+== step 1: commit the route api: api 90, api-canary 10
+  api-canary served 200, 5xx ...%; api served 1800, 5xx 0.0%; limit 1.0%
+  over the limit: api-canary back to weight 0, the release stops
+route api: api weight 100, api-canary weight 0
+route api: api weight 1
+
+... canary-steps.sh: Remove api-canary
+... canary-steps.sh: Canary stopped: api-canary weight 0
+... canary-steps.sh: Canary step 1: api 90, api-canary 10
+... canary-steps.sh: api-canary, catalog-reads one at a time, no traffic yet
+release: stopped

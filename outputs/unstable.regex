@@ -163,6 +163,6 @@ answers/s x average = \K[0-9.]+$
 # each phase of blue-green.sh got, the bad canary's 503 share, the bad shares
 # and request counts of incident-drill.sh.
 ^  (?:blue|switch|green|switch back|blue again): 200 x\K[0-9]+$
-^  api-canary served [0-9]+, 5xx \K[0-9.]+(?=%; api served)
+^  api-canary served [0-9]+, 5xx \K(?!0\.0%)[0-9.]+(?=%; api served)
 ^bad share over (?:5 minutes|1 hour): \K[0-9.]+(?=%, )
-^  HTTP [0-9]{3}: \K[0-9]+(?= requests$)
+^  (?:HTTP 2xx|HTTP 503|other 5xx|other): \K[0-9]+(?= requests$)

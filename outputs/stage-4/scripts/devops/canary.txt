@@ -1,0 +1,29 @@
+== Prometheus on staging: Pods scraped, by app
+{app="api"} => ...
+
+== commit api-canary, one Pod, no traffic yet
+deployment "api-canary" successfully rolled out
+
+== commit the route api: api 90, api-canary 10
++          weight: 90
++        - name: api-canary
++          port: 8080
++          weight: 10
+route api: api weight 90, api-canary weight 10
+
+promql> sum by (app) (http_requests_received_total{method="GET", endpoint="api/v1/products"})
+== 200 product reads through the Gateway, 20 at a time
+  HTTP 200: 200
+== product reads each Deployment served
+  api:        180
+  api-canary: 20
+  together:   200
+
+== commit the route api: api 100, api-canary 0, then remove api-canary
+route api: api weight 100, api-canary weight 0
+route api: api weight 1
+
+... canary.sh: Remove api-canary
+... canary.sh: Canary: api-canary weight 0
+... canary.sh: Canary: api 90, api-canary 10
+... canary.sh: api-canary beside api, no traffic yet

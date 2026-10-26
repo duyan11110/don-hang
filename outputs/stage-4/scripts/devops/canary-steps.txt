@@ -1,0 +1,24 @@
+== commit api-canary, one Pod, no traffic yet
+deployment "api-canary" successfully rolled out
+
+== step 1: commit the route api: api 90, api-canary 10
+  api-canary served 200, 5xx 0.0%; api served 1800, 5xx 0.0%; limit 1.0%
+  within the limit: next step
+
+== step 2: commit the route api: api 50, api-canary 50
+  api-canary served 200, 5xx 0.0%; api served 200, 5xx 0.0%; limit 1.0%
+  within the limit: next step
+
+== step 3: commit the route api: api 0, api-canary 100
+  api-canary served 200, 5xx 0.0%; api served 0, 5xx 0.0%; limit 1.0%
+  within the limit: the canary serves every request
+
+== step 3 passed: api already runs the digest api-canary runs; the route goes back to api alone
+route api: api weight 1
+
+... canary-steps.sh: Remove api-canary
+... canary-steps.sh: Canary step 3: api 0, api-canary 100
+... canary-steps.sh: Canary step 2: api 50, api-canary 50
+... canary-steps.sh: Canary step 1: api 90, api-canary 10
+... canary-steps.sh: api-canary beside api, no traffic yet
+release: passed

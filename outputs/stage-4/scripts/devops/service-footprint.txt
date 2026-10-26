@@ -1,0 +1,33 @@
+== files outside DonHang.Payments/ that name payments
+CI: 3
+  .github/dependabot.yml
+  .github/workflows/ci.yml
+  .github/workflows/release.yml
+Compose: 1
+  docker-compose.yml
+Kustomize and manifests: 12
+  deploy/gitops/config-repo-kustomize/base/db-backup.yaml
+  deploy/gitops/config-repo-kustomize/base/db-init.yaml
+  deploy/gitops/config-repo-kustomize/base/db.yaml
+  deploy/gitops/config-repo-kustomize/base/fake-gateway.yaml
+  deploy/gitops/config-repo-kustomize/base/keycloak.yaml
+  deploy/gitops/config-repo-kustomize/base/kustomization.yaml
+  deploy/gitops/config-repo-kustomize/base/payments.yaml
+  deploy/gitops/config-repo-kustomize/base/rabbitmq.yaml
+  deploy/gitops/config-repo-kustomize/envs/production/kustomization.yaml
+  deploy/gitops/config-repo-kustomize/envs/staging/kustomization.yaml
+  deploy/gitops/config-repo/envs/production/db-init.yaml
+  deploy/gitops/config-repo/envs/staging/db-init.yaml
+NetworkPolicy: 2
+  deploy/gitops/config-repo-kustomize/base/egress-policies.yaml
+  deploy/gitops/config-repo-kustomize/base/network-policies.yaml
+route: 2
+  Caddyfile
+  deploy/gitops/config-repo/platform/edge/httproutes.yaml
+sealed secret: 1
+  scripts/devops/seal-secrets.sh
+OpenTofu: none
+script: 2
+  scripts/dev-secrets.sh
+  scripts/devops/backup-logical.sh
+total: 23 files

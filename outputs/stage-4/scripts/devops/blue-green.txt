@@ -1,0 +1,31 @@
+== commit api-green, as many replicas as api
+deployment "api-green" successfully rolled out
+NAME        REPLICAS   READY
+api         2          2
+api-green   2          2
+route api: api weight 1
+
+== commit the route api -> api-green, while reads keep coming
+-        - name: api
++        - name: api-green
+route api: api-green weight 1
+
+== git revert the release commit
+route api: api weight 1
+
+== product reads by phase and status code
+  blue: 200 x...
+  switch: 200 x...
+  green: 200 x...
+  switch back: 200 x...
+  blue again: 200 x...
+requests without a 2xx answer: 0
+blue's Pods: the same 2 Pods as before the release, none restarted
+
+== remove api-green
+the api's Deployments now: api
+
+... blue-green.sh: Remove api-green
+... blue-green.sh: Revert "Release: the route api sends to api-green"
+... blue-green.sh: Release: the route api sends to api-green
+... blue-green.sh: api-green beside api, no traffic yet
