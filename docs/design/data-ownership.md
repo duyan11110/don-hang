@@ -17,6 +17,7 @@ hoặc một lý do nói rõ vì sao không. Thao tác nào được trả lời
 | Tài khoản đăng nhập (email, mật khẩu, role) | Keycloak, database `keycloak` | `customers.identity_subject` trỏ tới tài khoản (`sub`) | Chỉ là khóa trỏ tới, không chép dữ liệu tài khoản | Keycloak |
 | Email và tên của khách | Ordering, `customers` | Mỗi message `order.*` (`customerEmail`, `customerName`); dòng `notifications`; `requested_by` của dòng hoàn tiền | Chép lúc message được ghi vào outbox; cố ý không cập nhật về sau: email gửi theo đúng message đã nhận | `customers` |
 | Lựa chọn kênh của khách (notification preferences): SMS, push ngoài email | Notifications, `donhang_notifications` (chưa có ở stage-4, ADR 0027) | Không ai | | `donhang_notifications` |
+| Dòng báo cáo hoàn tiền của cổng và kết quả đối soát | Payments, `donhang_payments` (chưa có ở stage-4, ADR 0028) | Không ai; báo cáo gốc nằm ở cổng | Mỗi ngày job đối soát lấy báo cáo của ngày trước; dòng đã lưu không sửa | Cổng, về việc cổng đã làm gì; chỗ lệch do người giải thích |
 
 ### Bản sao ngoài các service
 

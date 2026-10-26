@@ -35,6 +35,8 @@ làm này được chọn trong ADR 0001.
 | 0024 | [Gửi email cho khách qua Dịch vụ A, bằng SMTP](0024-dich-vu-gui-email-ben-ngoai.md) | Đã chấp nhận |
 | 0026 | [Cửa hàng lớn chuyển sang database riêng, qua bảng ánh xạ cửa hàng](0026-cua-hang-lon-chuyen-sang-database-rieng.md) | Đã chấp nhận |
 | 0027 | [Thông báo nhiều kênh, email là kênh chính](0027-thong-bao-nhieu-kenh-email-la-kenh-chinh.md) | Đã chấp nhận |
+| 0028 | [Đối soát hoàn tiền mỗi ngày với báo cáo của cổng](0028-doi-soat-hoan-tien-hang-ngay-voi-bao-cao-cua-cong.md) | Đã chấp nhận |
+| 0029 | [Ký bảng kê cho ngân hàng kèm dấu thời gian và trạng thái thu hồi](0029-ky-bang-ke-ngan-hang-kem-dau-thoi-gian.md) | Đã chấp nhận |
 
 ### Khi nào viết một ADR
 
