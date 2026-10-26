@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:donhang_app/features/catalog/product.dart';
+import 'package:donhang_app/features/catalog/product_catalog.dart';
+import 'package:donhang_app/features/catalog/product_tile.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
-import 'package:donhang_app/models.dart';
-import 'package:donhang_app/widgets/product_catalog.dart';
-import 'package:donhang_app/widgets/product_tile.dart';
 
 // lesson: frontend.l1.responsive-basics
 // The same catalog given two widths: a list when narrow, a grid when wide.

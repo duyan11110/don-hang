@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../design/components/loading_view.dart';
-import '../design/components/message_view.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
-import '../providers.dart';
+import '../../design/components/loading_view.dart';
+import '../../design/components/message_view.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import 'catalog_providers.dart';
 
 // lesson: frontend.l2.deep-links
 // Gets only the id from the URL and loads the product itself: opened from a

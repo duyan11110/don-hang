@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:donhang_app/features/catalog/catalog_providers.dart';
 import 'package:donhang_app/main.dart';
-import 'package:donhang_app/providers.dart';
 
 void main() {
   // The whole app, router included, opens on the product list at `/`. The

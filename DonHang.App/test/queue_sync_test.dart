@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:donhang_app/api_client.dart';
-import 'package:donhang_app/auth/auth_controller.dart';
 import 'package:donhang_app/design/brand.dart';
 import 'package:donhang_app/design/theme.dart';
+import 'package:donhang_app/features/auth/auth_controller.dart';
+import 'package:donhang_app/features/ordering/order.dart';
+import 'package:donhang_app/features/ordering/order_queue.dart';
+import 'package:donhang_app/features/ordering/orders_api.dart';
+import 'package:donhang_app/features/ordering/queue_sync.dart';
+import 'package:donhang_app/features/ordering/queued_orders_screen.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
-import 'package:donhang_app/models.dart';
-import 'package:donhang_app/offline/local_store.dart';
-import 'package:donhang_app/offline/order_queue.dart';
-import 'package:donhang_app/offline/queue_sync.dart';
-import 'package:donhang_app/providers.dart';
-import 'package:donhang_app/screens/queued_orders_screen.dart';
+import 'package:donhang_app/shared/api_client.dart';
+import 'package:donhang_app/shared/local_store.dart';
 
 // A token whose payload holds only `sub`; the app never checks the signature.
 String tokenFor(String subject) =>
@@ -31,11 +31,11 @@ class FixedAuth extends AuthController {
 
 // Answers each createOrder with the next scripted answer, and remembers the
 // Idempotency-Key of every attempt.
-class ScriptedApi extends ApiClient {
+class ScriptedApi extends OrdersApi {
   final List<Future<OrderResult> Function()> answers;
   final List<String> keysSent = [];
 
-  ScriptedApi(this.answers) : super(readToken: () => null);
+  ScriptedApi(this.answers) : super(ApiClient());
 
   @override
   Future<OrderResult> createOrder(List<OrderItemRequest> items, {required String idempotencyKey}) {
@@ -64,7 +64,7 @@ QueuedOrder order(String key, {String subject = 'alice'}) => QueuedOrder(
 ProviderContainer containerWith(ScriptedApi api, List<QueuedOrder> orders, {String? signedIn = 'alice'}) {
   final container = ProviderContainer(overrides: [
     localStoreProvider.overrideWithValue(MemoryLocalStore()),
-    apiClientProvider.overrideWithValue(api),
+    ordersApiProvider.overrideWithValue(api),
     authProvider.overrideWith(() => FixedAuth(signedIn == null ? null : tokenFor(signedIn))),
   ]);
   addTearDown(container.dispose);

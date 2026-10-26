@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:donhang_app/auth/auth_controller.dart';
+import 'package:donhang_app/features/auth/auth_controller.dart';
+import 'package:donhang_app/features/catalog/catalog_providers.dart';
+import 'package:donhang_app/features/catalog/product.dart';
+import 'package:donhang_app/features/catalog/product_catalog.dart';
+import 'package:donhang_app/features/catalog/product_list_screen.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
-import 'package:donhang_app/models.dart';
-import 'package:donhang_app/providers.dart';
-import 'package:donhang_app/screens/product_list_screen.dart';
-import 'package:donhang_app/widgets/product_catalog.dart';
 
 // Starts signed in, without Keycloak: build() returns a token at once.
 class SignedInAuth extends AuthController {

@@ -4,8 +4,12 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'design/brand.dart';
 import 'design/theme.dart';
+// lesson: frontend.l4.feature-folders
+// main.dart, like router.dart, belongs to no feature: it starts the app with
+// the design system, the router and Ordering's queue sync, the job a
+// composition root does for DonHang.Api.
+import 'features/ordering/ordering.dart';
 import 'l10n/app_localizations.dart';
-import 'offline/queue_sync.dart';
 import 'router.dart';
 
 // lesson: frontend.l2.riverpod-providers

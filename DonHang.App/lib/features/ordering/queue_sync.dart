@@ -1,11 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api_client.dart';
-import '../auth/auth_controller.dart';
-import '../auth/token_subject.dart';
-import '../providers.dart';
-import 'browser.dart';
+import '../../shared/api_client.dart';
+import '../../shared/browser.dart';
+import '../auth/auth.dart';
 import 'order_queue.dart';
+import 'orders_api.dart';
 
 // Why the last sync stopped before the queue was empty.
 enum SyncPause { none, notSent, rateLimited, signInNeeded }
@@ -69,7 +68,7 @@ class QueueSync extends Notifier<SyncState> {
   Future<SyncState?> _send(QueuedOrder order) async {
     final queue = ref.read(orderQueueProvider.notifier);
     try {
-      final result = await ref.read(apiClientProvider).createOrder(order.items, idempotencyKey: order.idempotencyKey);
+      final result = await ref.read(ordersApiProvider).createOrder(order.items, idempotencyKey: order.idempotencyKey);
       queue.markSent(order, result);
       return null;
     } on ApiUnreachable {

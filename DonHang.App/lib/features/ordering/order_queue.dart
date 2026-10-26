@@ -3,8 +3,8 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models.dart';
-import 'local_store.dart';
+import '../../shared/local_store.dart';
+import 'order.dart';
 
 // Where an order is in the queue. Only the API's answer moves it on from
 // waiting: 201 makes it sent, 400 or 409 makes it rejected.

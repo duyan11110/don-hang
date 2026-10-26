@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../auth/auth_controller.dart';
-import '../auth/token_subject.dart';
-import '../design/components/message_view.dart';
-import '../design/components/status_banner.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
-import '../models.dart';
-import '../offline/order_queue.dart';
-import '../offline/queue_sync.dart';
+import '../../design/components/message_view.dart';
+import '../../design/components/status_banner.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import '../auth/auth.dart';
+import 'order.dart';
+import 'order_queue.dart';
+import 'queue_sync.dart';
 
 // lesson: frontend.l3.offline-order-queue
 // The orders this customer placed that the API has not answered yet, and

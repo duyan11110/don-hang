@@ -2,14 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'auth/auth_controller.dart';
-import 'screens/auth_callback_screen.dart';
-import 'screens/create_order_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/order_detail_screen.dart';
-import 'screens/product_detail_screen.dart';
-import 'screens/product_list_screen.dart';
-import 'screens/queued_orders_screen.dart';
+// lesson: frontend.l4.feature-folders
+// From stage-4 the router sits outside the features and assembles them:
+// it imports each feature's public file only, and gives each screen a path.
+import 'features/auth/auth.dart';
+import 'features/catalog/catalog.dart';
+import 'features/ordering/ordering.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // lesson: frontend.l2.route-guards

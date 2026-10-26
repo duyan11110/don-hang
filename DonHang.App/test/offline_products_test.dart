@@ -4,20 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:donhang_app/api_client.dart';
 import 'package:donhang_app/design/brand.dart';
 import 'package:donhang_app/design/theme.dart';
+import 'package:donhang_app/features/catalog/catalog_api.dart';
+import 'package:donhang_app/features/catalog/catalog_providers.dart';
+import 'package:donhang_app/features/catalog/product.dart';
+import 'package:donhang_app/features/catalog/product_list_screen.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
-import 'package:donhang_app/models.dart';
-import 'package:donhang_app/offline/local_store.dart';
-import 'package:donhang_app/providers.dart';
-import 'package:donhang_app/screens/product_list_screen.dart';
+import 'package:donhang_app/shared/api_client.dart';
+import 'package:donhang_app/shared/local_store.dart';
 
 // An API that answers with a fixed list, or that cannot be reached.
-class FakeProductsApi extends ApiClient {
+class FakeProductsApi extends CatalogApi {
   final List<Product>? products;
 
-  FakeProductsApi(this.products) : super(readToken: () => null);
+  FakeProductsApi(this.products) : super(ApiClient());
 
   @override
   Future<List<Product>> fetchProducts() async {
@@ -27,10 +28,10 @@ class FakeProductsApi extends ApiClient {
   }
 }
 
-Widget screenWith(LocalStore store, ApiClient api) => ProviderScope(
+Widget screenWith(LocalStore store, CatalogApi api) => ProviderScope(
       overrides: [
         localStoreProvider.overrideWithValue(store),
-        apiClientProvider.overrideWithValue(api),
+        catalogApiProvider.overrideWithValue(api),
       ],
       child: MaterialApp(
         theme: buildTheme(donHangBrand, Brightness.light),

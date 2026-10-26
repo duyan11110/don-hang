@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../auth/auth_controller.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import 'auth_controller.dart';
 
 // The other end of the sign-in that LoginScreen starts.
 // Keycloak sends the browser back to /auth/callback?code=…: the app starts

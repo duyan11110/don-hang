@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
-import '../models.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import 'product.dart';
 
 // lesson: frontend.l1.accessibility-basics
 // lesson: frontend.l2.messages-with-values

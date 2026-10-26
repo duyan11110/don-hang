@@ -1,5 +1,8 @@
 import 'dart:js_interop';
 
+// lesson: frontend.l4.library-reach
+// One of the two files in lib/ that import package:web, both wrappers
+// around the browser; the rest of the app calls these functions instead.
 import 'package:web/web.dart' as web;
 
 import 'local_store.dart';

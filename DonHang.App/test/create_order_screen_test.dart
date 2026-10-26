@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:donhang_app/api_client.dart';
 import 'package:donhang_app/design/brand.dart';
 import 'package:donhang_app/design/theme.dart';
+import 'package:donhang_app/features/catalog/catalog_providers.dart';
+import 'package:donhang_app/features/catalog/product.dart';
+import 'package:donhang_app/features/ordering/create_order_screen.dart';
+import 'package:donhang_app/features/ordering/order.dart';
+import 'package:donhang_app/features/ordering/orders_api.dart';
 import 'package:donhang_app/l10n/app_localizations.dart';
-import 'package:donhang_app/models.dart';
-import 'package:donhang_app/providers.dart';
-import 'package:donhang_app/screens/create_order_screen.dart';
+import 'package:donhang_app/shared/api_client.dart';
 
 // lesson: frontend.l2.server-errors-in-forms
-// A fake ApiClient whose createOrder always fails the way DonHang.Api does
+// A fake OrdersApi whose createOrder always fails the way DonHang.Api does
 // when an item breaks a rule: 400 with a Problem Details body.
-class RejectingApiClient extends ApiClient {
-  RejectingApiClient() : super(readToken: () => null);
+class RejectingOrdersApi extends OrdersApi {
+  RejectingOrdersApi() : super(ApiClient());
 
   @override
   Future<OrderResult> createOrder(List<OrderItemRequest> items, {required String idempotencyKey}) async {
@@ -32,7 +34,7 @@ void main() {
   testWidgets('shows the API detail and keeps what was typed', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        apiClientProvider.overrideWithValue(RejectingApiClient()),
+        ordersApiProvider.overrideWithValue(RejectingOrdersApi()),
         productsProvider.overrideWithValue(AsyncValue.data(LoadedProducts([Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]))),
       ],
       // From stage-3 the server's error is a StatusBanner, whose colors
@@ -63,7 +65,7 @@ void main() {
   testWidgets('does not send an order the validators reject', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        apiClientProvider.overrideWithValue(RejectingApiClient()),
+        ordersApiProvider.overrideWithValue(RejectingOrdersApi()),
         productsProvider.overrideWithValue(AsyncValue.data(LoadedProducts([Product(id: 1, name: 'Bàn phím cơ', priceVnd: 1250000)]))),
       ],
       // From stage-3 the server's error is a StatusBanner, whose colors

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../auth/auth_controller.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import 'auth_controller.dart';
 
 // From stage-2 there is no password here: the button leaves for Keycloak's
 // sign-in page, and the customer comes back through /auth/callback.

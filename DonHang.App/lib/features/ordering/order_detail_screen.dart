@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../design/components/loading_view.dart';
-import '../design/components/message_view.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
-import '../providers.dart';
+import '../../design/components/loading_view.dart';
+import '../../design/components/message_view.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import 'orders_api.dart';
 
 // lesson: frontend.l2.route-guards
 // Reached only through /orders/:id, which the router's redirect guards: a

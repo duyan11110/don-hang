@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../api_client.dart';
-import '../auth/auth_controller.dart';
-import '../auth/token_subject.dart';
-import '../design/components/loading_view.dart';
-import '../design/components/message_view.dart';
-import '../design/components/status_banner.dart';
-import '../design/tokens.dart';
-import '../l10n/app_localizations.dart';
-import '../models.dart';
-import '../offline/order_queue.dart';
-import '../providers.dart';
+import '../../design/components/loading_view.dart';
+import '../../design/components/message_view.dart';
+import '../../design/components/status_banner.dart';
+import '../../design/tokens.dart';
+import '../../l10n/app_localizations.dart';
+import '../../shared/api_client.dart';
+import '../auth/auth.dart';
+// lesson: frontend.l4.feature-public-files
+// The product list and Product come from Catalog's public file, the way
+// DonHang.Api's Ordering module reaches products only through ICatalog.
+import '../catalog/catalog.dart';
+import 'order.dart';
+import 'order_queue.dart';
+import 'orders_api.dart';
 
 // One product and one quantity per order: a cart with several lines is
 // outside stage-2 (frontend.l2.form-validation depth_notes).
@@ -66,7 +69,7 @@ class _CreateOrderScreenState extends ConsumerState<CreateOrderScreen> {
     final items = [OrderItemRequest(productId: product.id, quantity: quantity, unitPriceVnd: product.priceVnd)];
     final idempotencyKey = newIdempotencyKey();
     try {
-      final order = await ref.read(apiClientProvider).createOrder(items, idempotencyKey: idempotencyKey);
+      final order = await ref.read(ordersApiProvider).createOrder(items, idempotencyKey: idempotencyKey);
       if (mounted) context.go('/orders/${order.id}');
     } on ApiUnreachable {
       _queue('$quantity × ${product.name}', items, idempotencyKey);

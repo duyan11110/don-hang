@@ -1,23 +1,6 @@
 // lesson: frontend.l1.fetching-with-http-package
-// Two shapes matching DonHang.Api's DTOs (DonHang.Api/Dtos.cs), nothing more.
-class Product {
-  final int id;
-  final String name;
-  final int priceVnd;
-
-  Product({required this.id, required this.name, required this.priceVnd});
-
-  factory Product.fromJson(Map<String, dynamic> json) => Product(
-        id: json['id'] as int,
-        name: json['name'] as String,
-        priceVnd: json['priceVnd'] as int,
-      );
-
-  // From stage-3: the shape the saved product list is kept in, the same as
-  // the API's, so fromJson reads both (frontend.l3.offline-first).
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'priceVnd': priceVnd};
-}
-
+// Shapes matching DonHang.Api's order DTOs (DonHang.Api/Dtos.cs), only the
+// fields the app uses. From stage-4 they live in the Ordering feature.
 class OrderItemRequest {
   final int productId;
   final int quantity;

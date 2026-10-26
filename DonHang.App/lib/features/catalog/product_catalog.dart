@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../design/tokens.dart';
-import '../models.dart';
+import '../../design/tokens.dart';
+import 'product.dart';
 import 'product_tile.dart';
 
 // lesson: frontend.l1.responsive-basics

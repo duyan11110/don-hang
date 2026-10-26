@@ -4,28 +4,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:donhang_app/api_client.dart';
-import 'package:donhang_app/models.dart';
+import 'package:donhang_app/features/ordering/order.dart';
+import 'package:donhang_app/features/ordering/orders_api.dart';
+import 'package:donhang_app/shared/api_client.dart';
 
 final items = [OrderItemRequest(productId: 1, quantity: 2, unitPriceVnd: 1000)];
 
-ApiClient clientAnswering(int status, {Map<String, String> headers = const {}}) => ApiClient(
+OrdersApi clientAnswering(int status, {Map<String, String> headers = const {}}) => OrdersApi(ApiClient(
       readToken: () => 'a.token',
       httpClient: MockClient((request) async => http.Response('{}', status, headers: headers)),
-    );
+    ));
 
 void main() {
   // lesson: frontend.l3.offline-order-queue
   // Only "no answer" is ApiUnreachable; a 400 or 409 is the API's answer.
   test('every order carries its Idempotency-Key', () async {
     String? keySent;
-    final client = ApiClient(
+    final client = OrdersApi(ApiClient(
       readToken: () => 'a.token',
       httpClient: MockClient((request) async {
         keySent = request.headers['Idempotency-Key'];
         return http.Response(jsonEncode({'id': 7, 'status': 'pending', 'items': []}), 201);
       }),
-    );
+    ));
 
     await client.createOrder(items, idempotencyKey: 'key-1');
 
@@ -39,10 +40,10 @@ void main() {
   }
 
   test('no response at all means no answer', () async {
-    final client = ApiClient(
+    final client = OrdersApi(ApiClient(
       readToken: () => null,
       httpClient: MockClient((request) async => throw http.ClientException('connection refused')),
-    );
+    ));
     expect(client.createOrder(items, idempotencyKey: 'k'), throwsA(isA<ApiUnreachable>()));
   });
 

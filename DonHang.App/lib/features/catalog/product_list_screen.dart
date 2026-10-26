@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../auth/auth_controller.dart';
-import '../design/components/loading_view.dart';
-import '../design/components/message_view.dart';
-import '../design/components/status_banner.dart';
-import '../l10n/app_localizations.dart';
-import '../providers.dart';
-import '../widgets/product_catalog.dart';
+import '../../design/components/loading_view.dart';
+import '../../design/components/message_view.dart';
+import '../../design/components/status_banner.dart';
+import '../../l10n/app_localizations.dart';
+import '../auth/auth.dart';
+import 'catalog_providers.dart';
+import 'product_catalog.dart';
 
 // lesson: frontend.l2.riverpod-providers
 // lesson: frontend.l2.futureprovider-and-asyncvalue
