@@ -21,6 +21,7 @@ làm này được chọn trong ADR 0001.
 | 0010 | [Cổng thanh toán bên ngoài cho hoàn tiền](0010-cong-thanh-toan-ben-ngoai.md) | Đã chấp nhận |
 | 0011 | [Không bọc RabbitMQ sau một lớp trung lập](0011-khong-boc-message-broker-sau-lop-chung.md) | Bị từ chối |
 | 0012 | [Phục vụ mọi cửa hàng từ một bản triển khai chung](0012-phuc-vu-moi-cua-hang-tu-mot-ban-trien-khai.md) | Đã chấp nhận |
+| 0013 | [Dữ liệu của mọi cửa hàng trong bảng chung, có `shop_id` và row-level security](0013-du-lieu-cua-hang-trong-bang-chung.md) | Đã chấp nhận |
 | 0019 | [Mỗi thành phần phát hành theo cách đường đi của nó cho phép](0019-chien-luoc-phat-hanh-theo-thanh-phan.md) | Đã chấp nhận |
 | 0020 | [Chạy ở một region, phục hồi ở region thứ hai từ bản sao lưu](0020-mot-region-phuc-hoi-tu-ban-sao-luu.md) | Đã chấp nhận |
 | 0021 | [Chưa dùng service mesh](0021-chua-dung-service-mesh.md) | Đã chấp nhận |
