@@ -19,6 +19,8 @@ clean-code
 craft
 design
 git
+postmortems
+runbooks
 team
 
 samples:
@@ -57,11 +59,12 @@ login.html
 samples/DonHang.Samples/Program.cs
 
 3. how much code is there?
-41
+46
 
 4. from a word you saw on screen to the line that produced it:
 db/seed.sql:7:    (2, 'Chuột không dây',     450000),
 samples/DonHang.Samples/Samples/Data/CollectionsChoice.cs:13:            new(2, "Chuột không dây", 450_000),
+samples/DonHang.Samples/Samples/Security/InvoiceSigning.cs:20:        Lines: [new(1, "Bàn phím cơ", 1, 1_250_000), new(2, "Chuột không dây", 2, 450_000)],
 
 5. what the folders are named after:
 Clean
@@ -71,3 +74,5 @@ Debug
 Design
 Http
 Oop
+Release
+Security
