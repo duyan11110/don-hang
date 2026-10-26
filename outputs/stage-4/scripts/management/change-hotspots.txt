@@ -11,9 +11,9 @@ commits  file
       5  DonHang.Api/Controllers/ProductsController.cs
       5  DonHang.Api/Controllers/V2/OrdersV2Controller.cs
       5  DonHang.Tests/FakeOrderRepository.cs
+      4  DonHang.App/lib/api_client.dart
+      4  DonHang.App/lib/main.dart
       4  DonHang.App/lib/screens/product_list_screen.dart
-      4  DonHang.Infrastructure/EfOrderRepository.cs
-      4  DonHang.Tests/Domain/OrderTests.cs
-      3  DonHang.Api/Middleware/ExceptionHandlingMiddleware.cs
+      4  DonHang.App/test/product_catalog_test.dart
 
-Files counted: 169
+Files counted: 203
