@@ -1,0 +1,42 @@
+== db-replica follows db
+-- on db-replica
+SELECT pg_is_in_recovery() AS replica
+ replica 
+---------
+ t
+
+== promote db-replica while db still runs
+-- on db-replica
+SELECT pg_promote() AS promoted
+ promoted 
+----------
+ t
+
+-- on db-replica
+SELECT pg_is_in_recovery() AS replica
+ replica 
+---------
+ f
+
+== each primary accepts its own price for product 1
+-- on db
+UPDATE products SET price_vnd = 1300000 WHERE id = 1
+UPDATE 1
+-- on db-replica
+UPDATE products SET price_vnd = 1200000 WHERE id = 1
+UPDATE 1
+== and each answers with its own
+-- on db
+SELECT price_vnd FROM products WHERE id = 1
+ price_vnd 
+-----------
+   1300000
+
+-- on db-replica
+SELECT price_vnd FROM products WHERE id = 1
+ price_vnd 
+-----------
+   1200000
+
+(product 1 gets its old price back on db when this script ends)
+(db-replica and its volume are removed now)
