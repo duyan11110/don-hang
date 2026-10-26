@@ -22,6 +22,8 @@ spec:
       labels:
         app: echo-region
     spec:
+      # lesson: k8s.l4.one-argo-cd-many-clusters
+      # The node's name, from the Pod's spec, in the answer.
       containers:
         - name: echo
           image: caddy:2.10.0@sha256:133b5eb7ef9d42e34756ba206b06d84f4e3eb308044e268e182c2747083f09de

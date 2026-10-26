@@ -42,6 +42,8 @@ spec:
       labels:
         app: caller
     spec:
+      # lesson: k8s.l4.sidecar-proxies
+      # The sidecar holds gateway-client's certificate and key.
       initContainers:
         - name: tls-proxy
           image: caddy:2.10.0

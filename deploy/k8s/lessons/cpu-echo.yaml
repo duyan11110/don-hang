@@ -21,6 +21,8 @@ spec:
       labels:
         app: cpu-echo
     spec:
+      # lesson: k8s.l4.horizontal-pod-autoscaler
+      # Without a CPU request, the HPA has nothing to compute a percentage of.
       containers:
         - name: echo
           image: caddy:2.10.0

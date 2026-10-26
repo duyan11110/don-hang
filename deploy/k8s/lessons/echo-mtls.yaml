@@ -41,6 +41,8 @@ spec:
       labels:
         app: echo-mtls
     spec:
+      # lesson: k8s.l4.mutual-tls
+      # The Caddyfile and the certificate files, mounted read-only.
       containers:
         - name: echo
           image: caddy:2.10.0
