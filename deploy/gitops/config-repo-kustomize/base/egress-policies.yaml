@@ -39,6 +39,7 @@ spec:
 # lesson: k8s.l3.egress-policies
 # The api: PostgreSQL, Redis, RabbitMQ, and Keycloak, from which it fetches
 # the keys that sign tokens (Keycloak__MetadataAddress, port 8080).
+# api-canary and api-green, the api's other Deployments, call the same.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -46,8 +47,10 @@ metadata:
   namespace: donhang
 spec:
   podSelector:
-    matchLabels:
-      app: api
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [api, api-canary, api-green]
   policyTypes: ["Egress"]
   egress:
     - to: [{ podSelector: { matchLabels: { app: db } } }]

@@ -14,6 +14,8 @@ spec:
 ---
 # lesson: k8s.l3.network-policies
 # PostgreSQL: only the services that use it, their migrations and the backup.
+# From stage-4 each list that names api also names api-canary and api-green,
+# the api's other Deployments (deploy/gitops/lessons/).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -30,7 +32,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [api, migrate, notifications, notifications-migrate, payments, payments-migrate, db-backup]
+                values: [api, api-canary, api-green, migrate, notifications, notifications-migrate, payments, payments-migrate, db-backup]
       ports:
         - port: 5432
 ---
@@ -45,7 +47,7 @@ spec:
     matchExpressions:
       - key: app
         operator: In
-        values: [api, payments]
+        values: [api, api-canary, api-green, payments]
   policyTypes: ["Ingress"]
   ingress:
     - from:
@@ -76,7 +78,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [api, payments]
+                values: [api, api-canary, api-green, payments]
       ports:
         - port: 8080
 ---
@@ -97,7 +99,7 @@ spec:
             matchExpressions:
               - key: app
                 operator: In
-                values: [api, notifications, payments]
+                values: [api, api-canary, api-green, notifications, payments]
       ports:
         - port: 5672
 ---
@@ -115,8 +117,10 @@ spec:
   ingress:
     - from:
         - podSelector:
-            matchLabels:
-              app: api
+            matchExpressions:
+              - key: app
+                operator: In
+                values: [api, api-canary, api-green]
       ports:
         - port: 6379
 ---
