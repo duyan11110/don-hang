@@ -37,6 +37,8 @@ làm này được chọn trong ADR 0001.
 | 0027 | [Thông báo nhiều kênh, email là kênh chính](0027-thong-bao-nhieu-kenh-email-la-kenh-chinh.md) | Đã chấp nhận |
 | 0028 | [Đối soát hoàn tiền mỗi ngày với báo cáo của cổng](0028-doi-soat-hoan-tien-hang-ngay-voi-bao-cao-cua-cong.md) | Đã chấp nhận |
 | 0029 | [Ký bảng kê cho ngân hàng kèm dấu thời gian và trạng thái thu hồi](0029-ky-bang-ke-ngan-hang-kem-dau-thoi-gian.md) | Đã chấp nhận |
+| 0030 | [Tìm sản phẩm bằng full-text search của PostgreSQL, trong Catalog](0030-tim-san-pham-bang-full-text-search-cua-postgresql.md) | Đã chấp nhận |
+| 0031 | [Báo cáo đọc từ database báo cáo riêng, nạp bằng job mỗi giờ](0031-bao-cao-tu-database-bao-cao-rieng.md) | Đã chấp nhận |
 
 ### Khi nào viết một ADR
 

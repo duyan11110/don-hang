@@ -18,6 +18,7 @@ hoặc một lý do nói rõ vì sao không. Thao tác nào được trả lời
 | Email và tên của khách | Ordering, `customers` | Mỗi message `order.*` (`customerEmail`, `customerName`); dòng `notifications`; `requested_by` của dòng hoàn tiền | Chép lúc message được ghi vào outbox; cố ý không cập nhật về sau: email gửi theo đúng message đã nhận | `customers` |
 | Lựa chọn kênh của khách (notification preferences): SMS, push ngoài email | Notifications, `donhang_notifications` (chưa có ở stage-4, ADR 0027) | Không ai | | `donhang_notifications` |
 | Dòng báo cáo hoàn tiền của cổng và kết quả đối soát | Payments, `donhang_payments` (chưa có ở stage-4, ADR 0028) | Không ai; báo cáo gốc nằm ở cổng | Mỗi ngày job đối soát lấy báo cáo của ngày trước; dòng đã lưu không sửa | Cổng, về việc cổng đã làm gì; chỗ lệch do người giải thích |
+| Tổng báo cáo theo cửa hàng theo ngày | Không là chủ: bản sao trong database báo cáo (chưa có ở stage-4, ADR 0031); chủ của từng con số vẫn là Ordering (`donhang`) và Payments (`donhang_payments`) | Database báo cáo | Job chạy mỗi giờ, tính lại vài ngày gần nhất | Ordering, Payments |
 
 ### Bản sao ngoài các service
 
