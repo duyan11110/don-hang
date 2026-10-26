@@ -1,0 +1,37 @@
+# lesson: k8s.l4.one-argo-cd-many-clusters
+# One Application per registered cluster whose Secret carries the label
+# donhang.lab/region: "true" (scripts/k8s/applicationset.sh adds it to the
+# Secrets of donhang-north and donhang-south). Staging itself, Argo CD's
+# own cluster, has no such Secret, so it gets none.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: regions
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - clusters:
+        selector:
+          matchLabels:
+            donhang.lab/region: "true"
+  # lesson: k8s.l4.one-argo-cd-many-clusters
+  # The template, filled in once per cluster: .name and .server come from
+  # that cluster's Secret. Every region syncs the same path at the same
+  # revision.
+  template:
+    metadata:
+      name: "echo-{{.name}}"
+    spec:
+      project: default
+      source:
+        repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+        targetRevision: main
+        path: platform/regions
+      destination:
+        server: "{{.server}}"
+        namespace: regions
+      syncPolicy:
+        automated:
+          selfHeal: true
+          prune: true

@@ -1,0 +1,22 @@
+# lesson: k8s.l4.failover-between-clusters
+# The one entry in front of both regions: a Caddy container on Docker's
+# network kind (scripts/k8s/failover.sh starts it as donhang-global-entry),
+# where it reaches each region's node by name, at echo-region's node port.
+{
+	admin off
+}
+
+:8080 {
+	# lesson: k8s.l4.failover-between-clusters
+	# first: every call goes to the first region whose health check passes,
+	# north while it is up (active-passive); round_robin, set through the
+	# environment variable LB_POLICY, sends calls to both in turn
+	# (active-active). Every 2 s Caddy calls / on each region and marks it
+	# down when no answer comes within 1 s.
+	reverse_proxy donhang-north-control-plane:30090 donhang-south-control-plane:30090 {
+		lb_policy {$LB_POLICY:first}
+		health_uri /
+		health_interval 2s
+		health_timeout 1s
+	}
+}

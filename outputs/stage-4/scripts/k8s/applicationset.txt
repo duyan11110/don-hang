@@ -1,0 +1,37 @@
+$ kubectl create secret generic region-north -n argocd --from-literal=name=donhang-north --from-literal=server=https://donhang-north-control-plane:6443 --from-literal=config=<its certificates>
+secret/region-north created
+$ kubectl label secret region-north -n argocd argocd.argoproj.io/secret-type=cluster donhang.lab/region=true
+secret/region-north labeled
+$ kubectl create secret generic region-south -n argocd --from-literal=name=donhang-south --from-literal=server=https://donhang-south-control-plane:6443 --from-literal=config=<its certificates>
+secret/region-south created
+$ kubectl label secret region-south -n argocd argocd.argoproj.io/secret-type=cluster donhang.lab/region=true
+secret/region-south labeled
+$ kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=cluster -L donhang.lab/region
+NAME           TYPE     REGION
+region-north   Opaque   true
+region-south   Opaque   true
+
+$ git add platform/regions && git commit -m 'regions: echo-region for every region' && git push
+
+$ kubectl apply -f deploy/gitops/lessons/regions-appset.yaml
+applicationset.argoproj.io/regions created
+$ kubectl get applications -n argocd -o custom-columns=NAME,DESTINATION,SYNC,HEALTH
+NAME                 DESTINATION                                SYNC     HEALTH
+echo-donhang-north   https://donhang-north-control-plane:6443   Synced   Healthy
+echo-donhang-south   https://donhang-south-control-plane:6443   Synced   Healthy
+staging              https://kubernetes.default.svc             Synced   Healthy
+
+$ docker exec donhang-north-control-plane curl -s http://localhost:30090/
+greetings from donhang-north-control-plane
+$ docker exec donhang-south-control-plane curl -s http://localhost:30090/
+greetings from donhang-south-control-plane
+
+$ git commit -am 'regions: say hello' && git push   (greetings from -> hello from)
+echo-donhang-north: Synced, Healthy
+echo-donhang-south: Synced, Healthy
+$ docker exec donhang-north-control-plane curl -s http://localhost:30090/
+hello from donhang-north-control-plane
+$ docker exec donhang-south-control-plane curl -s http://localhost:30090/
+hello from donhang-south-control-plane
+
+deleted: ApplicationSet regions, Secrets region-north and region-south, platform/regions/

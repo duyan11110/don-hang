@@ -157,3 +157,5 @@ answers/s x average = \K[0-9.]+$
 # the Pod names of multi-cluster-and-mesh and managed-vs-selfhosted.
 \b(?:caller|echo-sidecar|echo-mtls|echo-region|cpu-echo|load)-\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
 \b(?:caller|echo-sidecar|echo-mtls|echo-region|cpu-echo|load)-\.\.\.-\K[bcdfghjklmnpqrstvwxz2456789]{5}\b
+# regions-up.sh: the memory a region's node container uses right now.
+^donhang-(?:north|south)-control-plane: \K\S+$

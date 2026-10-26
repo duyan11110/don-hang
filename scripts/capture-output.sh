@@ -160,6 +160,12 @@ k8s_host_scripts=(
   pod-network cni kube-proxy service-types coredns dns-search network-debug
   metallb-install metallb-pool metallb-l2 external-traffic-policy traefik-ha csi control-plane-ha
   custom-resources cert-manager-install cert-manager operator kubeadm etcd-snapshot encryption-at-rest drain version-skew
+  # Stage-4: multi-cluster-and-mesh, then managed-vs-selfhosted. The region
+  # clusters donhang-north and donhang-south (about 1 GB of Docker's memory
+  # each) run from regions-up to regions-down only; applicationset uses
+  # donhang-staging's Argo CD, the others donhang.
+  team-quota regions-up applicationset failover regions-down mutual-tls sidecar-proxy
+  autoscale node-capacity
 )
 
 is_devops_host() {

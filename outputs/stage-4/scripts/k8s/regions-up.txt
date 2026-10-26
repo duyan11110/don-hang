@@ -1,0 +1,16 @@
+$ kind create cluster --name donhang-north --image <the node image of kind-config.yaml> --kubeconfig secrets/regions.kubeconfig
+$ kind create cluster --name donhang-south --image <the node image of kind-config.yaml> --kubeconfig secrets/regions.kubeconfig
+
+$ kubectl config get-contexts --kubeconfig secrets/regions.kubeconfig -o name
+kind-donhang-north
+kind-donhang-south
+$ kubectl --kubeconfig secrets/regions.kubeconfig --context kind-donhang-north get nodes
+NAME                          STATUS   VERSION
+donhang-north-control-plane   Ready    v1.34.11
+$ kubectl --kubeconfig secrets/regions.kubeconfig --context kind-donhang-south get nodes
+NAME                          STATUS   VERSION
+donhang-south-control-plane   Ready    v1.34.11
+
+$ docker stats --no-stream donhang-north-control-plane donhang-south-control-plane
+donhang-north-control-plane: ...
+donhang-south-control-plane: ...
