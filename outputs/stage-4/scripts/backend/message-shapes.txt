@@ -1,0 +1,12 @@
+messages in notifications.order-events.dead before: 0
+== order.placed with one more property, giftWrap
+  routed: true
+== order.placed with customerEmail renamed to email
+  routed: true
+
+the message with giftWrap was handled: yes
+a new email to anh.tran@example.com in Mailpit: yes
+messages in notifications.order-events.dead after: 1
+the dead-lettered one:
+  {"orderId":2,"email":"anh.tran@example.com","customerName":"Trần Minh Anh","occurredAt":"2026-03-05T08:00:00+00:00"}
+  reason: rejected
