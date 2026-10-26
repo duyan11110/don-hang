@@ -24,6 +24,7 @@ làm này được chọn trong ADR 0001.
 | 0013 | [Dữ liệu của mọi cửa hàng trong bảng chung, có `shop_id` và row-level security](0013-du-lieu-cua-hang-trong-bang-chung.md) | Đã chấp nhận |
 | 0014 | [Keycloak giữ email của khách](0014-keycloak-giu-email-khach-hang.md) | Đã chấp nhận |
 | 0015 | [Khóa ký hóa đơn nằm trong HSM, chỉ Payments được gọi](0015-khoa-ky-hoa-don-trong-hsm.md) | Đã chấp nhận |
+| 0016 | [Giới hạn tải theo cửa hàng, chồng lên giới hạn chung](0016-gioi-han-tai-theo-cua-hang.md) | Đã chấp nhận |
 | 0019 | [Mỗi thành phần phát hành theo cách đường đi của nó cho phép](0019-chien-luoc-phat-hanh-theo-thanh-phan.md) | Đã chấp nhận |
 | 0020 | [Chạy ở một region, phục hồi ở region thứ hai từ bản sao lưu](0020-mot-region-phuc-hoi-tu-ban-sao-luu.md) | Đã chấp nhận |
 | 0021 | [Chưa dùng service mesh](0021-chua-dung-service-mesh.md) | Đã chấp nhận |
