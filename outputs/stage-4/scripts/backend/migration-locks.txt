@@ -1,0 +1,14 @@
+== 1. A: BEGIN; CREATE INDEX orders_status_idx ON orders (status); (transaction left open)
+B: SELECT count(*) FROM orders -> 200000
+B: SET lock_timeout = '2s'; INSERT INTO orders ...
+  ERROR:  canceling statement due to lock timeout at character 40
+== 2. CREATE INDEX CONCURRENTLY inside a transaction block
+  ERROR:  CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+and on its own
+  created
+== 3. A: BEGIN; SELECT count(*) FROM orders; (transaction left open)
+B: SET lock_timeout = '5s'; ALTER TABLE orders ADD COLUMN note text
+C: SELECT count(*) FROM orders
+  C waits for a lock, behind B: yes
+  B: ERROR:  canceling statement due to lock timeout
+  C, once B gave up: 200000
