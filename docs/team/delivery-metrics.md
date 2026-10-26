@@ -33,6 +33,10 @@ tháng sẽ kéo trung bình lên mà không nói gì về các thay đổi còn
 `delivery-metrics.sh` chỉ đọc `git log`, nên chỉ thấy phần thứ nhất và thứ
 hai.
 
+Bản ghi sự cố của Đơn Hàng là các postmortem trong `docs/postmortems/` (mẫu:
+`docs/postmortems/template.md`): mỗi bản có dòng thời gian với mốc deploy gây sự
+cố và mốc dịch vụ trở lại bình thường.
+
 ### Giới hạn
 
 - Lịch sử Git chỉ thấy lỗi được sửa bằng revert. Sự cố sửa cách khác chỉ có

@@ -13,7 +13,9 @@ theo nhãn `endpoint` (mẫu route, ví dụ `api/v1/orders`), `method`, `code`.
 - Lab: Prometheus (profile `monitoring`) scrape `api:8080`. Nó không có volume
   dữ liệu, nên chỉ giữ số đo từ lần khởi động gần nhất; trong lab
   `scripts/backend/slo-report.sh` đọc cửa sổ 1 giờ thay cho 28 ngày.
-- Staging và production chưa có Prometheus: xem mục Chưa có.
+- Staging: từ stage-4 có Prometheus (namespace `monitoring`) scrape các Pod
+  api, `api-canary`, `api-green`, cũng không có volume dữ liệu. Production chưa
+  có Prometheus: xem mục Chưa có.
 
 ### SLI
 
@@ -95,9 +97,11 @@ Nhóm và product owner thống nhất trước, không bàn lại trong lúc c�
 
 ### Chưa có
 
-- Alert theo tốc độ tiêu budget (burn rate): chưa có; SLI hiện chỉ xem được
-  khi có người hỏi Prometheus.
+- Gửi thông báo khi alert bật: staging đã có alert theo tốc độ tiêu budget
+  (burn rate) cho S1–S4 (`alerts.md`), nhưng chưa có thành phần nào nhận alert
+  từ Prometheus và gửi cho người trực; alert chỉ xem được khi có người hỏi
+  Prometheus của staging (`docs/team/on-call.md`).
 - SLI theo từng cửa hàng: S1–S4 gộp mọi cửa hàng, nên một cửa hàng bị từ chối
   phần lớn thời gian vẫn có thể không làm SLI tụt dưới SLO (ADR 0016).
-- Prometheus trên cluster staging và production: chưa có; SLO ở đây mới đo
-  được trong lab.
+- Prometheus trên production: chưa có, nên SLO của production chưa đo được và
+  chưa có alert nào về production. Staging có Prometheus và alert từ stage-4.
