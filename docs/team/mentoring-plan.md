@@ -61,6 +61,8 @@ chiều: người mới cũng nói điều gì trong cách kèm đang giúp và 
 
 - Việc chạm tới phần hệ thống người mới chưa sửa lần nào, để số người sửa được
   mỗi phần trong `team-structure.md` tăng lên.
+- Việc luyện loại tài liệu ở dòng có bậc thấp nhất của người mới trong
+  `architecture-skills-checklist.md`.
 
 Kế hoạch này không nói về lộ trình thăng tiến hay lương; những việc đó không
 thuộc tài liệu của đội.
