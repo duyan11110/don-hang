@@ -9,7 +9,7 @@ toán. Hệ thống gồm một API ASP.NET Core (`DonHang.Api`), hai service t�
 thanh toán), một app Flutter chạy trên trình duyệt (`DonHang.App`),
 PostgreSQL, Redis, RabbitMQ và Keycloak, tất cả chạy bằng Docker Compose trên
 máy bạn. Mỗi tag `stage-N` là trạng thái của repo cho một giai đoạn của giáo
-trình; file này mô tả tag `stage-3`.
+trình; file này mô tả tag `stage-4`.
 
 ## Cần có trên máy
 
@@ -21,7 +21,8 @@ trình; file này mô tả tag `stage-3`.
 - Chỉ khi chạy test: .NET SDK 10.0.300 (ghim trong `global.json`); test tích
   hợp cũng cần Docker đang chạy.
 - Chỉ cho các bài Kubernetes, OpenTofu và GitOps: kind, kubectl, OpenTofu,
-  kubeseal và Helm trên máy, cùng đủ bộ nhớ cho Docker (xem `STAGE.md`).
+  kubeseal, Helm và `openssl` trên máy, cùng đủ bộ nhớ cho Docker: hai cluster
+  region của các bài nhiều cluster cần thêm khoảng 2 GB (xem `STAGE.md`).
 - Trên Windows và macOS, chạy test của app bằng
   `flutter test --exclude-tags golden`: ảnh golden chỉ so trên Linux.
 
@@ -38,7 +39,8 @@ trình; file này mô tả tag `stage-3`.
 4. Dừng và xóa mọi dữ liệu: `scripts/down.sh`.
 
 Để có thêm Prometheus, Grafana, Loki và Tempo, sau bước 1 chạy
-`docker compose --profile monitoring up -d`. Profile `replica` và `pitr` dựng
+`docker compose --profile monitoring up -d` (`scripts/backend/slo-report.sh`
+cần chúng). Profile `replica` và `pitr` dựng
 bản sao và bản khôi phục của PostgreSQL cho các bài sao lưu.
 
 | Thành phần | Địa chỉ trên máy bạn |
@@ -70,6 +72,13 @@ Chạy test: `dotnet test DonHang.slnx` cho API, `flutter test` trong thư mục
 - `docs/team/payment-gateway-evaluation.md`: đánh giá cổng thanh toán.
 - `docs/team/self-run-components.md`: thành phần đội tự chạy và việc định kỳ
   của chúng.
+- `docs/design/slo.md`, `docs/design/alerts.md`, `docs/runbooks/`,
+  `docs/postmortems/`: SLO, alert, runbook và postmortem.
+- `docs/team/architecture-governance.md`, `docs/team/technical-strategy.md`,
+  `docs/team/roadmap.md`: ai quyết định gì, chiến lược kỹ thuật và roadmap.
+- `docs/design/*-design-review.md`: review thiết kế của các bài toán lớn.
+- `docs/design/app-structure.md`: app chia theo feature (`lib/features/`,
+  `lib/shared/`).
 - `deploy/k8s/` và `scripts/k8s/`: chạy Đơn Hàng trên một cluster kind.
 - `deploy/tofu/`, `deploy/gitops/` và `scripts/devops/`: cluster staging dựng
   bằng OpenTofu và triển khai bằng Argo CD.
