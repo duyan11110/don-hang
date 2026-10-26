@@ -1,0 +1,30 @@
+$ promtool check rules slo.rules.yml
+Checking slo.rules.yml
+  SUCCESS: 24 rules found
+
+
+$ promtool test rules slo.test.yml
+  SUCCESS
+
+
+== the alerts slo.rules.yml defines
+ProductReadsFastBurn
+  severity: page
+  runbook: docs/runbooks/product-reads-burn.md
+ProductReadsSlowBurn
+  severity: ticket
+OrderPlacementFastBurn
+  severity: page
+  runbook: docs/runbooks/order-placement-burn.md
+OrderPlacementSlowBurn
+  severity: ticket
+OrderPlacementLatencyFastBurn
+  severity: page
+  runbook: docs/runbooks/order-placement-latency-burn.md
+OrderPlacementLatencySlowBurn
+  severity: ticket
+RefundRequestsFastBurn
+  severity: page
+  runbook: docs/runbooks/refund-requests-burn.md
+RefundRequestsSlowBurn
+  severity: ticket

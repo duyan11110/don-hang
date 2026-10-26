@@ -1,0 +1,101 @@
+# lesson: devops.l4.burn-rate-alerts
+# Unit tests for slo.rules.yml: promtool test rules feeds the made-up
+# series below to the rules, one sample a minute, and checks which alerts
+# are firing at the given times (scripts/devops/alert-rules-test.sh).
+# '0+90x120' means 0, 90, 180, ... for 120 more minutes.
+rule_files:
+  - slo.rules.yml
+evaluation_interval: 1m
+
+tests:
+  # lesson: devops.l4.burn-rate-alerts
+  # A steady burn: 10% of product reads fail for two hours. The 1-hour and
+  # the 5-minute share are both above 6.72%, so the fast alert pages.
+  - name: a steady 10% of product reads failing pages
+    interval: 1m
+    input_series:
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="200"}'
+        values: '0+90x120'
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="503"}'
+        values: '0+10x120'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: ProductReadsFastBurn
+        exp_alerts:
+          - exp_labels: {job: api, severity: page}
+            exp_annotations:
+              summary: Product reads fail fast enough to spend 2% of S3's 28-day error budget in an hour
+              runbook: docs/runbooks/product-reads-burn.md
+
+  # lesson: devops.l4.burn-rate-alerts
+  # A spike: every read fails for two minutes, among an hour of good ones.
+  # The 5-minute share jumps, but the 1-hour share stays below 6.72%.
+  - name: a two-minute spike does not page
+    interval: 1m
+    input_series:
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="200"}'
+        values: '0+100x60 6000 6000 6000+100x60'
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="503"}'
+        values: '0x60 100 200 200x60'
+    alert_rule_test:
+      - eval_time: 64m
+        alertname: ProductReadsFastBurn
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: ProductReadsFastBurn
+        exp_alerts: []
+
+  # lesson: devops.l4.burn-rate-alerts
+  # A slow leak: 3% fail for seven hours. Above 2.8% over 6 hours and 30
+  # minutes, so a ticket; far below 6.72%, so no page.
+  - name: a steady 3% opens a ticket and does not page
+    interval: 1m
+    input_series:
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="200"}'
+        values: '0+97x420'
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="503"}'
+        values: '0+3x420'
+    alert_rule_test:
+      - eval_time: 400m
+        alertname: ProductReadsSlowBurn
+        exp_alerts:
+          - exp_labels: {job: api, severity: ticket}
+            exp_annotations:
+              summary: Product reads spend S3's error budget faster than it lasts (5% in 6 hours)
+      - eval_time: 400m
+        alertname: ProductReadsFastBurn
+        exp_alerts: []
+
+  # lesson: devops.l4.burn-rate-alerts
+  # The errors stop at minute 60. Within the 5-minute window the short share
+  # falls below 6.72% and the alert resolves, while the 1-hour share is
+  # still above it.
+  - name: the fast alert resolves soon after the errors stop
+    interval: 1m
+    input_series:
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="200"}'
+        values: '0+90x60 5400+100x30'
+      - series: 'http_requests_received_total{job="api", app="api", method="GET", endpoint="api/v1/products", code="503"}'
+        values: '0+10x60 600x30'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: ProductReadsFastBurn
+        exp_alerts:
+          - exp_labels: {job: api, severity: page}
+            exp_annotations:
+              summary: Product reads fail fast enough to spend 2% of S3's 28-day error budget in an hour
+              runbook: docs/runbooks/product-reads-burn.md
+      - eval_time: 65m
+        alertname: ProductReadsFastBurn
+        exp_alerts: []
+    promql_expr_test:
+      - expr: job:product_reads_bad:ratio_rate1h > bool (13.44 * 0.005)
+        eval_time: 65m
+        exp_samples:
+          - labels: '{job="api"}'
+            value: 1
+      - expr: job:product_reads_bad:ratio_rate5m < bool (13.44 * 0.005)
+        eval_time: 65m
+        exp_samples:
+          - labels: '{job="api"}'
+            value: 1

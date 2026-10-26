@@ -379,6 +379,19 @@ jobs:
               -strict -summary -kubernetes-version 1.34.0 -
           done
 
+      # Staging's Prometheus, as Argo CD builds platform/monitoring.
+      - name: Render the monitoring platform and validate it
+        run: |
+          kubectl kustomize deploy/gitops/config-repo/platform/monitoring | docker run --rm -i "$KUBECONFORM" \
+            -strict -summary -kubernetes-version 1.34.0 -
+
+      # lesson: devops.l4.burn-rate-alerts
+      # The alert rules are checked and their unit tests run before staging
+      # loads them: a rule that no longer pages for a steady burn, or pages
+      # for a short spike, fails the build.
+      - name: Check Prometheus's rules and run their unit tests
+        run: scripts/devops/alert-rules-test.sh
+
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         if: hashFiles('deploy/helm/**/Chart.yaml') != ''
         with:

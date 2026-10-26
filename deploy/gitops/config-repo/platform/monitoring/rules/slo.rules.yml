@@ -1,0 +1,125 @@
+# The SLIs of docs/design/slo.md as Prometheus rules, for staging's
+# Prometheus (prometheus.yaml loads this file through kustomization.yaml)
+# and for promtool (scripts/devops/alert-rules-test.sh, with slo.test.yml).
+# Thresholds: docs/design/alerts.md. Each SLI has one group: its bad share
+# over four windows, then a fast-burn alert and a slow-burn alert.
+groups:
+  # lesson: devops.l4.recording-rules
+  # S3, product reads: the share of GET requests to the two product
+  # endpoints that got a 5xx, over 5 minutes, 30 minutes, 1 hour and 6
+  # hours. sum by (job) adds up every Pod the job api scrapes, of api,
+  # api-canary and api-green alike. The name says level:metric:operations.
+  - name: slo-s3-product-reads
+    rules:
+      - record: job:product_reads_bad:ratio_rate5m
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*", code!~"5.."}[5m])) / sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*"}[5m]))
+      - record: job:product_reads_bad:ratio_rate30m
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*", code!~"5.."}[30m])) / sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*"}[30m]))
+      - record: job:product_reads_bad:ratio_rate1h
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*", code!~"5.."}[1h])) / sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*"}[1h]))
+      - record: job:product_reads_bad:ratio_rate6h
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*", code!~"5.."}[6h])) / sum by (job) (rate(http_requests_received_total{method="GET", endpoint=~"api/v1/products.*"}[6h]))
+      # lesson: devops.l4.burn-rate-alerts
+      # Fast burn: the 1-hour and the 5-minute bad share both above 13.44
+      # times the 0.5% S3's SLO allows (6.72%), for 2 minutes: a person now.
+      - alert: ProductReadsFastBurn
+        expr: job:product_reads_bad:ratio_rate1h > (13.44 * 0.005) and job:product_reads_bad:ratio_rate5m > (13.44 * 0.005)
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: Product reads fail fast enough to spend 2% of S3's 28-day error budget in an hour
+          runbook: docs/runbooks/product-reads-burn.md
+      # Slow burn: the 6-hour and the 30-minute share above 5.6 times 0.5%
+      # (2.8%), for 15 minutes: a ticket for working hours.
+      - alert: ProductReadsSlowBurn
+        expr: job:product_reads_bad:ratio_rate6h > (5.6 * 0.005) and job:product_reads_bad:ratio_rate30m > (5.6 * 0.005)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: Product reads spend S3's error budget faster than it lasts (5% in 6 hours)
+
+  # S1, placing orders: POST to api/v1/orders and api/v2/orders without a
+  # 5xx. SLO 99.5%.
+  - name: slo-s1-order-placement
+    rules:
+      - record: job:order_placement_bad:ratio_rate5m
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders", code!~"5.."}[5m])) / sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders"}[5m]))
+      - record: job:order_placement_bad:ratio_rate30m
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders", code!~"5.."}[30m])) / sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders"}[30m]))
+      - record: job:order_placement_bad:ratio_rate1h
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders", code!~"5.."}[1h])) / sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders"}[1h]))
+      - record: job:order_placement_bad:ratio_rate6h
+        expr: 1 - sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders", code!~"5.."}[6h])) / sum by (job) (rate(http_requests_received_total{method="POST", endpoint=~"api/v[12]/orders"}[6h]))
+      - alert: OrderPlacementFastBurn
+        expr: job:order_placement_bad:ratio_rate1h > (13.44 * 0.005) and job:order_placement_bad:ratio_rate5m > (13.44 * 0.005)
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: Placing orders fails fast enough to spend 2% of S1's 28-day error budget in an hour
+          runbook: docs/runbooks/order-placement-burn.md
+      - alert: OrderPlacementSlowBurn
+        expr: job:order_placement_bad:ratio_rate6h > (5.6 * 0.005) and job:order_placement_bad:ratio_rate30m > (5.6 * 0.005)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: Placing orders spends S1's error budget faster than it lasts (5% in 6 hours)
+
+  # S2, placing orders fast enough: the same requests answered within the
+  # bucket le="0.512". Bad means slower. SLO 99%.
+  - name: slo-s2-order-placement-latency
+    rules:
+      - record: job:order_placement_slow:ratio_rate5m
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint=~"api/v[12]/orders", le="0.512"}[5m])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint=~"api/v[12]/orders"}[5m]))
+      - record: job:order_placement_slow:ratio_rate30m
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint=~"api/v[12]/orders", le="0.512"}[30m])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint=~"api/v[12]/orders"}[30m]))
+      - record: job:order_placement_slow:ratio_rate1h
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint=~"api/v[12]/orders", le="0.512"}[1h])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint=~"api/v[12]/orders"}[1h]))
+      - record: job:order_placement_slow:ratio_rate6h
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint=~"api/v[12]/orders", le="0.512"}[6h])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint=~"api/v[12]/orders"}[6h]))
+      - alert: OrderPlacementLatencyFastBurn
+        expr: job:order_placement_slow:ratio_rate1h > (13.44 * 0.01) and job:order_placement_slow:ratio_rate5m > (13.44 * 0.01)
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: Placing orders is slow often enough to spend 2% of S2's 28-day error budget in an hour
+          runbook: docs/runbooks/order-placement-latency-burn.md
+      - alert: OrderPlacementLatencySlowBurn
+        expr: job:order_placement_slow:ratio_rate6h > (5.6 * 0.01) and job:order_placement_slow:ratio_rate30m > (5.6 * 0.01)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: Slow order placements spend S2's error budget faster than it lasts (5% in 6 hours)
+
+  # S4, refund requests (YC-7): POST api/v1/orders/{id:int}/refund answered
+  # within the bucket le="2.048". SLO 99%.
+  - name: slo-s4-refund-requests
+    rules:
+      - record: job:refund_requests_slow:ratio_rate5m
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint="api/v1/orders/{id:int}/refund", le="2.048"}[5m])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint="api/v1/orders/{id:int}/refund"}[5m]))
+      - record: job:refund_requests_slow:ratio_rate30m
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint="api/v1/orders/{id:int}/refund", le="2.048"}[30m])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint="api/v1/orders/{id:int}/refund"}[30m]))
+      - record: job:refund_requests_slow:ratio_rate1h
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint="api/v1/orders/{id:int}/refund", le="2.048"}[1h])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint="api/v1/orders/{id:int}/refund"}[1h]))
+      - record: job:refund_requests_slow:ratio_rate6h
+        expr: 1 - sum by (job) (rate(http_request_duration_seconds_bucket{method="POST", endpoint="api/v1/orders/{id:int}/refund", le="2.048"}[6h])) / sum by (job) (rate(http_request_duration_seconds_count{method="POST", endpoint="api/v1/orders/{id:int}/refund"}[6h]))
+      - alert: RefundRequestsFastBurn
+        expr: job:refund_requests_slow:ratio_rate1h > (13.44 * 0.01) and job:refund_requests_slow:ratio_rate5m > (13.44 * 0.01)
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: Refund requests are slow often enough to spend 2% of S4's 28-day error budget in an hour
+          runbook: docs/runbooks/refund-requests-burn.md
+      - alert: RefundRequestsSlowBurn
+        expr: job:refund_requests_slow:ratio_rate6h > (5.6 * 0.01) and job:refund_requests_slow:ratio_rate30m > (5.6 * 0.01)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: Slow refund requests spend S4's error budget faster than it lasts (5% in 6 hours)
