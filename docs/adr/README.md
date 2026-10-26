@@ -39,6 +39,8 @@ làm này được chọn trong ADR 0001.
 | 0029 | [Ký bảng kê cho ngân hàng kèm dấu thời gian và trạng thái thu hồi](0029-ky-bang-ke-ngan-hang-kem-dau-thoi-gian.md) | Đã chấp nhận |
 | 0030 | [Tìm sản phẩm bằng full-text search của PostgreSQL, trong Catalog](0030-tim-san-pham-bang-full-text-search-cua-postgresql.md) | Đã chấp nhận |
 | 0031 | [Báo cáo đọc từ database báo cáo riêng, nạp bằng job mỗi giờ](0031-bao-cao-tu-database-bao-cao-rieng.md) | Đã chấp nhận |
+| 0032 | [Chat hỗ trợ qua WebSocket, trong service riêng `DonHang.Support`](0032-chat-ho-tro-qua-websocket-trong-service-rieng.md) | Đã chấp nhận |
+| 0033 | [Cửa hàng tự đăng ký bằng saga nhiều bước; gói và cài đặt là dữ liệu](0033-cua-hang-tu-dang-ky-goi-la-du-lieu.md) | Đã chấp nhận |
 
 ### Khi nào viết một ADR
 

@@ -19,6 +19,8 @@ hoặc một lý do nói rõ vì sao không. Thao tác nào được trả lời
 | Lựa chọn kênh của khách (notification preferences): SMS, push ngoài email | Notifications, `donhang_notifications` (chưa có ở stage-4, ADR 0027) | Không ai | | `donhang_notifications` |
 | Dòng báo cáo hoàn tiền của cổng và kết quả đối soát | Payments, `donhang_payments` (chưa có ở stage-4, ADR 0028) | Không ai; báo cáo gốc nằm ở cổng | Mỗi ngày job đối soát lấy báo cáo của ngày trước; dòng đã lưu không sửa | Cổng, về việc cổng đã làm gì; chỗ lệch do người giải thích |
 | Tổng báo cáo theo cửa hàng theo ngày | Không là chủ: bản sao trong database báo cáo (chưa có ở stage-4, ADR 0031); chủ của từng con số vẫn là Ordering (`donhang`) và Payments (`donhang_payments`) | Database báo cáo | Job chạy mỗi giờ, tính lại vài ngày gần nhất | Ordering, Payments |
+| Cuộc trò chuyện và tin chat | Support, `donhang_support` (chưa có ở stage-4, ADR 0032) | Không ai; kênh publish/subscribe của Redis chỉ chuyển tiếp, không giữ | Không có bản sao để cập nhật | `donhang_support` |
+| Cửa hàng (`shops`: gói, cài đặt, trạng thái `pending`/`active`/`leaving`) và bảng gói | Ordering, `donhang`, do đội Cửa hàng phụ trách (giả định; chưa có ở stage-4, ADR 0033) | Cache bảng ánh xạ trong mỗi Pod (ADR 0026) | Cache hết hạn sau một thời gian ngắn | `shops` |
 
 ### Bản sao ngoài các service
 
