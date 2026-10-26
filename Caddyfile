@@ -21,7 +21,9 @@
 		# directly (decided in backend.l1.what-kestrel-does, kept through devops).
 		# lesson: backend.l3.compensating-action
 		# From stage-3 one path of the API belongs to the Payments service:
-		# the list of refunds. More specific than /api/v1/*, so it wins.
+		# the list of refunds. Inside `route` Caddy tries the blocks in the
+		# order they are written, not by how specific their paths are, so
+		# this one wins only because it comes before /api/v1/*.
 		handle /api/v1/refunds* {
 			reverse_proxy payments:8080
 		}
