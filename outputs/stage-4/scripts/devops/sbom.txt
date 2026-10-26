@@ -3,7 +3,7 @@
     102 pkg:deb
      34 pkg:nuget
 == NuGet packages in the image that Directory.Packages.props does not list
-  Microsoft.AspNetCore.App.Runtime.linux-x64 10.0.12
+  Microsoft.AspNetCore.App.Runtime.linux-x64 10.0.14
   Microsoft.Bcl.Cryptography 10.0.2
   Microsoft.EntityFrameworkCore 10.0.12
   Microsoft.EntityFrameworkCore.Abstractions 10.0.12
@@ -14,7 +14,7 @@
   Microsoft.IdentityModel.Protocols 8.19.2
   Microsoft.IdentityModel.Protocols.OpenIdConnect 8.19.2
   Microsoft.IdentityModel.Tokens 8.19.2
-  Microsoft.NETCore.App.Runtime.linux-x64 10.0.12
+  Microsoft.NETCore.App.Runtime.linux-x64 10.0.14
   Microsoft.OpenApi 2.12.0
   OpenTelemetry 1.19.1
   OpenTelemetry.Api 1.19.1

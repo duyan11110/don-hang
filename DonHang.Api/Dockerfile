@@ -7,7 +7,7 @@
 # what is pulled, the tag only says which line it came from. Each project's
 # packages.lock.json comes in with its .csproj, and --locked-mode makes the
 # restore fail instead of choosing a version the lock file does not name.
-FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS build
 WORKDIR /src
 
 COPY global.json Directory.Packages.props Directory.Build.props ./
@@ -34,7 +34,7 @@ COPY .config/dotnet-tools.json .config/
 RUN dotnet tool restore \
     && dotnet ef migrations bundle --project DonHang.Infrastructure --configuration Release --output /bundle/efbundle
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:b89586dc17781f25531909993658aa8161205ae38b8cec8847df4a8221a403d5 AS migrate
+FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:a3f9f81954b9c810af2ed18849716c8dc74a4707bd0907fdbd69be81554c0f30 AS migrate
 # The same Kerberos library as the api image below, for the same reason.
 RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
@@ -45,7 +45,7 @@ USER $APP_UID
 ENTRYPOINT ["./efbundle"]
 
 # The api's image: the default target, because it is the last stage.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:de0ee358cdd672f7017a003bed21e9ac9ed48a27c922a59b18175b6e82fa7fee AS final
 WORKDIR /app
 # Npgsql probes for Kerberos/GSSAPI support at startup; without this library
 # present that probe logs a scary but harmless "cannot open shared object" line.
