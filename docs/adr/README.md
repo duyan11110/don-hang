@@ -33,6 +33,8 @@ làm này được chọn trong ADR 0001.
 | 0022 | [Production chạy trên Kubernetes managed](0022-production-tren-kubernetes-managed.md) | Đã chấp nhận |
 | 0023 | [Khóa ký hóa đơn nằm trong dịch vụ HSM của nhà cung cấp](0023-khoa-ky-hoa-don-trong-hsm-cua-nha-cung-cap.md) | Đã chấp nhận |
 | 0024 | [Gửi email cho khách qua Dịch vụ A, bằng SMTP](0024-dich-vu-gui-email-ben-ngoai.md) | Đã chấp nhận |
+| 0026 | [Cửa hàng lớn chuyển sang database riêng, qua bảng ánh xạ cửa hàng](0026-cua-hang-lon-chuyen-sang-database-rieng.md) | Đã chấp nhận |
+| 0027 | [Thông báo nhiều kênh, email là kênh chính](0027-thong-bao-nhieu-kenh-email-la-kenh-chinh.md) | Đã chấp nhận |
 
 ### Khi nào viết một ADR
 

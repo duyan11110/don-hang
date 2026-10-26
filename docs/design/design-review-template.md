@@ -56,7 +56,7 @@ ghi riêng.
 Phần nào của thiết kế tốn kém nếu phải đảo ngược, cần một ADR; số ADR khi đã
 có.
 
-### Câu hỏi trong buổi review
+### Câu hỏi phản biện trong buổi review
 
 Ghi lại trong buổi review, ngay vào tài liệu này.
 
