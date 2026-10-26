@@ -1,5 +1,6 @@
 # Sourced by the scripts of k8s/networking-deep, bare-metal and
-# operators-and-cluster-lifecycle that run on the cluster donhang.
+# operators-and-cluster-lifecycle that run on the cluster donhang, and by
+# the stage-4 ones that do (multi-cluster-and-mesh, managed-vs-selfhosted).
 # Every kubectl here talks to donhang, whatever context is current.
 kubectl() { command kubectl --context kind-donhang "$@"; }
 show() { echo "\$ $*"; "$@"; }

@@ -1,0 +1,46 @@
+# lesson: k8s.l4.sharing-a-cluster
+# One team's namespace, with a ResourceQuota on what all its Pods may claim
+# together: 200m of CPU requests, 256Mi of memory requests, 4 Pods. The
+# API server checks each new Pod against what the namespace already uses
+# and refuses the one that would go over.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tenancy-lessons
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: team-quota
+  namespace: tenancy-lessons
+spec:
+  hard:
+    requests.cpu: 200m
+    requests.memory: 256Mi
+    pods: "4"
+---
+# lesson: k8s.l4.sharing-a-cluster
+# The team's workload: each Pod requests 50m of CPU and 32Mi of memory, so
+# the quota above holds four of them.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: tenancy-lessons
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: caddy:2.10.0
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi

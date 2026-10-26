@@ -1,0 +1,33 @@
+$ kubectl apply -f deploy/k8s/lessons/team-quota.yaml
+namespace/tenancy-lessons created
+resourcequota/team-quota created
+deployment.apps/web created
+$ kubectl get resourcequota team-quota -n tenancy-lessons (used of hard, per resource)
+pods: 1 of 4
+requests.cpu: 50m of 200m
+requests.memory: 32Mi of 256Mi
+
+$ kubectl scale deployment web -n tenancy-lessons --replicas=6
+deployment.apps/web scaled
+$ kubectl get deployment web -n tenancy-lessons
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+web    4/6     4            4           ...
+$ kubectl get pods -n tenancy-lessons --no-headers | wc -l
+4
+== the ReplicaSet's FailedCreate events (each message once)
+Error creating: pods "web-<new Pod>" is forbidden: exceeded quota: team-quota, requested: pods=1,requests.cpu=50m, used: pods=4,requests.cpu=200m, limited: pods=4,requests.cpu=200m
+
+$ kubectl run bare -n tenancy-lessons --image=caddy:2.10.0
+Error from server (Forbidden): pods "bare" is forbidden: failed quota: team-quota: must specify requests.cpu for: bare; requests.memory for: bare
+
+$ kubectl apply -f deploy/k8s/lessons/team-limit-range.yaml
+limitrange/team-defaults created
+$ kubectl run bare -n tenancy-lessons --image=caddy:2.10.0
+pod/bare created
+$ kubectl get pod bare -n tenancy-lessons -o jsonpath='{.spec.containers[0].resources}'
+{"limits":{"cpu":"100m","memory":"64Mi"},"requests":{"cpu":"20m","memory":"32Mi"}}
+
+$ kubectl get resourcequota team-quota -n tenancy-lessons (used of hard, per resource)
+pods: 2 of 4
+requests.cpu: 70m of 200m
+requests.memory: 64Mi of 256Mi

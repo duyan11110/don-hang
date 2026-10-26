@@ -1,0 +1,19 @@
+# lesson: k8s.l4.sharing-a-cluster
+# Defaults for every container in tenancy-lessons that sets none: the
+# requests the quota counts (defaultRequest) and the limits (default). The
+# API server writes them into the Pod when it is created, before the quota
+# is checked, so a Pod without requests is no longer refused.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: team-defaults
+  namespace: tenancy-lessons
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 20m
+        memory: 32Mi
+      default:
+        cpu: 100m
+        memory: 64Mi
