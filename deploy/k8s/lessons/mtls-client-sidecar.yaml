@@ -1,0 +1,66 @@
+# lesson: k8s.l4.sidecar-proxies
+# The caller's sidecar: plain HTTP on 127.0.0.1:9000 for its own app, and
+# for each request an mTLS connection to echo-sidecar with gateway-client's
+# certificate, checking the server's against the lab CA. Host is set to
+# the upstream's name and port, the name its certificate is for.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caller-sidecar
+  namespace: mesh-lessons
+data:
+  proxy.Caddyfile: |
+    {
+      admin off
+    }
+    http://:9000 {
+      bind 127.0.0.1
+      reverse_proxy https://echo-sidecar.mesh-lessons.svc:8443 {
+        header_up Host {upstream_hostport}
+        transport http {
+          tls_client_auth /certs/tls.crt /certs/tls.key
+          tls_trust_pool file /certs/ca.crt
+        }
+      }
+    }
+---
+# lesson: k8s.l4.sidecar-proxies
+# The calling app (here just a shell in Caddy's image) has no certificate
+# and no key: only its sidecar mounts gateway-client-tls.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caller
+  namespace: mesh-lessons
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caller
+  template:
+    metadata:
+      labels:
+        app: caller
+    spec:
+      initContainers:
+        - name: tls-proxy
+          image: caddy:2.10.0
+          restartPolicy: Always
+          command: ["caddy", "run", "--config", "/config/proxy.Caddyfile", "--adapter", "caddyfile"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+      containers:
+        - name: app
+          image: caddy:2.10.0
+          command: ["sleep", "86400"]
+      volumes:
+        - name: config
+          configMap:
+            name: caller-sidecar
+        - name: certs
+          secret:
+            secretName: gateway-client-tls

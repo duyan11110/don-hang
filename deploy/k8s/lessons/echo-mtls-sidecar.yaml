@@ -1,0 +1,93 @@
+# lesson: k8s.l4.sidecar-proxies
+# Two Caddyfiles for one Pod. app.Caddyfile: the echo app, plain HTTP, on
+# 127.0.0.1 only, so nothing outside the Pod reaches it. proxy.Caddyfile:
+# the sidecar, mTLS on 8443 as in echo-mtls.yaml, forwarding each request
+# to the app with the caller's name in a header.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-sidecar
+  namespace: mesh-lessons
+data:
+  app.Caddyfile: |
+    {
+      admin off
+    }
+    http://:8080 {
+      bind 127.0.0.1
+      respond "echo app, plain HTTP, called by {http.request.header.X-Client-Subject}"
+    }
+  proxy.Caddyfile: |
+    {
+      admin off
+    }
+    :8443 {
+      tls /certs/tls.crt /certs/tls.key {
+        client_auth {
+          mode require_and_verify
+          trust_pool file /certs/ca.crt
+        }
+      }
+      reverse_proxy 127.0.0.1:8080 {
+        header_up X-Client-Subject {http.request.tls.client.subject}
+      }
+    }
+---
+# lesson: k8s.l4.sidecar-proxies
+# The sidecar is an init container with restartPolicy Always: it starts
+# before the echo container and keeps running beside it. Only the sidecar
+# mounts the server certificate; the echo container has no key.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-sidecar
+  namespace: mesh-lessons
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-sidecar
+  template:
+    metadata:
+      labels:
+        app: echo-sidecar
+    spec:
+      initContainers:
+        - name: tls-proxy
+          image: caddy:2.10.0
+          restartPolicy: Always
+          command: ["caddy", "run", "--config", "/config/proxy.Caddyfile", "--adapter", "caddyfile"]
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+      containers:
+        - name: echo
+          image: caddy:2.10.0
+          command: ["caddy", "run", "--config", "/config/app.Caddyfile", "--adapter", "caddyfile"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: echo-sidecar
+        - name: certs
+          secret:
+            secretName: echo-mtls-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-sidecar
+  namespace: mesh-lessons
+spec:
+  selector:
+    app: echo-sidecar
+  ports:
+    - port: 8443
+      targetPort: 8443

@@ -1,0 +1,53 @@
+# lesson: k8s.l4.mutual-tls
+# The lab CA signs every certificate of mesh-lessons, as in
+# lab-ca-issuer.yaml: scripts/k8s/mutual-tls.sh puts its certificate and
+# key in the Secret lab-ca from secrets/, so the key never reaches Git.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: lab-ca
+  namespace: mesh-lessons
+spec:
+  ca:
+    secretName: lab-ca
+---
+# lesson: k8s.l4.mutual-tls
+# The server's certificate: the names a caller in the cluster uses for the
+# Services echo-mtls and echo-sidecar (echo-mtls-sidecar.yaml), for server
+# authentication only.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: echo-mtls
+  namespace: mesh-lessons
+spec:
+  secretName: echo-mtls-tls
+  dnsNames:
+    - echo-mtls.mesh-lessons.svc
+    - echo-sidecar.mesh-lessons.svc
+  usages:
+    - server auth
+    - digital signature
+    - key encipherment
+  issuerRef:
+    kind: Issuer
+    name: lab-ca
+---
+# lesson: k8s.l4.mutual-tls
+# The caller's certificate: its name, gateway-client, is the subject's
+# common name, and it may only prove a client (client auth).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: gateway-client
+  namespace: mesh-lessons
+spec:
+  secretName: gateway-client-tls
+  commonName: gateway-client
+  usages:
+    - client auth
+    - digital signature
+    - key encipherment
+  issuerRef:
+    kind: Issuer
+    name: lab-ca

@@ -1,0 +1,73 @@
+# lesson: k8s.l4.mutual-tls
+# Caddy as an HTTPS server that asks every client for a certificate:
+# require_and_verify refuses the handshake without one, or with one the
+# lab CA (ca.crt in the Secret cert-manager wrote) did not sign. It answers
+# with the subject of the client's certificate, the caller's name.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-mtls
+  namespace: mesh-lessons
+data:
+  Caddyfile: |
+    {
+      admin off
+    }
+    :8443 {
+      tls /certs/tls.crt /certs/tls.key {
+        client_auth {
+          mode require_and_verify
+          trust_pool file /certs/ca.crt
+        }
+      }
+      respond "hello {http.request.tls.client.subject}"
+    }
+---
+# lesson: k8s.l4.mutual-tls
+# The server certificate's Secret is mounted as files; the Caddyfile above
+# replaces the image's own.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-mtls
+  namespace: mesh-lessons
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-mtls
+  template:
+    metadata:
+      labels:
+        app: echo-mtls
+    spec:
+      containers:
+        - name: echo
+          image: caddy:2.10.0
+          ports:
+            - containerPort: 8443
+          volumeMounts:
+            - name: config
+              mountPath: /etc/caddy
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: echo-mtls
+        - name: certs
+          secret:
+            secretName: echo-mtls-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-mtls
+  namespace: mesh-lessons
+spec:
+  selector:
+    app: echo-mtls
+  ports:
+    - port: 8443
+      targetPort: 8443

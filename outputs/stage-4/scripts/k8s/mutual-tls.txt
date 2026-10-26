@@ -1,0 +1,37 @@
+$ kubectl create secret tls lab-ca -n mesh-lessons --cert=secrets/lab-ca.crt --key=secrets/lab-ca.key
+secret/lab-ca created
+$ kubectl apply -f deploy/k8s/lessons/mtls-certificates.yaml
+issuer.cert-manager.io/lab-ca created
+certificate.cert-manager.io/echo-mtls created
+certificate.cert-manager.io/gateway-client created
+$ kubectl get certificates -n mesh-lessons
+NAME             READY   SECRET               AGE
+echo-mtls        True    echo-mtls-tls        ...
+gateway-client   True    gateway-client-tls   ...
+
+== echo-mtls-tls
+issuer=CN=Don Hang lab CA, O=donhang-dev
+X509v3 Extended Key Usage: 
+    TLS Web Server Authentication
+X509v3 Subject Alternative Name: critical
+    DNS:echo-mtls.mesh-lessons.svc, DNS:echo-sidecar.mesh-lessons.svc
+== gateway-client-tls
+issuer=CN=Don Hang lab CA, O=donhang-dev
+subject=CN=gateway-client
+X509v3 Extended Key Usage: 
+    TLS Web Client Authentication
+
+$ kubectl apply -f deploy/k8s/lessons/echo-mtls.yaml
+configmap/echo-mtls created
+deployment.apps/echo-mtls created
+service/echo-mtls created
+
+$ openssl s_client -connect echo-mtls (port-forward) -CAfile secrets/lab-ca.crt
+handshake refused: tlsv13 alert certificate required
+
+$ openssl s_client -connect echo-mtls (port-forward) -CAfile secrets/lab-ca.crt -cert <gateway-client, signed by another CA> -key ...
+handshake refused: tlsv1 alert unknown ca
+
+$ openssl s_client -connect echo-mtls (port-forward) -CAfile secrets/lab-ca.crt -cert <gateway-client-tls's tls.crt> -key <its tls.key>
+HTTP/1.1 200 OK
+hello CN=gateway-client

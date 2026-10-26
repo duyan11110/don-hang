@@ -1,0 +1,37 @@
+$ kubectl apply -f deploy/k8s/lessons/echo-mtls-sidecar.yaml
+configmap/echo-sidecar created
+deployment.apps/echo-sidecar created
+service/echo-sidecar created
+$ kubectl apply -f deploy/k8s/lessons/mtls-client-sidecar.yaml
+configmap/caller-sidecar created
+deployment.apps/caller created
+$ kubectl get pods -n mesh-lessons
+NAME                   READY   STATUS    RESTARTS   AGE
+caller-...-...         2/2     Running   0          ...
+echo-sidecar-...-...   2/2     Running   0          ...
+
+$ kubectl get pod -l app=echo-sidecar -n mesh-lessons -o jsonpath=<init containers, containers>
+initContainers: tls-proxy (restartPolicy: Always)
+containers: echo
+$ kubectl get pod -l app=caller -n mesh-lessons -o jsonpath=<init containers, containers>
+initContainers: tls-proxy (restartPolicy: Always)
+containers: app
+
+$ kubectl exec deploy/caller -n mesh-lessons -c app -- wget -qO- http://127.0.0.1:9000/
+echo app, plain HTTP, called by CN=gateway-client
+
+$ kubectl exec deploy/caller -n mesh-lessons -c app -- wget --no-check-certificate -qO- https://echo-sidecar.mesh-lessons.svc:8443/
+wget: error getting response: Resource temporarily unavailable
+
+$ kubectl exec deploy/echo-sidecar -n mesh-lessons -c echo -- ls /certs
+ls: /certs: No such file or directory
+$ kubectl exec deploy/echo-sidecar -n mesh-lessons -c tls-proxy -- ls /certs
+ca.crt
+tls.crt
+tls.key
+$ kubectl exec deploy/caller -n mesh-lessons -c app -- ls /certs
+ls: /certs: No such file or directory
+$ kubectl exec deploy/caller -n mesh-lessons -c tls-proxy -- ls /certs
+ca.crt
+tls.crt
+tls.key

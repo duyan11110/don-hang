@@ -153,3 +153,7 @@ in flight: \K *[0-9.]+(?= answered)
 , p95 \K *[0-9.]+(?= ms, 503)
 , 503: \K[0-9]+(?=, answers/s)
 answers/s x average = \K[0-9.]+$
+# Stage-4 k8s scripts (capture-output.sh --k8s-host): the random parts of
+# the Pod names of multi-cluster-and-mesh and managed-vs-selfhosted.
+\b(?:caller|echo-sidecar|echo-mtls|echo-region|cpu-echo|load)-\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
+\b(?:caller|echo-sidecar|echo-mtls|echo-region|cpu-echo|load)-\.\.\.-\K[bcdfghjklmnpqrstvwxz2456789]{5}\b
