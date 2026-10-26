@@ -39,10 +39,6 @@ responded [0-9]+ in \K[0-9]+(?=ms)
 \b10\.96\.(?!0\.1\b|0\.10\b)[0-9]+\.[0-9]+\b
 (?<=   )donhang-worker\K2?(?=   |$)
 pod-template-hash=\K[bcdfghjklmnpqrstvwxz2456789]{5,10}\b
-# scripts/frontend/web-bundle.sh: sizes in bytes, which change with any
-# change to the app, its packages or Flutter.
-\b(?:raw|gzip) \K[0-9]+
-^bytes sent \K[0-9]+
 # Stage-3 messaging and refund scripts: a refund's request time, a fresh
 # message id, and the client library's words for a refused connection.
 "requestedAt":"\K[^"]*(?=")
@@ -147,3 +143,13 @@ KUBE-SEP-\K[A-Z0-9]{16}\b
 # script run before it.
 ^  S[1-4] .* good \K[0-9]+, total [0-9]+, ratio \S+$
 ^  S1 budget left: \K\S+(?= requests$)
+# scripts/frontend/web-bundle.sh: the total of every file in build/web,
+# which includes files Flutter writes differently on each build (a build id,
+# hashes in flutter_bootstrap.js); the single files' sizes stay.
+all files together: raw \K[0-9]+
+# Stage-4 load-steps.sh: rates and times of a load test on one machine.
+in flight: \K *[0-9.]+(?= answered)
+, average \K *[0-9.]+(?= ms, p95)
+, p95 \K *[0-9.]+(?= ms, 503)
+, 503: \K[0-9]+(?=, answers/s)
+answers/s x average = \K[0-9.]+$
