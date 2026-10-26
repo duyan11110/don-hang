@@ -1,0 +1,29 @@
+== the certificate in secrets/donhang-tls.crt
+subject=CN=donhang.localhost, O=donhang-dev
+issuer=CN=Don Hang lab CA, O=donhang-dev
+X509v3 Subject Alternative Name: 
+    DNS:donhang.localhost, DNS:auth.donhang.localhost
+sealed donhang-tls into platform/edge/sealed-donhang-tls.yaml
+
+-   Keycloak__Authority: "http://localhost:8180/realms/donhang"
++   Keycloak__Authority: "https://auth.donhang.localhost:18443/realms/donhang"
+-   value: "http://localhost:8180"
++   value: "https://auth.donhang.localhost:18443"
+edge-staging: Synced, Healthy
+staging: Synced, Healthy
+
+== the Gateway's listeners
+http: 1 route(s), Programmed=True
+https: 2 route(s), Programmed=True
+
+== GET http://donhang.localhost:18080/api/v1/products
+HTTP 301, Location: https://donhang.localhost:18443/api/v1/products
+== GET https://donhang.localhost:18443/api/v1/products, without and with --cacert secrets/lab-ca.crt
+curl: error 60, the certificate is not trusted
+HTTP 200 over HTTPS
+
+== the token's issuer
+"iss":"https://auth.donhang.localhost:18443/realms/donhang"
+== GET https://donhang.localhost:18443/api/v1/orders/1 (an order of anh.tran), without and with the token
+HTTP 401
+HTTP 200

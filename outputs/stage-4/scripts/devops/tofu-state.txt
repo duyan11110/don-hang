@@ -1,0 +1,24 @@
+$ tofu state list
+kind_cluster.this
+
+$ grep -o '"client_key": *"-----BEGIN [A-Z ]*-----' terraform.tfstate
+"client_key":"-----BEGIN RSA PRIVATE KEY-----
+
+== main.tf without its resource block
+  # kind_cluster.this will be destroyed
+  # (because kind_cluster.this is not in configuration)
+Plan: 0 to add, 0 to change, 1 to destroy.
+
+== terraform.tfstate moved away
+  # kind_cluster.this will be created
+Plan: 1 to add, 0 to change, 0 to destroy.
+Error: node(s) already exist for a cluster with the name "donhang-iac"
+
+== the state is back; apply the plan saved without it
+$ tofu apply -no-color stale.tfplan
+
+Error: Saved plan is stale
+
+The given plan file can no longer be applied because the state was changed by
+another operation after the plan was created.
+(exit 1)

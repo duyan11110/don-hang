@@ -1,0 +1,25 @@
+staging: Synced, Healthy
+$ kubectl get services -n donhang
+NAME                CLUSTER-IP
+rabbitmq            ...
+rabbitmq-headless   None
+
+rabbitmq            -> the Service's address: yes
+rabbitmq-headless   -> rabbitmq-0's address: yes
+rabbitmq-0.rabbitmq-headless.donhang.svc.cluster.local -> rabbitmq-0's address: yes
+== queues on rabbitmq-0
+name	durable
+orders.payment-events	true
+orders.payment-events.dead	true
+
+$ kubectl delete pod rabbitmq-0 -n donhang
+pod "rabbitmq-0" deleted from donhang namespace
+rabbitmq-0's address changed: yes
+rabbitmq-0.rabbitmq-headless.donhang.svc.cluster.local -> the new address: yes
+== the node's name and its folder on the claim
+'rabbit@rabbitmq-0.rabbitmq-headless.donhang.svc.cluster.local'
+rabbit@rabbitmq-0.rabbitmq-headless.donhang.svc.cluster.local
+== queues on the new rabbitmq-0
+name	durable
+orders.payment-events	true
+orders.payment-events.dead	true

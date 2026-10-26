@@ -1,0 +1,14 @@
+== session A: BEGIN, claim 2 rows FOR UPDATE SKIP LOCKED, hold the locks for 3 s
+  A got: demo job 1
+  A got: demo job 2
+== session B, while A holds its locks: the same claim
+  B got: demo job 3
+  B got: demo job 4
+== session C: the claim without SKIP LOCKED, giving up after 1 s of waiting
+  C: ERROR:  canceling statement due to lock timeout
+  C: CONTEXT:  while locking tuple ... in relation "notifications"
+== session D: a plain SELECT, no FOR UPDATE: it waits for nothing
+  D sees: demo job 1
+  D sees: demo job 2
+  D sees: demo job 3
+  D sees: demo job 4

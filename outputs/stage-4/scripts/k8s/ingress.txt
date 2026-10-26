@@ -1,0 +1,19 @@
+$ kubectl get service api -n donhang
+NAME   TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
+api    ClusterIP   ...          <none>        8080/TCP   ...
+
+== GET http://ingress.donhang.localhost:18080/api/v1/products, no Ingress yet
+HTTP 404
+
+$ kubectl apply -f deploy/k8s/lessons/api-ingress.yaml
+ingress.networking.k8s.io/api created
+$ kubectl get ingress api -n donhang
+NAME   CLASS     HOST                        PATH      SERVICE
+api    traefik   ingress.donhang.localhost   /api/v1   api
+
+== GET http://ingress.donhang.localhost:18080/api/v1/products, with the Ingress
+[{"id":1,"name":"Bàn phím cơ","priceVnd":1250000},{"id":2,"name":"Chuột không dây","priceVnd":450000},{"id":3,"na
+HTTP 200
+
+$ kubectl delete -f deploy/k8s/lessons/api-ingress.yaml
+ingress.networking.k8s.io "api" deleted from donhang namespace

@@ -1,0 +1,52 @@
+== rows in each partition
+SELECT tableoid::regclass AS partition, count(*) FROM orders_by_month GROUP BY 1 ORDER BY 1
+   partition    | count 
+----------------+-------
+ orders_2026_01 | 44639
+ orders_2026_02 | 40320
+ orders_2026_03 | 44640
+ orders_2026_04 | 43200
+ orders_2026_05 | 27201
+
+== March's orders: a condition on placed_at, the partition key
+EXPLAIN (COSTS OFF) SELECT count(*) FROM orders_by_month
+WHERE placed_at >= '2026-03-01 00:00+07' AND placed_at < '2026-04-01 00:00+07'
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on orders_2026_03 orders_by_month
+         Filter: ((placed_at >= '2026-03-01 00:00:00+07'::timestamp with time zone) AND (placed_at < '2026-04-01 00:00:00+07'::timestamp with time zone))
+
+== one customer's orders: no condition on placed_at
+EXPLAIN (COSTS OFF) SELECT count(*) FROM orders_by_month WHERE customer_id = 7
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Index Only Scan using orders_2026_01_customer_id_idx on orders_2026_01 orders_by_month_1
+               Index Cond: (customer_id = 7)
+         ->  Index Only Scan using orders_2026_02_customer_id_idx on orders_2026_02 orders_by_month_2
+               Index Cond: (customer_id = 7)
+         ->  Index Only Scan using orders_2026_03_customer_id_idx on orders_2026_03 orders_by_month_3
+               Index Cond: (customer_id = 7)
+         ->  Index Only Scan using orders_2026_04_customer_id_idx on orders_2026_04 orders_by_month_4
+               Index Cond: (customer_id = 7)
+         ->  Index Only Scan using orders_2026_05_customer_id_idx on orders_2026_05 orders_by_month_5
+               Index Cond: (customer_id = 7)
+
+== a primary key without the partition key
+CREATE TABLE orders_by_month_id_only (id integer PRIMARY KEY, placed_at timestamptz NOT NULL)
+PARTITION BY RANGE (placed_at)
+ERROR:  unique constraint on partitioned table must include all partitioning columns
+DETAIL:  PRIMARY KEY constraint on table "orders_by_month_id_only" lacks column "placed_at" which is part of the partition key.
+
+== remove January
+ALTER TABLE orders_by_month DETACH PARTITION orders_2026_01
+ALTER TABLE
+DROP TABLE orders_2026_01
+DROP TABLE
+SELECT min(placed_at), count(*) FROM orders_by_month
+          min           | count  
+------------------------+--------
+ 2026-02-01 00:00:00+07 | 155361
+

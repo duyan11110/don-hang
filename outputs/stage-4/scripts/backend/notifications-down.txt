@@ -1,0 +1,9 @@
+notifications is stopped
+== POST /api/v1/orders as customer 1
+  -> 201
+messages waiting in notifications.order-events: 1
+email jobs for the new order in donhang_notifications: 0
+
+notifications is back
+messages waiting in notifications.order-events: 0
+the new order's email job: sent

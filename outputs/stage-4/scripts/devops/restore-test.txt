@@ -1,0 +1,10 @@
+newest dumps: /backups/logical/...
+restored donhang
+restored donhang_notifications
+restored donhang_payments
+restored donhang_tofu
+restored keycloak
+orders: ... in counts.txt, ... restored, same
+order_items: ... in counts.txt, ... restored, same
+customers: 5 in counts.txt, 5 restored, same
+restore and check took ... s

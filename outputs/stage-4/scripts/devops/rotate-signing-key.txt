@@ -1,0 +1,9 @@
+== before: a token from the active key
+  token's kid is the active RS256 key: yes
+  GET /api/v1/orders with it -> 200
+== after adding a key with priority ...
+  a new token's kid is the new key's: yes
+  and differs from the old token's: yes
+  GET /api/v1/orders with the new token -> 200 (after ... s)
+  GET /api/v1/orders with the old token -> 200
+the old key can go once every token it signed has expired: 300 s after this rotation

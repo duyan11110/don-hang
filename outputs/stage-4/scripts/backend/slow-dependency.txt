@@ -1,0 +1,6 @@
+== GET /api/v1/products/3, Redis up
+  -> 200 after less than 1 s
+== GET /api/v1/products/3, Redis stopped
+  -> 200 after less than 1 s
+== GET /api/v1/products/3, Redis paused
+  -> 200 after more than 5 s

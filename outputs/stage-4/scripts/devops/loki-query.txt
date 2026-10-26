@@ -1,0 +1,5 @@
+== POST /api/v1/orders that the database refuses
+  -> 500
+
+logql> {service="api"} | json | State_StatusCode >= 500
+{"LogLevel":"Information","Category":"DonHang.Api.Middleware.RequestLoggingMiddleware","Message":"POST /api/v1/orders responded 500 in ...ms"}

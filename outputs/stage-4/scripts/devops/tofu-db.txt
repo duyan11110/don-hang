@@ -1,0 +1,29 @@
+== schemas in donhang_tofu
+            List of schemas
+        Name        |       Owner       
+--------------------+-------------------
+ production_cluster | donhang
+ public             | pg_database_owner
+ staging_cluster    | donhang
+ staging_platform   | donhang
+(4 rows)
+
+== staging's states
+      schema      |  name   
+------------------+---------
+ staging_cluster  | default
+ staging_platform | default
+(2 rows)
+
+
+== what a row holds
+serial
+lineage
+meta
+encrypted_data
+encryption_version
+rows that contain a private key in plain text:
+0
+
+== state files under deploy/tofu/envs
+none

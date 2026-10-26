@@ -1,0 +1,7 @@
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+logql> {service=~"api|payments|notifications"} | trace_id="..." != "Microsoft.EntityFrameworkCore" != "System.Net.Http"
+api: POST /api/v1/orders/10/refund responded 202 in ...ms
+notifications: Saved the refund requested email for order 10
+payments: Refund ... for order 10 is done
+notifications: Saved the order refunded email for order 10

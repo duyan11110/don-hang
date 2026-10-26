@@ -1,0 +1,29 @@
+== without the moved block
+  # kind_cluster.this will be destroyed
+  # (because kind_cluster.this is not in configuration)
+  # module.cluster.kind_cluster.this will be created
+Plan: 1 to add, 0 to change, 1 to destroy.
+
+== with it
+  # kind_cluster.this has moved to module.cluster.kind_cluster.this
+Plan: 0 to add, 0 to change, 0 to destroy.
+
+$ tofu apply -auto-approve -no-color
+
+OpenTofu will perform the following actions:
+
+  # kind_cluster.this has moved to module.cluster.kind_cluster.this
+    resource "kind_cluster" "this" {
+        id                     = "donhang-iac-kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d"
+        name                   = "donhang-iac"
+        # (9 unchanged attributes hidden)
+
+        # (1 unchanged block hidden)
+    }
+
+Plan: 0 to add, 0 to change, 0 to destroy.
+
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
+
+$ tofu state list
+module.cluster.kind_cluster.this

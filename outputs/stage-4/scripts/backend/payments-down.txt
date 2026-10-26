@@ -1,0 +1,13 @@
+payments is stopped
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+== 5 seconds later
+  GET /api/v1/orders/10 -> status refunding
+  messages waiting in payments.refund-requests: 1
+  refund rows for order 10 in donhang_payments: 0
+
+payments is back
+== once Payments has caught up
+  GET /api/v1/orders/10 -> status cancelled
+  messages waiting in payments.refund-requests: 0
+  the refund row: refunded

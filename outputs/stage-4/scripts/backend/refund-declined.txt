@@ -1,0 +1,21 @@
+order 3 belongs to customer 2 and was paid by bank transfer:
+charge | paid | 3520000 | bank_transfer
+
+== POST /api/v1/orders/3/refund as customer 2
+  -> 202
+
+== donhang: order 3's history since the request, and its status now
+refund-requested | refunding
+refund-failed | paid
+now: paid
+== donhang_payments: the refund row
+refund | failed | 1 | a bank transfer cannot be refunded through the card gateway
+== donhang_notifications: the emails to customer 2
+refund requested | sent
+refund failed | sent
+
+== GET /api/v1/refunds?status=failed as staff
+[{"orderId":3,"amountVnd":3520000,"status":"failed","requestedBy":"chau.nguyen@example.com","requestedAt":"...","attempts":1,"failureReason":"a bank transfer cannot be refunded through the card gateway"}]
+  -> 200
+== the same as customer 2
+  -> 403

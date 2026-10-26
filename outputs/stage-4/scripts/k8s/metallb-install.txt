@@ -1,0 +1,13 @@
+$ kubectl apply -f deploy/metallb/metallb-native.yaml
+namespace/metallb-system created
+deployment.apps/controller created
+daemonset.apps/speaker created
+$ kubectl get pods -n metallb-system -o custom-columns=POD:.metadata.name,READY:.status.containerStatuses[0].ready,NODE:.spec.nodeName
+POD                  READY   NODE
+controller-...-...   true    donhang-worker...
+speaker-...          true    donhang-control-plane
+speaker-...          true    donhang-worker...
+speaker-...          true    donhang-worker...
+
+$ kubectl get nodes -l node.kubernetes.io/exclude-from-external-load-balancers -o name
+node/donhang-control-plane

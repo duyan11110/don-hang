@@ -1,0 +1,26 @@
+$ kubectl apply -f deploy/k8s/lessons/retain-storageclass.yaml
+storageclass.storage.k8s.io/retain-local created
+$ kubectl get storageclass
+NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+retain-local         rancher.io/local-path   Retain          WaitForFirstConsumer   false                  ...
+standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  ...
+
+== the claims data (standard) and kept (retain-local), bound
+CLAIM   CLASS          RECLAIM   STATUS
+data    standard       Delete    Bound
+kept    retain-local   Retain    Bound
+
+$ kubectl delete pod writer -n storage-lessons
+pod "writer" deleted from storage-lessons namespace
+$ kubectl delete pvc data kept -n storage-lessons
+persistentvolumeclaim "data" deleted from storage-lessons namespace
+persistentvolumeclaim "kept" deleted from storage-lessons namespace
+== the PersistentVolumes left
+CLAIM   CLASS          RECLAIM   STATUS
+kept    retain-local   Retain    Released
+
+$ kubectl delete namespace storage-lessons
+namespace "storage-lessons" deleted
+== the PersistentVolumes left
+CLAIM   CLASS          RECLAIM   STATUS
+kept    retain-local   Retain    Released

@@ -1,0 +1,36 @@
+/repo
+
+db:
+databases.sql
+migrations-baseline.sql
+partitioning
+perf
+pg_hba.conf
+pitr
+queries
+replica
+schema.sql
+seed.sql
+sharding
+tenancy
+
+docs:
+adr
+clean-code
+craft
+design
+git
+team
+
+www:
+cached.html
+index.html
+login.html
+
+48 db/schema.sql
+
+-- Ask one table a question: choose columns, filter rows, sort, cut.
+SET TIME ZONE 'Asia/Ho_Chi_Minh';
+
+/repo/db/queries
+/repo

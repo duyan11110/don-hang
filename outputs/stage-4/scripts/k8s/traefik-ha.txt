@@ -1,0 +1,25 @@
+$ helm upgrade --install traefik-ha traefik --repo https://traefik.github.io/charts --version 41.6.1 \
+    -n ha-lessons --create-namespace -f deploy/k8s/lessons/traefik-ha-values.yaml --wait
+NAME: traefik-ha
+STATUS: deployed
+REVISION: 2
+$ kubectl get pods -n ha-lessons -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName
+POD                  NODE
+traefik-ha-...-...   donhang-worker...
+traefik-ha-...-...   donhang-worker...
+$ kubectl get service traefik-ha -n ha-lessons
+NAME         TYPE           CLUSTER-IP   EXTERNAL-IP      PORT(S)                  AGE
+traefik-ha   LoadBalancer   ...          172.22.255.201   80:.../TCP,443:.../TCP   ...
+
+$ kubectl apply -f deploy/k8s/lessons/echo-ingress.yaml
+ingress.networking.k8s.io/echo-ip unchanged
+$ docker exec donhang-lb-client wget -qO- http://<traefik-ha's address>
+echo-ip-...-... saw ...
+
+$ docker pause donhang-worker
+calls: ... s after the pause; then 20 in a row succeeded
+$ kubectl get node donhang-worker -o custom-columns=NODE:.metadata.name,READY:.status.conditions[-1].status
+NODE             READY
+donhang-worker   Unknown
+the address is announced by donhang-worker2
+$ docker unpause donhang-worker

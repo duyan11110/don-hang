@@ -1,0 +1,13 @@
+== GET /api/v1/products/3, product:3 not in Redis (a cache miss)
+{"id":3,"name":"Tai nghe","priceVnd":890000}  -> 200
+queries PostgreSQL ran for it: 1
+product:3 in Redis now: {"id":3,"name":"Tai nghe","priceVnd":890000}
+seconds left on product:3: ...
+
+== the same request again (a cache hit)
+{"id":3,"name":"Tai nghe","priceVnd":890000}  -> 200
+queries PostgreSQL ran for it: 0
+
+== the same request with the redis container stopped
+{"id":3,"name":"Tai nghe","priceVnd":890000}  -> 200
+queries PostgreSQL ran for it: 1

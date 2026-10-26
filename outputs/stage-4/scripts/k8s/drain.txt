@@ -1,0 +1,72 @@
+$ kubectl cordon donhang-worker
+node/donhang-worker cordoned
+$ kubectl get node donhang-worker -o custom-columns=NODE:.metadata.name,UNSCHEDULABLE:.spec.unschedulable
+NODE             UNSCHEDULABLE
+donhang-worker   true
+POD           STATUS    NODE
+web-...-...   Running   donhang-worker...
+web-...-...   Running   donhang-worker...
+web-...-...   Running   donhang-worker...
+$ kubectl uncordon donhang-worker
+node/donhang-worker uncordoned
+
+$ kubectl drain donhang-worker
+cannot delete cannot delete Pods that declare no controller (use --force to override): lifecycle-lessons/lonely
+cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/kindnet-..., kube-system/kube-proxy-..., metallb-system/speaker-...
+cannot delete Pods with local storage (use --delete-emptydir-data to override): donhang/db-...-..., ha-lessons/traefik-ha-...-...
+$ kubectl drain donhang-worker --ignore-daemonsets --pod-selector=run=lonely
+cannot delete cannot delete Pods that declare no controller (use --force to override): lifecycle-lessons/lonely
+
+$ kubectl apply -f deploy/k8s/lessons/web-pdb.yaml
+poddisruptionbudget.policy/web created
+$ kubectl drain donhang-worker --ignore-daemonsets --pod-selector=app=web --timeout=180s
+node/donhang-worker cordoned
+evicting pod lifecycle-lessons/web-...-...
+evicting pod lifecycle-lessons/web-...-...
+evicting pod lifecycle-lessons/web-...-...
+error when evicting pods/"web-...-..." -n "lifecycle-lessons" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+error when evicting pods/"web-...-..." -n "lifecycle-lessons" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+pod/web-...-... evicted
+pod/web-...-... evicted
+pod/web-...-... evicted
+node/donhang-worker drained
+POD           STATUS    NODE
+web-...-...   Running   donhang-worker...
+web-...-...   Running   donhang-worker...
+web-...-...   Running   donhang-worker...
+$ kubectl uncordon donhang-worker
+node/donhang-worker uncordoned
+
+$ kubectl apply -f deploy/k8s/lessons/web-pdb-strict.yaml
+poddisruptionbudget.policy/web configured
+$ kubectl drain donhang-worker --ignore-daemonsets --pod-selector=app=web --timeout=30s
+node/donhang-worker cordoned
+evicting pod lifecycle-lessons/web-...-...
+evicting pod lifecycle-lessons/web-...-...
+error when evicting pods/"web-...-..." -n "lifecycle-lessons" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+error when evicting pods/"web-...-..." -n "lifecycle-lessons" (will retry after 5s): Cannot evict pod as it would violate the pod's disruption budget.
+There are pending pods in node "donhang-worker" when an error occurred: [error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s, error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s]
+pod/web-...-...
+pod/web-...-...
+error: unable to drain node "donhang-worker" due to error: [error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s, error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s], continuing command...
+There are pending nodes to be drained:
+ donhang-worker
+error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s
+error when evicting pods/"web-...-..." -n "lifecycle-lessons": global timeout reached: 30s
+$ kubectl uncordon donhang-worker
+node/donhang-worker uncordoned
+$ kubectl delete pod <a web Pod> -n lifecycle-lessons
+pod "<a web Pod>" deleted from lifecycle-lessons namespace
+
+store (claim store-data on standard) runs on donhang-worker
+$ kubectl drain donhang-worker --ignore-daemonsets --pod-selector=app=store --timeout=60s
+node/donhang-worker cordoned
+evicting pod lifecycle-lessons/store-...-...
+pod/store-...-... evicted
+node/donhang-worker drained
+POD             STATUS    NODE
+store-...-...   Pending   <none>
+$ kubectl uncordon donhang-worker
+node/donhang-worker uncordoned
+POD             STATUS    NODE
+store-...-...   Running   donhang-worker...

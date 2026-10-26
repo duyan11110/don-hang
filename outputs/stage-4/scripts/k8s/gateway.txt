@@ -1,0 +1,21 @@
+$ kubectl apply -f .gitops/donhang-config/apps/edge-staging.yaml
+application.argoproj.io/edge-staging unchanged
+edge-staging: Synced, Healthy
+
+== the Gateway and the routes attached to it
+NAME   CLASS   ADDRESS   PROGRAMMED   AGE
+gateway.gateway.networking.k8s.io/donhang   traefik   True   ...
+
+NAME                                           HOSTNAMES                    AGE
+httproute.gateway.networking.k8s.io/api        ["donhang.localhost"]        ...
+httproute.gateway.networking.k8s.io/keycloak   ["auth.donhang.localhost"]   ...
+
+== the HTTPRoute api, as Traefik accepted it
+Accepted=True (Accepted)
+ResolvedRefs=True (ResolvedRefs)
+
+GET http://donhang.localhost:18080/api/v1/products -> 200
+GET http://donhang.localhost:18080/api/v2/orders/1 -> 401
+GET http://donhang.localhost:18080/openapi/v1.json -> 200
+GET http://auth.donhang.localhost:18080/realms/donhang/.well-known/openid-configuration -> 200
+GET http://donhang.localhost:18080/index.html -> 404

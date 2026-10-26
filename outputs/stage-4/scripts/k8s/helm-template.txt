@@ -1,0 +1,45 @@
+== the chart: Chart.yaml, values.yaml and templates/
+deploy/helm/lessons/web/Chart.yaml
+deploy/helm/lessons/web/templates/deployment.yaml
+deploy/helm/lessons/web/templates/service.yaml
+deploy/helm/lessons/web/values.yaml
+
+== defaults (values.yaml)
+$ helm template web deploy/helm/lessons/web --show-only templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: web
+          image: "caddy:2.10.0"
+          ports:
+            - containerPort: 80
+
+== -f deploy/helm/lessons/web-three-replicas.yaml
+  replicas: 3
+          image: "caddy:2.10.0"
+
+== the same, plus --set replicas=5 --set image.tag=2.10.2
+  replicas: 5
+          image: "caddy:2.10.2"
+
+== values.yaml after both renders
+replicas: 1
+image:
+  repository: caddy
+  tag: "2.10.0"
+
+== --set replicas=two
+  replicas: two
+(helm template printed it; the API server would refuse a Deployment whose replicas is a string)

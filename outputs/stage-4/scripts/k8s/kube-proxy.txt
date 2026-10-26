@@ -1,0 +1,25 @@
+$ kubectl get service echo-ip -n network-lessons
+NAME      TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+echo-ip   ClusterIP   ...          <none>        80/TCP    ...
+$ kubectl get endpointslices -n network-lessons -l kubernetes.io/service-name=echo-ip -o custom-columns=ADDRESSES:.endpoints[*].addresses[0],READY:.endpoints[*].conditions.ready,PORT:.ports[0].port
+ADDRESSES   READY       PORT
+...,...     true,true   8080
+
+$ kubectl get configmap kube-proxy -n kube-system -o jsonpath='{.data.config\.conf}' | grep '^mode'
+mode: iptables
+$ docker exec donhang-worker iptables-save -t nat | grep 'network-lessons/echo-ip ' (comments cut)
+-A KUBE-SERVICES -d .../32 -p tcp -m tcp --dport 80 -j KUBE-SVC-CLMCAZ67BDWMELKC
+-A KUBE-SVC-CLMCAZ67BDWMELKC -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-...
+-A KUBE-SVC-CLMCAZ67BDWMELKC -j KUBE-SEP-...
+-A KUBE-SEP-... -p tcp -m tcp -j DNAT --to-destination ...:8080
+-A KUBE-SEP-... -p tcp -m tcp -j DNAT --to-destination ...:8080
+
+$ for i in $(seq 10); do kubectl exec client -n network-lessons -- wget -qO- http://echo-ip; done
+different Pods that answered: 2
+$ kubectl exec client -n network-lessons -- sh -c '(ten requests) | nc echo-ip 80'
+answers: 10, different Pods that answered: 1
+
+$ kubectl get service echo-ip-headless -n network-lessons
+NAME               TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)    AGE
+echo-ip-headless   ClusterIP   None         <none>        8080/TCP   ...
+rules for echo-ip-headless on donhang-worker: 0

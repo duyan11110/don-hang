@@ -1,0 +1,43 @@
+== envs/staging and envs/production differ in
+<   replicas: 2
+>   replicas: 3
+<           image: ghcr.io/duyan11110/donhang-api:1.0.0
+>           image: ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5
+<       image: ghcr.io/duyan11110/donhang-migrate:1.0.0
+>       image: ghcr.io/duyan11110/donhang-migrate:sha-bb184243e4cafed6ae833ca61710608366214aa5
+
+== promote api 1.0.0 (production runs sha-bb184243e4cafed6ae833ca61710608366214aa5)
+... gitops-promote.sh: Promote api 1.0.0 to production
+
+ envs/production/api.yaml          | 2 +-
+ envs/production/migrate-hook.yaml | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+diff --git a/envs/production/api.yaml b/envs/production/api.yaml
+index f7e4225..56ab902 100644
+--- a/envs/production/api.yaml
++++ b/envs/production/api.yaml
+@@ -39,7 +39,7 @@ spec:
+           # lesson: devops.l3.rollback-by-revert
+           # A deploy is a commit that changes this tag, and the migration
+           # hook's, to one CI has pushed to ghcr.io.
+-          image: ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5
++          image: ghcr.io/duyan11110/donhang-api:1.0.0
+           ports:
+             - containerPort: 8080
+           envFrom:
+diff --git a/envs/production/migrate-hook.yaml b/envs/production/migrate-hook.yaml
+index a810213..eac7065 100644
+--- a/envs/production/migrate-hook.yaml
++++ b/envs/production/migrate-hook.yaml
+@@ -18,7 +18,7 @@ spec:
+   containers:
+     - name: migrate
+       # Always the same tag as the api in api.yaml.
+-      image: ghcr.io/duyan11110/donhang-migrate:sha-bb184243e4cafed6ae833ca61710608366214aa5
++      image: ghcr.io/duyan11110/donhang-migrate:1.0.0
+       args: ["--connection", "$(ConnectionStrings__Default)"]
+       env:
+         - name: ConnectionStrings__Default
+
+== Applications that read envs/production
+none

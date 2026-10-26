@@ -1,0 +1,15 @@
+== kubectl scale api to 4, with automated sync but no self-heal
+deployment.apps/api scaled
+30 s later: 4 replicas, OutOfSync
+
+== a ConfigMap added in Git, then removed from Git, without prune
+after the sync of that commit: 2 replicas
+configmap/prune-demo
+ConfigMap/prune-demo: requiresPruning=true
+
+== self-heal and prune, from config-repo/apps/staging.yaml
+application.argoproj.io/staging
+staging: Synced, Healthy
+Error from server (NotFound): configmaps "prune-demo" not found
+deployment.apps/api scaled
+shortly after: 2 replicas, Synced

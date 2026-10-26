@@ -1,0 +1,12 @@
+== POST /api/v1/orders as customer 1
+  -> 201
+
+== its row in donhang_notifications, the email job:
+email | order placed
+status after the sender's next round: sent
+sent after the response came back: yes
+
+== what Mailpit received (its HTTP API, mailpit:8025):
+from:    orders@donhang.local
+to:      anh.tran@example.com
+subject: Order ...: order placed

@@ -1,0 +1,8 @@
+$ kubectl config current-context
+kind-donhang
+
+$ kubectl get nodes
+NAME                    STATUS   ROLES           AGE   VERSION
+donhang-control-plane   Ready    control-plane   ...   v1.34.11
+donhang-worker          Ready    <none>          ...   v1.34.11
+donhang-worker2         Ready    <none>          ...   v1.34.11

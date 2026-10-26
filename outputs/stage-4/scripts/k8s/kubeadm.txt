@@ -1,0 +1,67 @@
+$ docker exec donhang-control-plane kubeadm version -o short
+v1.34.11
+$ docker exec donhang-control-plane systemctl is-active kubelet containerd
+active
+active
+$ docker exec donhang-control-plane grep -m 1 ^kind: /kind/kubeadm.conf
+kind: ClusterConfiguration
+
+$ docker exec donhang-control-plane ls /etc/kubernetes/manifests
+etcd.yaml
+kube-apiserver.yaml
+kube-controller-manager.yaml
+kube-scheduler.yaml
+$ kubectl get pods -n kube-system -l tier=control-plane -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName
+POD                                             NODE
+etcd-donhang-control-plane                      donhang-control-plane
+kube-apiserver-donhang-control-plane            donhang-control-plane
+kube-controller-manager-donhang-control-plane   donhang-control-plane
+kube-scheduler-donhang-control-plane            donhang-control-plane
+
+$ docker exec donhang-control-plane ls /etc/kubernetes/pki /etc/kubernetes/pki/etcd
+/etc/kubernetes/pki:
+apiserver-etcd-client.crt
+apiserver-etcd-client.key
+apiserver-kubelet-client.crt
+apiserver-kubelet-client.key
+apiserver.crt
+apiserver.key
+ca.crt
+ca.key
+etcd
+front-proxy-ca.crt
+front-proxy-ca.key
+front-proxy-client.crt
+front-proxy-client.key
+sa.key
+sa.pub
+
+/etc/kubernetes/pki/etcd:
+ca.crt
+ca.key
+healthcheck-client.crt
+healthcheck-client.key
+peer.crt
+peer.key
+server.crt
+server.key
+
+$ docker exec donhang-control-plane kubeadm certs check-expiration
+
+CERTIFICATE   EXPIRES   RESIDUAL TIME   CERTIFICATE AUTHORITY   EXTERNALLY MANAGED
+admin.conf                 ...   ...   ca               no      
+apiserver                  ...   ...   ca               no      
+apiserver-etcd-client      ...   ...   etcd-ca          no      
+apiserver-kubelet-client   ...   ...   ca               no      
+controller-manager.conf    ...   ...   ca               no      
+etcd-healthcheck-client    ...   ...   etcd-ca          no      
+etcd-peer                  ...   ...   etcd-ca          no      
+etcd-server                ...   ...   etcd-ca          no      
+front-proxy-client         ...   ...   front-proxy-ca   no      
+scheduler.conf             ...   ...   ca               no      
+super-admin.conf           ...   ...   ca               no      
+
+CERTIFICATE AUTHORITY   EXPIRES   RESIDUAL TIME   EXTERNALLY MANAGED
+ca               ...   9y   no      
+etcd-ca          ...   9y   no      
+front-proxy-ca   ...   9y   no      

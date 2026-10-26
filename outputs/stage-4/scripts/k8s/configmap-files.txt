@@ -1,0 +1,18 @@
+$ kubectl get configmap db-init -n donhang
+NAME      DATA   AGE
+db-init   3      ...
+
+$ kubectl exec deployment/db -n donhang -- ls /docker-entrypoint-initdb.d
+10-schema.sql
+20-seed.sql
+30-migrations-baseline.sql
+$ kubectl exec deployment/db -n donhang -- head -n 4 /docker-entrypoint-initdb.d/10-schema.sql
+-- The whole Đơn Hàng database at stage-0. Money is stored in whole đồng, so
+-- every amount is an integer. Times are stored with a time zone, always.
+
+CREATE TABLE products (
+
+$ kubectl logs deployment/db -n donhang | grep 'running /docker-entrypoint-initdb.d'
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/10-schema.sql
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/20-seed.sql
+/usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/30-migrations-baseline.sql

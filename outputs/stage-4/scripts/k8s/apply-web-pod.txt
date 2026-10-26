@@ -1,0 +1,10 @@
+$ kubectl apply -f deploy/k8s/lessons/web-pod.yaml
+pod/web created
+$ kubectl wait --for=condition=Ready pod/web --timeout=120s
+pod/web condition met
+$ kubectl get pod web
+NAME   READY   STATUS    RESTARTS   AGE
+web    1/1     Running   0          ...
+
+$ kubectl apply -f deploy/k8s/lessons/web-pod.yaml
+pod/web unchanged

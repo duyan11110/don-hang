@@ -1,0 +1,27 @@
+== exchanges (topic, durable)
+  donhang.orders  type=topic durable=true
+  donhang.payments  type=topic durable=true
+  notifications.dead-letter  type=topic durable=true
+  orders.dead-letter  type=topic durable=true
+  payments.dead-letter  type=topic durable=true
+== queues
+  notifications.order-events  type=quorum durable=true
+  notifications.order-events.dead  type=classic durable=true
+  orders.payment-events  type=quorum durable=true
+  orders.payment-events.dead  type=classic durable=true
+  payments.refund-requests  type=quorum durable=true
+  payments.refund-requests.dead  type=classic durable=true
+== bindings on donhang.orders and donhang.payments
+  donhang.orders --[order.*]--> notifications.order-events
+  donhang.orders --[order.refund-requested]--> payments.refund-requests
+  donhang.payments --[payment.*]--> orders.payment-events
+
+== a demo exchange whose only queue is bound with order.*
+  order.placed -> routed: true
+  order.refund-requested -> routed: true
+  order -> routed: false
+  order.placed.again -> routed: false
+  invoice.created -> routed: false
+
+== donhang.orders, with a routing key no queue is bound for
+  invoice.created -> routed: false

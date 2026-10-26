@@ -1,0 +1,18 @@
+$ kubectl apply -f deploy/k8s/lessons/web-service.yaml
+service/web created
+$ kubectl get service web -n donhang
+NAME   TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+web    ClusterIP   ...          <none>        80/TCP    ...
+
+== GET http://<cluster IP of web>:80/, from a Pod inside the cluster
+<title>Caddy works!</title>
+
+$ kubectl delete pods -n donhang -l app=web
+pod "web-...-..." deleted from donhang namespace
+pod "web-...-..." deleted from donhang namespace
+pod "web-...-..." deleted from donhang namespace
+Pod IP addresses that are new: 3 of 3
+The Service's cluster IP is the same as before: yes
+
+== GET http://<cluster IP of web>:80/ again
+<title>Caddy works!</title>

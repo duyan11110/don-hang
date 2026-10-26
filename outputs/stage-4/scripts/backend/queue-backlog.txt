@@ -1,0 +1,13 @@
+notifications is stopped: order messages wait in notifications.order-events
+== POST /api/v1/orders, 5 times
+  -> 201
+  -> 201
+  -> 201
+  -> 201
+  -> 201
+promql> rabbitmq_detailed_queue_messages_ready{queue="notifications.order-events"}
+  value: 5
+5xx responses from the api meanwhile: 0
+notifications is back
+promql> rabbitmq_detailed_queue_messages_ready{queue="notifications.order-events"}
+  value: 0

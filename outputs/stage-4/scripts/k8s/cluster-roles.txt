@@ -1,0 +1,25 @@
+$ kubectl apply -f deploy/k8s/lessons/junior-view-binding.yaml
+rolebinding.rbac.authorization.k8s.io/junior-view created
+$ kubectl auth can-i list pods -n donhang --as=junior-dev
+yes
+$ kubectl auth can-i list deployments -n donhang --as=junior-dev
+yes
+$ kubectl auth can-i list pods -n kube-system --as=junior-dev
+no
+$ kubectl auth can-i get secrets -n donhang --as=junior-dev
+no
+$ kubectl auth can-i list nodes --as=junior-dev
+Warning: resource 'nodes' is not namespace scoped
+
+no
+$ kubectl auth can-i delete pods -n donhang --as=junior-dev
+no
+
+$ kubectl get clusterrolebinding argocd-application-controller
+roleRef: ClusterRole argocd-application-controller
+subject: ServiceAccount argocd/argocd-application-controller
+$ kubectl get clusterrole argocd-application-controller
+apiGroups=["*"] resources=["*"] nonResourceURLs= verbs=["*"]
+apiGroups= resources= nonResourceURLs=["*"] verbs=["*"]
+can system:serviceaccount:argocd:argocd-application-controller create clusterrolebindings? yes
+can system:serviceaccount:argocd:argocd-application-controller get secrets in kube-system? yes

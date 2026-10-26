@@ -1,0 +1,5 @@
+GET /api/v1/products: 200
+web (Caddy) stopped
+GET /api/v1/products: no answer
+web (Caddy) started
+GET /api/v1/products: 200

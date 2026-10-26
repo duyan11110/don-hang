@@ -1,0 +1,64 @@
+psql:/repo/db/tenancy/row-level-security.sql:25: NOTICE:  policy "orders_of_current_shop" for relation "orders" does not exist, skipping
+== as donhang, a superuser: the policy does not apply
+SELECT shop_id, count(*) FROM orders GROUP BY shop_id ORDER BY shop_id
+ shop_id | count 
+---------+-------
+       1 |     3
+       2 |     2
+
+== as shop_app, before any shop is set
+SET ROLE shop_app; SELECT count(*) FROM orders
+SET
+ count 
+-------
+     0
+
+== as shop_app, inside a transaction for shop 1
+SET ROLE shop_app;
+BEGIN;
+SET LOCAL app.shop_id = '1';
+SELECT shop_id, id, status FROM orders ORDER BY id;
+COMMIT;
+SELECT current_setting('app.shop_id', true) AS shop_after_commit, count(*) FROM orders;
+SET
+BEGIN
+SET
+ shop_id | id | status  
+---------+----+---------
+       1 |  1 | paid
+       1 |  2 | new
+       1 |  3 | shipped
+
+COMMIT
+ shop_after_commit | count 
+-------------------+-------
+                   |     0
+
+== as shop_app for shop 1, insert an order of shop 2
+SET ROLE shop_app;
+BEGIN;
+SET LOCAL app.shop_id = '1';
+INSERT INTO orders (shop_id, id, customer_id, placed_at, status)
+VALUES (2, 3, 1, now(), 'new');
+ROLLBACK;
+SET
+BEGIN
+SET
+ERROR:  new row violates row-level security policy for table "orders"
+
+== a table with row-level security and no policy: customers
+BEGIN;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+SET LOCAL ROLE shop_app;
+SET LOCAL app.shop_id = '1';
+SELECT count(*) FROM customers;
+ROLLBACK;
+BEGIN
+ALTER TABLE
+SET
+SET
+ count 
+-------
+     0
+
+ROLLBACK

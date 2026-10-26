@@ -1,0 +1,7 @@
+== POST /api/v1/orders as customer 5, until the api refuses one
+  201 Created, 10 times
+  then: 429 Retry-After: ...
+== POST /api/v1/orders as customer 2, at the same moment
+  201
+== POST /api/v1/orders as customer 5, Retry-After seconds later
+  201

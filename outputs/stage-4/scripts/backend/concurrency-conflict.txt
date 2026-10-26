@@ -1,0 +1,16 @@
+== PATCH /api/v1/orders/5/cancel, sent while the ship session holds the row
+{"type":"https://donhang.local/problems/concurrent-update","title":"Order was changed by another request","status":409,"detail":"reload the order and try again","orderId":5}
+  -> 409
+== ship session
+BEGIN;
+BEGIN
+UPDATE orders SET status = 'shipped' WHERE id = 5;
+UPDATE 1
+COMMIT;
+COMMIT
+== order 5 afterwards
+ id | status  
+----+---------
+  5 | shipped
+(1 row)
+

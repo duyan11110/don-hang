@@ -1,0 +1,3 @@
+20 requests at once for GET /api/v1/products/3; status codes received:
+  20 200
+queries PostgreSQL ran for them: 1

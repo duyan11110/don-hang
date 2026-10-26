@@ -1,0 +1,28 @@
+$ kubectl get cronjob db-backup -n donhang -o custom-columns=NAME:.metadata.name,SCHEDULE:.spec.schedule,CONCURRENCY:.spec.concurrencyPolicy
+NAME        SCHEDULE    CONCURRENCY
+db-backup   0 2 * * *   Forbid
+
+$ kubectl create job db-backup-now --from=cronjob/db-backup -n donhang
+Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "pg-dump" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "pg-dump" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "pg-dump" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "pg-dump" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+job.batch/db-backup-now created
+staging: Synced, Healthy
+$ kubectl get job db-backup-now -n donhang -o custom-columns=NAME:.metadata.name,COMPLETIONS:.status.succeeded,FAILED:.status.failed
+NAME            COMPLETIONS   FAILED
+db-backup-now   1             <none>
+wrote donhang-<time>.dump
+wrote donhang_notifications-<time>.dump
+wrote donhang_payments-<time>.dump
+
+Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "reader" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "reader" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "reader" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "reader" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+== the newest dumps, copied to backups/staging/
+donhang_notifications-<time>.dump
+donhang_payments-<time>.dump
+donhang-<time>.dump
+== each one is a pg_dump archive pg_restore can read
+donhang_notifications-<time>.dump: PGDMP
+donhang_payments-<time>.dump: PGDMP
+donhang-<time>.dump: PGDMP
+
+$ kubectl get jobs -n donhang -o custom-columns=NAME:.metadata.name,COMPLETIONS:.status.succeeded,FAILED:.status.failed
+NAME            COMPLETIONS   FAILED
+db-backup-now   1             <none>

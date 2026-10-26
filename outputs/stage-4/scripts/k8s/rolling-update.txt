@@ -1,0 +1,11 @@
+$ kubectl apply -f deploy/k8s/lessons/api-deployment-1.0.0.yaml
+deployment.apps/api configured
+While it ran: Pods of both versions were ready at the same time: yes
+While it ran: the most Pods both ReplicaSets wanted together: 3
+
+$ kubectl rollout status deployment/api -n donhang
+deployment "api" successfully rolled out
+$ kubectl get replicasets -n donhang -l app=api -o wide --sort-by=.spec.replicas
+NAME      DESIRED   CURRENT   READY   AGE   CONTAINERS   IMAGES                                                                        SELECTOR
+api-...   0         0         0       ...   api          ghcr.io/duyan11110/donhang-api:sha-bb184243e4cafed6ae833ca61710608366214aa5   app=api,pod-template-hash=...
+api-...   2         2         2       ...   api          ghcr.io/duyan11110/donhang-api:1.0.0                                          app=api,pod-template-hash=...

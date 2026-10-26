@@ -1,0 +1,14 @@
+fake-gateway now answers each refund call after 6 s
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+== how RefundSender's first attempt ended
+  attempt 1: the gateway did not answer in time
+== the refund row: status
+pending
+== refunds the gateway made for this refund row, 6 s after the first call
+[{"orderId":10,"amountVnd":1730000}]
+fake-gateway answers at once again
+== the refund row now: status
+refunded
+== refunds the gateway made for this refund row
+[{"orderId":10,"amountVnd":1730000}]

@@ -1,0 +1,7 @@
+this shell has: xin chào
+a child started with a different value sees: hello
+this shell still has: xin chào
+a process started without the variable sees: [nothing]
+
+the database password the lab uses comes in the same way:
+donhang-dev-password

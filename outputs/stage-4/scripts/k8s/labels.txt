@@ -1,0 +1,24 @@
+$ kubectl apply -f deploy/k8s/lessons/labelled-pods.yaml
+pod/web-stable created
+pod/web-test created
+pod/proxy created
+
+$ kubectl get pods -n donhang --show-labels
+NAME         READY   STATUS    RESTARTS   AGE   LABELS
+proxy        1/1     Running   0          ...   app=proxy,track=stable
+web-stable   1/1     Running   0          ...   app=web,track=stable
+web-test     1/1     Running   0          ...   app=web,track=test
+
+$ kubectl get pods -n donhang -l app=web
+NAME         READY   STATUS    RESTARTS   AGE
+web-stable   1/1     Running   0          ...
+web-test     1/1     Running   0          ...
+
+$ kubectl get pods -n donhang -l app=web,track=stable
+NAME         READY   STATUS    RESTARTS   AGE
+web-stable   1/1     Running   0          ...
+
+$ kubectl get pods -n donhang -l track=stable
+NAME         READY   STATUS    RESTARTS   AGE
+proxy        1/1     Running   0          ...
+web-stable   1/1     Running   0          ...

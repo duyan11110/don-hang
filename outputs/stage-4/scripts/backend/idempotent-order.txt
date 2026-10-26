@@ -1,0 +1,9 @@
+first request, Idempotency-Key: <the same key>
+{"id":...,"customerId":1,"status":"new","placedAt":"...","items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}
+  -> 201
+retry request, Idempotency-Key: <the same key>
+{"id":...,"customerId":1,"status":"new","placedAt":"...","items":[{"productId":2,"quantity":1,"unitPriceVnd":450000}]}
+  -> 201
+
+both responses carry the same order id: yes
+orders customer 1 gained from the two requests: 1

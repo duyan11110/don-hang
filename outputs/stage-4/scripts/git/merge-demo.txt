@@ -1,0 +1,24 @@
+Merge made by the 'ort' strategy.
+ shipping.sh | 5 +++++
+ 1 file changed, 5 insertions(+)
+ create mode 100755 shipping.sh
+
+the history after the merge:
+*   d89695a Merge branch 'feature/shipping' into merge-demo
+|\  
+| * 59f8ec8 Charge no shipping over two million
+| * 1108382 Add shipping.sh
+* | 57a2d53 Add a README
+* | c812dbd Explain the rounding
+* | b3472f6 Round the total down to millions
+|/  
+* 09c8526 Add a second product
+* d915e63 Add total.sh and a check for it
+
+the merge commit has two parents:
+d89695a Merge branch 'feature/shipping' into merge-demo
+parents: 57a2d53 59f8ec8
+
+the branch itself is untouched by the merge:
+59f8ec8 Charge no shipping over two million
+1108382 Add shipping.sh

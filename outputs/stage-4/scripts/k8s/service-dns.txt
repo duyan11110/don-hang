@@ -1,0 +1,20 @@
+== /etc/resolv.conf of a Pod in donhang
+search donhang.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+
+== the cluster DNS server is the Service kube-dns
+$ kubectl get service kube-dns -n kube-system
+NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+kube-dns   ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   ...
+
+== nslookup web.donhang.svc.cluster.local. (from a Pod in donhang)
+web.donhang.svc.cluster.local ...
+That is the cluster IP of the Service web: yes
+
+== wget http://web/ from a Pod in donhang
+<title>Caddy works!</title>
+== wget http://web.donhang/ from a Pod in default
+<title>Caddy works!</title>
+== wget http://web/ from a Pod in default
+wget: bad address 'web'

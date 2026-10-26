@@ -1,0 +1,39 @@
+$ kubectl rollout history deployment/api -n donhang
+deployment.apps/api 
+REVISION   CHANGE-CAUSE
+1          <none>
+2          <none>
+
+$ kubectl apply -f deploy/k8s/lessons/api-deployment-bad-tag.yaml
+deployment.apps/api configured
+$ kubectl get pods -n donhang -l app=api --sort-by=.status.phase
+NAME          READY   STATUS             RESTARTS   AGE
+api-...-...   0/1     ImagePullBackOff   0          ...
+api-...-...   1/1     Running            0          ...
+api-...-...   1/1     Running            0          ...
+$ kubectl rollout status deployment/api -n donhang --timeout=10s
+Waiting for deployment "api" rollout to finish: 1 out of 2 new replicas have been updated...
+error: timed out waiting for the condition
+
+$ kubectl rollout history deployment/api -n donhang
+deployment.apps/api 
+REVISION   CHANGE-CAUSE
+1          <none>
+2          <none>
+3          <none>
+
+$ kubectl rollout undo deployment/api -n donhang
+deployment.apps/api rolled back
+$ kubectl rollout history deployment/api -n donhang
+deployment.apps/api 
+REVISION   CHANGE-CAUSE
+1          <none>
+3          <none>
+4          <none>
+
+$ kubectl get deployment api -n donhang -o wide
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                 SELECTOR
+api    2/2     2            2           ...   api          ghcr.io/duyan11110/donhang-api:1.0.0   app=api
+
+$ kubectl apply -f deploy/k8s/lessons/api-deployment-1.0.0.yaml
+deployment.apps/api configured

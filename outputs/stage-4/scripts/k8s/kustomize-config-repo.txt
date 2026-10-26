@@ -1,0 +1,69 @@
+== envs/staging before: plain manifests
+  api.yaml
+  api-configmap.yaml
+  db.yaml
+  db-init.yaml
+  keycloak.yaml
+  keycloak-realm.yaml
+  mailpit.yaml
+  migrate-hook.yaml
+  redis.yaml
+  sealed-api.yaml
+  sealed-db.yaml
+  sealed-fake-gateway.yaml
+  sealed-keycloak.yaml
+  sealed-notifications.yaml
+  sealed-payments.yaml
+  sealed-rabbitmq.yaml
+
+  R   envs/staging/api.yaml -> base/api.yaml
+  R   envs/production/db-init.yaml -> base/db-init.yaml
+  R   envs/staging/db.yaml -> base/db.yaml
+  R   envs/production/keycloak-realm.yaml -> base/keycloak-realm.yaml
+  R   envs/staging/keycloak.yaml -> base/keycloak.yaml
+  A   base/kustomization.yaml
+  R   envs/staging/mailpit.yaml -> base/mailpit.yaml
+  R   envs/staging/migrate-hook.yaml -> base/migrate-hook.yaml
+  R   envs/staging/redis.yaml -> base/redis.yaml
+  D   envs/production/api-configmap.yaml
+  D   envs/production/api.yaml
+  D   envs/production/db.yaml
+  D   envs/production/keycloak.yaml
+  A   envs/production/kustomization.yaml
+  D   envs/production/mailpit.yaml
+  D   envs/production/migrate-hook.yaml
+  D   envs/production/redis.yaml
+  D   envs/staging/api-configmap.yaml
+  D   envs/staging/db-init.yaml
+  D   envs/staging/keycloak-realm.yaml
+  A   envs/staging/kustomization.yaml
+
+== what Argo CD finds different in staging, before syncing
+ConfigMap api
+ConfigMap api-...
+Deployment api
+
+staging: Synced, Healthy
+== after the sync
+the api's ConfigMap: api-...
+new ReplicaSets of the api: 1
+
+== the config repository now
+  base/api.yaml
+  base/db-init.yaml
+  base/db.yaml
+  base/keycloak-realm.yaml
+  base/keycloak.yaml
+  base/kustomization.yaml
+  base/mailpit.yaml
+  base/migrate-hook.yaml
+  base/redis.yaml
+  envs/production/kustomization.yaml
+  envs/staging/kustomization.yaml
+  envs/staging/sealed-api.yaml
+  envs/staging/sealed-db.yaml
+  envs/staging/sealed-fake-gateway.yaml
+  envs/staging/sealed-keycloak.yaml
+  envs/staging/sealed-notifications.yaml
+  envs/staging/sealed-payments.yaml
+  envs/staging/sealed-rabbitmq.yaml

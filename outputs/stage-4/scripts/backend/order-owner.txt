@@ -1,0 +1,24 @@
+order 1 belongs to customer 1, order 3 to customer 2:
+ id | customer_id | status 
+----+-------------+--------
+  1 |           1 | paid
+  3 |           2 | paid
+(2 rows)
+
+== customer 1 reads order 1
+  -> 200
+== customer 1 reads order 3
+  -> 403
+== customer 1 cancels order 3
+  -> 403
+== staff reads order 3
+  -> 200
+== nobody signed in reads order 3
+  -> 401
+
+order 3 afterwards:
+ id | customer_id | status 
+----+-------------+--------
+  3 |           2 | paid
+(1 row)
+

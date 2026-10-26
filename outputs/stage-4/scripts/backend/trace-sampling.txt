@@ -1,0 +1,7 @@
+== GET /api/v1/products/3 with traceparent ...-01
+  -> 200
+== GET /api/v1/products/3 with traceparent ...-00
+  -> 200
+== spans in Tempo for the trace marked 01: 1
+== spans in Tempo for the trace marked 00: 0
+== product reads the api counted meanwhile (http_requests_received_total): 2

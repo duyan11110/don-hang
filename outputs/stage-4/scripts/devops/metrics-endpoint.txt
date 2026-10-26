@@ -1,0 +1,13 @@
+== GET /api/v1/products/1 and /api/v1/products/999, through Caddy
+  -> 200
+  -> 404
+
+== GET http://api:8080/metrics (on the donhang network), a few of its lines
+# HELP http_requests_received_total Provides the count of HTTP requests that have been processed by the ASP.NET Core pipeline.
+# TYPE http_requests_received_total counter
+http_requests_received_total{code="200",method="GET",controller="Products",action="Get",endpoint="api/v1/products/{id:int}"} ...
+http_requests_received_total{code="404",method="GET",controller="Products",action="Get",endpoint="api/v1/products/{id:int}"} ...
+http_requests_received_total{code="503",method="GET",controller="Products",action="Get",endpoint="api/v1/products/{id:int}"} ...
+
+== GET http://localhost:8080/metrics, through Caddy
+  -> 404

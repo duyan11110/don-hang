@@ -1,0 +1,32 @@
+== Argo CD into the namespace argocd
+namespace/argocd
+      3 clusterrole.rbac.authorization.k8s.io
+      3 clusterrolebinding.rbac.authorization.k8s.io
+      7 configmap
+      3 customresourcedefinition.apiextensions.k8s.io
+      6 deployment.apps
+      7 networkpolicy.networking.k8s.io
+      6 role.rbac.authorization.k8s.io
+      6 rolebinding.rbac.authorization.k8s.io
+      2 secret
+      8 service
+      7 serviceaccount
+      1 statefulset.apps
+
+== what runs it
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/argocd-applicationset-controller   1/1     1            1           ...
+deployment.apps/argocd-dex-server                  1/1     1            1           ...
+deployment.apps/argocd-notifications-controller    1/1     1            1           ...
+deployment.apps/argocd-redis                       1/1     1            1           ...
+deployment.apps/argocd-repo-server                 1/1     1            1           ...
+deployment.apps/argocd-server                      1/1     1            1           ...
+
+NAME                                             READY   AGE
+statefulset.apps/argocd-application-controller   1/1     ...
+
+== the kinds of objects Argo CD added
+NAME              SHORTNAMES         APIVERSION             NAMESPACED   KIND
+applications      app,apps           argoproj.io/v1alpha1   true         Application
+applicationsets   appset,appsets     argoproj.io/v1alpha1   true         ApplicationSet
+appprojects       appproj,appprojs   argoproj.io/v1alpha1   true         AppProject

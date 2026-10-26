@@ -1,0 +1,25 @@
+== sync waves and hooks in envs/staging
+envs/staging/api.yaml: argocd.argoproj.io/sync-wave: "2"
+envs/staging/db.yaml: argocd.argoproj.io/sync-wave: "0"
+envs/staging/migrate-hook.yaml: argocd.argoproj.io/hook: Sync
+envs/staging/migrate-hook.yaml: argocd.argoproj.io/sync-wave: "1"
+envs/staging/migrate-hook.yaml: argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+
+== emptying donhang
+No resources found in donhang namespace.
+
+== sync
+sync: Succeeded
+staging: Synced, Healthy
+
+1. wave 0: Deployment db available
+2. wave 0: Deployment keycloak available
+3. wave 1: hook Pod migrate started
+4. wave 1: hook Pod migrate ended Succeeded
+5. wave 2: Deployment api created
+
+== one more sync, with nothing changed
+sync: Succeeded
+a new Pod migrate ran: Succeeded
+No migrations were applied. The database is already up to date.
+Done.

@@ -1,0 +1,42 @@
+SELECT count(*) FILTER (WHERE id % 4 <> id % 5) AS orders_that_move,
+       count(*) AS orders,
+       round(100.0 * count(*) FILTER (WHERE id % 4 <> id % 5) / count(*), 1) AS percent
+FROM orders;
+ orders_that_move | orders | percent 
+------------------+--------+---------
+           160000 | 200000 |    80.0
+
+CREATE TEMP TABLE shard_map (
+    bucket integer PRIMARY KEY,
+    shard  integer NOT NULL
+);
+CREATE TABLE
+INSERT INTO shard_map (bucket, shard)
+SELECT bucket, bucket % 4 FROM generate_series(0, 63) AS bucket;
+INSERT 0 64
+UPDATE shard_map SET shard = 4 WHERE bucket < 12;
+UPDATE 12
+SELECT count(*) FILTER (WHERE shard_map.shard = 4) AS orders_that_move,
+       count(*) AS orders,
+       round(100.0 * count(*) FILTER (WHERE shard_map.shard = 4) / count(*), 1) AS percent
+FROM orders
+JOIN shard_map ON shard_map.bucket = orders.id % 64;
+ orders_that_move | orders | percent 
+------------------+--------+---------
+            37500 | 200000 |    18.8
+
+SELECT shard_map.shard,
+       count(DISTINCT shard_map.bucket) AS buckets,
+       count(*) AS orders
+FROM orders
+JOIN shard_map ON shard_map.bucket = orders.id % 64
+GROUP BY shard_map.shard
+ORDER BY shard_map.shard;
+ shard | buckets | orders 
+-------+---------+--------
+     0 |      13 |  40625
+     1 |      13 |  40625
+     2 |      13 |  40625
+     3 |      13 |  40625
+     4 |      12 |  37500
+

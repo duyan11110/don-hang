@@ -1,0 +1,9 @@
+roles in customer 1's token: ["customer"]
+roles in the staff token:     ["staff"]
+
+== PATCH /api/v1/orders/1/ship, no token
+  -> 401
+== the same, as customer 1 (who owns order 1)
+  -> 403
+== the same, as staff
+  -> 200 {"id":...,"customerId":1,"status":"shipped","placedAt":"...","items":[{"productId":1,"quantity":1,"unitPriceVnd":1250000},{"productId":2,"quantity":2,"unitPriceVnd":450000}]}

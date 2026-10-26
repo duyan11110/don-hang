@@ -1,0 +1,19 @@
+$ git log --format= --name-only -- 'DonHang.*/**/*.cs' 'DonHang.*/**/*.dart' (without Migrations/)
+commits  file
+     12  DonHang.Api/Program.cs
+     11  DonHang.Api/Controllers/OrdersController.cs
+     11  DonHang.Infrastructure/DonHangDbContext.cs
+     10  DonHang.Domain/Entities.cs
+      9  DonHang.Domain/OrderService.cs
+      9  DonHang.Infrastructure/ServiceCollectionExtensions.cs
+      8  DonHang.Api/Dtos.cs
+      8  DonHang.Tests/Services/OrderServiceTests.cs
+      5  DonHang.Api/Controllers/ProductsController.cs
+      5  DonHang.Api/Controllers/V2/OrdersV2Controller.cs
+      5  DonHang.Tests/FakeOrderRepository.cs
+      4  DonHang.App/lib/screens/product_list_screen.dart
+      4  DonHang.Infrastructure/EfOrderRepository.cs
+      4  DonHang.Tests/Domain/OrderTests.cs
+      3  DonHang.Api/Middleware/ExceptionHandlingMiddleware.cs
+
+Files counted: 169

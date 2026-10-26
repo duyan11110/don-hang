@@ -1,0 +1,15 @@
+fake-gateway is stopped
+== POST /api/v1/orders/10/refund as customer 1
+  -> 202
+== RefundSender's attempts while the gateway is down
+  attempt 1: the call failed
+  attempt 2: the call failed
+  attempt 3: the call failed
+  attempt 4: not sent, the circuit is open
+== what the circuit breaker logged
+  Circuit to the gateway opened: no calls for 10 s
+fake-gateway is back
+== what the circuit breaker logged, now
+  Circuit to the gateway opened: no calls for 10 s
+  Circuit to the gateway half-open: one trial call
+  Circuit to the gateway closed: calls go through again

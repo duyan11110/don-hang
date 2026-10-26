@@ -1,0 +1,15 @@
+redis> SET product:3 {"id":3,"name":"Tai nghe","priceVnd":890000} EX 60
+OK
+redis> GET product:3
+{"id":3,"name":"Tai nghe","priceVnd":890000}
+redis> TTL product:3
+60
+
+the same key, now with 2 seconds to live:
+redis> SET product:3 {"id":3,"name":"Tai nghe","priceVnd":890000} EX 2
+OK
+(3 seconds later)
+redis> TTL product:3
+-2
+redis> GET product:3
+

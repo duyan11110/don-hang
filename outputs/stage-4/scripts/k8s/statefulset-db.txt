@@ -1,0 +1,26 @@
+== db before: deployment.apps/db
+
+ base/db.yaml | 50 ++++++++++++++++++++++++++++++++++----------------
+ 1 file changed, 34 insertions(+), 16 deletions(-)
+staging: Synced, Healthy
+$ kubectl get statefulset,pods,pvc -n donhang -l app=db
+NAME       READY   STATUS    RESTARTS   AGE
+pod/db-0   1/1     Running   0          ...
+
+NAME                              STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/data-db-0   Bound    pvc-...   1Gi        RWO            standard       <unset>                 ...
+$ kubectl get pvc data-db-0 -n donhang
+NAME        STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+data-db-0   Bound    pvc-...   1Gi        RWO            standard       <unset>                 ...
+orders: 12
+
+$ kubectl delete pod db-0 -n donhang
+pod "db-0" deleted from donhang namespace
+$ kubectl get pods -n donhang -l app=db
+NAME   READY   STATUS    RESTARTS   AGE
+db-0   1/1     Running   0          ...
+same IP address as before: no
+orders: 12
+== the new db-0's log
+PostgreSQL Database directory appears to contain a database; Skipping initialization
+... +07 [1] LOG:   database system is ready to accept connections

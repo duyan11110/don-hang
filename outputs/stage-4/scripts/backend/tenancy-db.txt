@@ -1,0 +1,5 @@
+donhang_tenancy, shared orders: 5
+donhang_tenancy, schema shop_1: 3
+donhang_tenancy, schema shop_2: 2
+donhang_shop_1: 3
+donhang_shop_2: 2

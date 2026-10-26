@@ -1,0 +1,11 @@
+== GET /api/v1/products/3 fills the cache
+{"id":3,"name":"Tai nghe","priceVnd":890000}  -> 200
+product:3 in Redis: {"id":3,"name":"Tai nghe","priceVnd":890000}
+
+== PATCH /api/v1/products/3 as staff, new price 950000
+{"id":3,"name":"Tai nghe","priceVnd":950000}  -> 200
+is product:3 still in Redis? 0 (1 = yes, 0 = no)
+
+== GET /api/v1/products/3 again: a miss that loads the new price
+{"id":3,"name":"Tai nghe","priceVnd":950000}  -> 200
+product:3 in Redis: {"id":3,"name":"Tai nghe","priceVnd":950000}

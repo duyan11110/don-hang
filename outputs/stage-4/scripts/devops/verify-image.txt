@@ -1,0 +1,16 @@
+== ghcr.io/duyan11110/donhang-api:sha-... -> ghcr.io/duyan11110/donhang-api@sha256:...
+-- signature
+Verification for ghcr.io/duyan11110/donhang-api@sha256:... --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates
+-- provenance
+built by https://github.com/duyan11110/don-hang, .github/workflows/ci.yml at commit ... (push)
+verified
+
+== ghcr.io/duyan11110/donhang-api:1.0.0 -> ghcr.io/duyan11110/donhang-api@sha256:1d0825b582ec31c52d33e7fa9e2b9d73f39bd059018aa41bafbbdec006dea314
+-- signature
+Error: no signatures found
+error during command execution: no signatures found
+not verified: refused

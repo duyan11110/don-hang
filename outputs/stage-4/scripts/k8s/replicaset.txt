@@ -1,0 +1,38 @@
+$ kubectl delete pod web
+pod "web" deleted from default namespace
+$ kubectl get pod web
+Error from server (NotFound): pods "web" not found
+
+$ kubectl apply -f deploy/k8s/lessons/web-replicaset.yaml
+replicaset.apps/web created
+$ kubectl get replicaset web -n donhang
+NAME   DESIRED   CURRENT   READY   AGE
+web    3         3         3       ...
+$ kubectl get pods -n donhang -l app=web
+NAME      READY   STATUS    RESTARTS   AGE
+web-...   1/1     Running   0          ...
+web-...   1/1     Running   0          ...
+web-...   1/1     Running   0          ...
+
+$ kubectl delete pod web-... -n donhang
+pod "web-..." deleted from donhang namespace
+$ kubectl get pods -n donhang -l app=web
+NAME      READY   STATUS    RESTARTS   AGE
+web-...   1/1     Running   0          ...
+web-...   1/1     Running   0          ...
+web-...   1/1     Running   0          ...
+Pods labelled app=web now: 3
+The deleted Pod's name is still in use: no
+Pods with a name and an IP address not seen before: 1
+
+$ kubectl apply --dry-run=server -f - (web-replicaset.yaml, template labelled app: website)
+The ReplicaSet "web" is invalid: spec.template.metadata.labels: Invalid value: {"app":"website"}: `selector` does not match template `labels`
+
+$ kubectl apply -f - (web-replicaset.yaml with replicas: 4 and image caddy:2.10.2)
+replicaset.apps/web configured
+$ kubectl get pods -n donhang -l app=web --sort-by=.spec.containers[0].image -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image
+NAME      IMAGE
+web-...   caddy:2.10.0
+web-...   caddy:2.10.0
+web-...   caddy:2.10.0
+web-...   caddy:2.10.2
