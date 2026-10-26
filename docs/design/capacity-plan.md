@@ -34,12 +34,12 @@ bình.
   giữ nguyên giới hạn này.
 - Trần đọc của một process, theo định luật Little: số đang chạy = thông lượng
   × thời gian trung bình, nên thông lượng tối đa = 20 / thời gian một lần đọc.
-  Thời gian trung bình một lần đọc danh sách sản phẩm, đo bằng
-  `scripts/backend/load-steps.sh` ở bước 1 đồng thời trên lab: khoảng 40 ms
-  (giả định cho tới khi đo trên môi trường giống production). Trần mỗi process
-  là 20 / 0,04 = 500 lần đọc mỗi giây.
+  Thời gian trung bình một lần đọc danh sách sản phẩm khi 20 chỗ đã đầy, đo
+  bằng `scripts/backend/load-steps.sh` trên lab: khoảng 10–12 ms (số lab,
+  giả định cho tới khi đo trên môi trường giống production). Trần mỗi process
+  khoảng 20 / 0,012, tức khoảng 1.600 lần đọc mỗi giây.
 - 2 Pod api (`deploy/gitops/config-repo-kustomize/base/api.yaml`): trần của
-  cả hai là 1.000 lần đọc mỗi giây.
+  cả hai khoảng 3.200 lần đọc mỗi giây.
 - Mọi lệnh ghi và mọi lần đọc đều vào primary PostgreSQL.
 - Kết nối database: mỗi Pod api giữ một pool kết nối của Npgsql cho
   `ConnectionStrings:Default`, kích thước mặc định vì connection string không
@@ -53,7 +53,7 @@ bình.
 Quy tắc: tải đỉnh không vượt một nửa trần của 2 Pod api, để một Pod gánh được
 toàn bộ khi mất Pod kia (node hỏng, rolling update).
 
-- Đọc sản phẩm: đỉnh khoảng 133 mỗi giây, một nửa trần là 500. Đạt.
+- Đọc sản phẩm: đỉnh khoảng 133 mỗi giây, một nửa trần khoảng 1.600. Đạt.
 - Đặt đơn: đỉnh khoảng 3,3 đơn mỗi giây, mỗi đơn một transaction ngắn trên
   primary. Đạt, không phải tài nguyên chặn.
 
