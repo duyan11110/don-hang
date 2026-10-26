@@ -1,0 +1,20 @@
+== the config repository: git log -- envs/production
+2026-07-03 17:00 d75cc92 gitops-repo.sh: Production as Đơn Hàng runs it
+2026-07-07 15:00 b769d36 gitops-promote.sh: Promote api sha-cd15c56... to production
+2026-07-14 10:00 78c3c11 gitops-promote.sh: Promote api sha-6fe331c... to production
+2026-07-23 16:00 160d885 gitops-promote.sh: Promote api sha-28e2849... to production
+2026-07-23 16:45 c2b7e50 gitops-revert.sh: Revert "Promote api sha-28e2849... to production"
+2026-07-28 10:00 f68d95d gitops-promote.sh: Promote api sha-4098fb0... to production
+2026-08-05 09:30 f23561a gitops-promote.sh: Promote api sha-9c5b48f... to production
+2026-08-18 10:00 b34200f gitops-promote.sh: Promote api sha-c6b5527... to production
+2026-08-26 14:00 4e889a7 gitops-promote.sh: Promote api sha-d86574a... to production
+2026-08-26 17:10 b662a01 gitops-revert.sh: Revert "Promote api sha-d86574a... to production"
+2026-09-01 10:00 e0f28ad gitops-promote.sh: Promote api sha-6659dec... to production
+2026-09-09 11:00 cad9720 gitops-promote.sh: Promote api sha-eb3c42d... to production
+2026-09-28 15:00 420d84b gitops-promote.sh: Promote api sha-4d2348e... to production
+
+== the four metrics, for 13 weeks
+deploys: 10, 0.8 a week
+lead time for changes, median: 51.5 hours (each deploy, in hours: 29.0 24.5 74.0 97.0 22.5 139.0 28.0 121.0 22.0 173.0)
+change failure rate: 2 of 10 deploys reverted, 20%
+time to restore, median: 117.5 minutes (each failed deploy: 45 190 minutes)
