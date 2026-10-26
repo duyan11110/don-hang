@@ -1,0 +1,21 @@
+# lesson: devops.l4.canary-release
+# The Application for platform/monitoring: staging's Prometheus, synced
+# from the config repository like the Gateway and the admission policy.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-staging
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc:3000/donhang/donhang-config.git
+    targetRevision: main
+    path: platform/monitoring
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

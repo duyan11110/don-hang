@@ -1,0 +1,14 @@
+# lesson: devops.l4.recording-rules
+# platform/monitoring as Argo CD builds it: prometheus.yaml, plus a
+# ConfigMap generated from the rule file itself. The file stays plain
+# Prometheus rules, so promtool reads the same file staging loads
+# (scripts/devops/alert-rules-test.sh).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - prometheus.yaml
+configMapGenerator:
+  - name: slo-rules
+    namespace: monitoring
+    files:
+      - rules/slo.rules.yml

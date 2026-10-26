@@ -1,0 +1,183 @@
+# lesson: devops.l4.canary-release
+# Staging's Prometheus, from stage-4: one Pod in the namespace monitoring
+# that scrapes the api's Pods in donhang, to count the requests each
+# Deployment (api, api-canary, api-green) served. No Grafana, no volume:
+# the numbers last until the Pod restarts. Production has no Prometheus.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+# Prometheus finds the Pods by asking the API server, so its
+# ServiceAccount may read Pods, and nothing else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 5s
+      # lesson: devops.l4.recording-rules
+      # Every 15 s Prometheus evaluates the rules of the files below, group
+      # by group: slo.rules.yml, mounted from the ConfigMap slo-rules.
+      evaluation_interval: 15s
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    scrape_configs:
+      # lesson: devops.l4.canary-release
+      # Targets from the API server: every Pod in donhang. Only Pods whose
+      # label app is api, api-canary or api-green are kept, on their port
+      # 8080, and each series gets the Pod's app label, so one query
+      # tells the Deployments apart.
+      - job_name: api
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [donhang]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: api|api-canary|api-green
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            regex: "8080"
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            target_label: app
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prometheus
+          # The version Compose runs (docker-compose.yml), by digest.
+          image: prom/prometheus:v3.5.5@sha256:332c2f43e7e389d74d3893b55bb02fbbd684208e681eeb604641d5d769c0fe2a
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=2d
+          ports:
+            - containerPort: 9090
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: rules
+              mountPath: /etc/prometheus/rules
+            - name: data
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus
+        # lesson: devops.l4.recording-rules
+        # The ConfigMap kustomization.yaml generates from rules/slo.rules.yml.
+        # Its name ends in a hash of the file, so a changed rule renames it,
+        # changes this Pod template and restarts Prometheus with the new rules.
+        - name: rules
+          configMap:
+            name: slo-rules
+        - name: data
+          emptyDir: {}
+---
+# The scripts ask Prometheus through this Service, by the API server's proxy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+---
+# lesson: devops.l4.canary-release
+# donhang denies every connection that no policy allows
+# (base/network-policies.yaml): this one lets Prometheus, in the namespace
+# monitoring, reach port 8080 of the api's Pods, where /metrics answers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: from-monitoring
+  namespace: donhang
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [api, api-canary, api-green]
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 8080
