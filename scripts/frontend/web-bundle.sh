@@ -24,10 +24,37 @@ find "$build" -type f -printf '%s %P\n' | sort -rn | head -n 8 |
 echo "  all files together: raw $(find "$build" -type f -printf '%s\n' | awk '{ total += $1 } END { print total }')"
 
 # lesson: frontend.l3.web-bundle-size
-# Asked as a browser asks, app-web answers with Content-Encoding: gzip, so
-# fewer bytes cross the network; the browser unpacks them before running.
+# From stage-4 up.sh builds with --no-web-resources-cdn, so the engine comes
+# from app-web too: flutter_bootstrap.js says "useLocalCanvasKit":true.
 echo
-echo "GET http://localhost:8081/main.dart.js with Accept-Encoding: gzip"
-curl --silent --show-error --fail --output /dev/null --header 'Accept-Encoding: gzip' \
-  --dump-header - --write-out 'bytes sent %{size_download}\n' http://localhost:8081/main.dart.js |
-  tr -d '\r' | grep -i -e '^content-encoding:' -e '^bytes sent'
+if grep -q '"useLocalCanvasKit":true' "$build/flutter_bootstrap.js"; then
+  echo "Engine: served by app-web (useLocalCanvasKit in flutter_bootstrap.js)"
+else
+  echo "Engine: fetched from a CDN (build without --no-web-resources-cdn)"
+fi
+
+# lesson: frontend.l3.web-bundle-size
+# Before the first frame the browser needs main.dart.js and one engine
+# build, chosen by flutter_bootstrap.js: canvaskit/chromium/ in a Chromium
+# browser, canvaskit/ in others. Asked as a browser asks (zstd or gzip),
+# app-web compresses each one; `sent` is the bytes that cross the network.
+echo
+echo "What app-web sends for them, with Accept-Encoding: zstd, gzip"
+for path in main.dart.js canvaskit/chromium/canvaskit.js canvaskit/chromium/canvaskit.wasm \
+            canvaskit/canvaskit.js canvaskit/canvaskit.wasm; do
+  answer=$(curl --silent --show-error --fail --retry 2 --retry-all-errors --output /dev/null \
+    --header 'Accept-Encoding: zstd, gzip' \
+    --dump-header - --write-out 'sent %{size_download}\n' "http://localhost:8081/$path" | tr -d '\r')
+  encoding=$(grep -i '^content-encoding:' <<< "$answer" | awk '{ print $2 }')
+  sent=$(grep '^sent ' <<< "$answer" | awk '{ print $2 }')
+  printf '  %-38s raw %s   sent %s (%s)\n' "$path" "$(wc -c < "$build/$path")" "$sent" "${encoding:-not compressed}"
+done
+
+# lesson: frontend.l3.web-bundle-size
+# Fonts: the build carries Roboto (assets/fonts/fallback/), so app-web
+# serves it; loading the product list in a browser asked nothing of any
+# other server. Only text with a character no bundled font has, such as an
+# emoji, makes the engine fetch a font from the address below.
+echo
+echo "Fonts in the build: $(cd "$build" && find assets -name '*.ttf' -o -name '*.otf' | LC_ALL=C sort | paste -sd ' ')"
+echo "Fonts for missing characters come from: $(grep -o 'https://fonts\.gstatic\.com/s/' "$build/main.dart.js" | head -n 1)"

@@ -9,7 +9,12 @@ cd "$(dirname "$0")/.."
 # The app-web container only serves files; building them needs the Flutter
 # SDK, which runs on the host, not in a container (D5/D7: Flutter is a
 # prerequisite here, same as Docker Desktop).
-(cd DonHang.App && flutter build web >/dev/null)
+#
+# lesson: frontend.l3.web-bundle-size
+# From stage-4 with --no-web-resources-cdn: the browser then loads Flutter's
+# engine (CanvasKit) from app-web, compressed like main.dart.js, instead of
+# from Google's CDN. Fonts are another matter: see scripts/frontend/web-bundle.sh.
+(cd DonHang.App && flutter build web --no-web-resources-cdn >/dev/null)
 
 # --wait returns once every service is running and each one with a healthcheck
 # is healthy, the api included: it answers before any script runs.
