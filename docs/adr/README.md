@@ -25,6 +25,8 @@ làm này được chọn trong ADR 0001.
 | 0014 | [Keycloak giữ email của khách](0014-keycloak-giu-email-khach-hang.md) | Đã chấp nhận |
 | 0015 | [Khóa ký hóa đơn nằm trong HSM, chỉ Payments được gọi](0015-khoa-ky-hoa-don-trong-hsm.md) | Đã chấp nhận |
 | 0016 | [Giới hạn tải theo cửa hàng, chồng lên giới hạn chung](0016-gioi-han-tai-theo-cua-hang.md) | Đã chấp nhận |
+| 0017 | [Giữ một mã Flutter cho mọi nền tảng](0017-giu-mot-ma-flutter-cho-moi-nen-tang.md) | Đã chấp nhận |
+| 0018 | [DonHang.App gọi thẳng DonHang.Api, chưa thêm BFF](0018-app-goi-thang-api-chua-them-bff.md) | Đã chấp nhận |
 | 0019 | [Mỗi thành phần phát hành theo cách đường đi của nó cho phép](0019-chien-luoc-phat-hanh-theo-thanh-phan.md) | Đã chấp nhận |
 | 0020 | [Chạy ở một region, phục hồi ở region thứ hai từ bản sao lưu](0020-mot-region-phuc-hoi-tu-ban-sao-luu.md) | Đã chấp nhận |
 | 0021 | [Chưa dùng service mesh](0021-chua-dung-service-mesh.md) | Đã chấp nhận |
