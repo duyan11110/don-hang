@@ -1,0 +1,15 @@
+== donhang_release, migrated to the last migration of stage-3
+  notifications: a table
+  payments: a table
+  rows in notifications: 6
+  rows in payments: 8
+== pg_dump -Fc --table notifications --table payments -> /backups/old-tables/donhang-old-tables.dump
+  TABLE DATA public notifications donhang
+  TABLE DATA public payments donhang
+== the release's migrations
+  Applying migration '20261101090000_DropOldNotificationsTable'
+== afterwards
+  notifications: no such table
+  payments: a table
+== the rows of the dropped table are still in the dump
+  notifications rows in the dump: 6
