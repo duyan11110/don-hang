@@ -15,6 +15,10 @@ status() { curl -sS -o /dev/null -w '%{http_code}' "$@"; }
 restore() {
   docker compose start db >/dev/null 2>&1
   docker compose up --wait db >/dev/null 2>&1
+  # Keycloak's connection pool keeps the connections db closed and hands them
+  # out again ("This connection has been closed"), so sign-ins fail until it
+  # restarts; the .NET services drop theirs on the first error.
+  docker compose restart keycloak >/dev/null 2>&1
   docker compose up --wait api notifications payments keycloak >/dev/null 2>&1
   for _ in $(seq 60); do
     [ "$(status http://localhost:8080/api/v1/products)" = 200 ] && break
