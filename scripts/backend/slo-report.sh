@@ -61,6 +61,10 @@ printf '  S1 budget left: %.1f requests\n' "$before"
 
 restore() {
   docker compose start db >/dev/null 2>&1
+  docker compose up --wait db >/dev/null 2>&1
+  # Keycloak's pool would hand out the connections db closed; a restart drops
+  # them (as in db-unreachable.sh), so later sign-ins work.
+  docker compose restart keycloak >/dev/null 2>&1
   docker compose up --wait db api notifications payments keycloak >/dev/null 2>&1
 }
 echo "== db stopped for a few seconds while orders arrive"
