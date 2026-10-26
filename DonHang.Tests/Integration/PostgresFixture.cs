@@ -41,10 +41,12 @@ public sealed class PostgresFixture : IAsyncLifetime
     // Empties every Đơn Hàng table in one statement; CASCADE covers the
     // foreign keys between them. The id sequences keep counting from where
     // they were, so a test uses the ids its own inserts returned.
+    // From stage-4 the old `notifications` table is gone
+    // (DropOldNotificationsTable, ADR 0008); the old `payments` one stays.
     public async Task ResetAsync()
     {
         await using var db = CreateContext();
         await db.Database.ExecuteSqlRawAsync(
-            "TRUNCATE customers, products, orders, order_items, payments, notifications, outbox_messages, inbox_messages CASCADE");
+            "TRUNCATE customers, products, orders, order_items, payments, outbox_messages, inbox_messages CASCADE");
     }
 }
