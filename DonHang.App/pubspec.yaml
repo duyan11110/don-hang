@@ -45,8 +45,8 @@ dependencies:
   # From stage-2: number formats in translated messages (frontend/forms-i18n-theming).
   intl: any
   # From stage-2: sign-in with Keycloak (PKCE hash; the browser's sessionStorage and address bar).
-  crypto: ^3.0.7
-  web: ^1.1.1
+  crypto: ^3.0.8
+  web: ^1.1.2
 
 dev_dependencies:
   flutter_test:
