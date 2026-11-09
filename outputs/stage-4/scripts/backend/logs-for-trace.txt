@@ -5,3 +5,6 @@ api: POST /api/v1/orders/10/refund responded 202 in ...ms
 notifications: Saved the refund requested email for order 10
 payments: Refund ... for order 10 is done
 notifications: Saved the order refunded email for order 10
+
+logql> {service="api"} |= "Now listening on" | trace_id=""
+api: Now listening on: http://[::]:8080, Scopes: []

@@ -166,3 +166,5 @@ answers/s x average = \K[0-9.]+$
 ^  api-canary served [0-9]+, 5xx \K(?!0\.0%)[0-9.]+(?=%; api served)
 ^bad share over (?:5 minutes|1 hour): \K[0-9.]+(?=%, )
 ^  (?:HTTP 2xx|HTTP 503|other 5xx|other): \K[0-9]+(?= requests$)
+# k8s/control-plane-ha.sh: the host port kind picked for donhang-ha's load balancer.
+^6443/tcp -> 127\.0\.0\.1:\K[0-9]+$

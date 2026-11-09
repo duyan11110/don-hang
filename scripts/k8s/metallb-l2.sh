@@ -23,6 +23,11 @@ echo "echo-loadbalancer: $lb, announced by $node"
 show kubectl get servicel2statuses -n metallb-system -o custom-columns=SERVICE:.status.serviceName,NODE:.status.node
 echo "MAC of $node: $(mac_of "$node")"
 echo "the client's ARP entry for $lb: $(arp_of "$lb")"
+# No network card of that node has the address: ip lists the node's
+# addresses, and none is the Service's.
+echo "\$ docker exec $node ip -4 -o addr show eth0"
+docker exec "$node" ip -4 -o addr show eth0 | awk '{print $2, $4}'
+echo "addresses of $node equal to $lb: $(docker exec "$node" ip -4 -o addr | grep -c " $lb/" || true)"
 echo
 
 # lesson: k8s.l3.metallb-layer2-mode

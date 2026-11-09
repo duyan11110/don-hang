@@ -29,7 +29,7 @@ trước khi cluster mới đồng bộ:
 ### Chuyển dữ liệu
 
 - PostgreSQL: khôi phục base backup mới nhất vào database ở cluster mới rồi
-  cho nó đọc tiếp WAL từ bản lưu trữ, cùng cách `pitr.sh` khôi phục. Khi nó đã
+  cho nó đọc tiếp WAL từ bản lưu trữ, cả WAL mới được ghi thêm. Khi nó đã
   đuổi kịp, dừng ghi một lúc ngắn (15 phút, giả định): một commit đặt số
   replica của `api` ở cluster cũ về 0, nên không đơn và không message mới nào
   được tạo. Đổi bằng commit chứ không bằng `kubectl scale`, vì self-heal của

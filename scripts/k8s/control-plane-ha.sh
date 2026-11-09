@@ -51,6 +51,9 @@ ha get nodes -o custom-columns=NAME:.metadata.name,STATUS:.status.conditions[-1]
 echo "\$ docker ps --filter name=donhang-ha --format '{{.Names}}'"
 docker ps --filter name=donhang-ha --format '{{.Names}}' | sort
 echo "the kubeconfig's API server: $(ha config view -o jsonpath='{.clusters[0].cluster.server}')"
+# The same host port, published by the load balancer container to its 6443.
+echo "\$ docker port donhang-ha-external-load-balancer"
+docker port donhang-ha-external-load-balancer
 echo
 
 # lesson: k8s.l3.control-plane-ha

@@ -59,7 +59,7 @@ trường thêm vào lại trả phần này một lần nữa.
 | Prometheus (chỉ staging) | 200m / 512Mi |
 | Tổng | 950m / 1984Mi |
 
-Các manifest của những thành phần này cũng chưa đặt request. Với tổng
+Các manifest của những thành phần này cũng chưa đặt request, trừ Prometheus (100m / 128Mi). Với tổng
 workload và phần nền (2670m / 5248Mi), staging vừa một node theo cách tính
 trên: một node cho 2,8 CPU và 5,6 GiB ở mức lấp đầy 70%.
 

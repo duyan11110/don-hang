@@ -10,11 +10,11 @@ Mọi SLI đo ở DonHang.Api bằng metric của prometheus-net:
 theo nhãn `endpoint` (mẫu route, ví dụ `api/v1/orders`), `method`, `code`.
 
 - Request hỏng trước khi tới API, ở Caddy hay ở Gateway, không được đếm.
-- Lab: Prometheus (profile `monitoring`) scrape `api:8080`. Nó không có volume
-  dữ liệu, nên chỉ giữ số đo từ lần khởi động gần nhất; trong lab
+- Lab: Prometheus (profile `monitoring`) scrape `api:8080`. Số đo nằm trong một
+  volume ẩn danh, mất khi container bị xóa (`docker compose down`); trong lab
   `scripts/backend/slo-report.sh` đọc cửa sổ 1 giờ thay cho 28 ngày.
 - Staging: từ stage-4 có Prometheus (namespace `monitoring`) scrape các Pod
-  api, `api-canary`, `api-green`, cũng không có volume dữ liệu. Production chưa
+  api, `api-canary`, `api-green`, không có volume dữ liệu. Production chưa
   có Prometheus: xem mục Chưa có.
 
 ### SLI

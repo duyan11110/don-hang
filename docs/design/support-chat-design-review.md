@@ -62,7 +62,7 @@ mọi Pod chuyển tin cho kết nối của cuộc trò chuyện đó. Tin chư
   có tin; kế hoạch dung lượng của Support đếm kết nối ở giờ đông, không đếm
   request mỗi giây.
 - Kết nối chat không giữ kết nối database: Pod chỉ mở một kết nối khi lưu hay
-  đọc tin. `max_connections` giới hạn tốc độ ghi tin, không giới hạn số khách
+  đọc tin. `max_connections` giới hạn số lần lưu và đọc tin chạy cùng lúc, không giới hạn số khách
   đang nối.
 - Redis (1 bản): sập thì chỉ mất chuyển tiếp giữa Pod; tin vẫn lưu, app đọc lại
   khi nối lại.

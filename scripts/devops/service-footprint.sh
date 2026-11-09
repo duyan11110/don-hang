@@ -13,7 +13,7 @@ own="DonHang.${service^}"
 # lesson: devops.l4.platform-engineering
 # Every file that names the service, ignoring case (payments, donhang_payments,
 # DonHang.Payments), sorted into the area it belongs to. Docs, tests and the
-# lessons' own scripts are left out: they did not have to change to run it.
+# scripts outside scripts/devops are left out: they did not have to change to run it.
 area() {
   case "$1" in
     .github/*) echo "CI" ;;

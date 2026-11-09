@@ -42,3 +42,16 @@ for _ in $(seq 30); do # Alloy and Loki need a moment to take the lines in
   sleep 1
 done
 echo "$lines"
+
+# lesson: backend.l3.trace-ids-in-logs
+# A line written outside any span has no TraceId in Scopes, and Alloy passes
+# it on unchanged: Loki keeps it with no trace_id. The api's start-up line,
+# written before any request, is such a line. Loki is asked about the last
+# day: the api started at most that long ago.
+query='{service="api"} |= "Now listening on" | trace_id=""'
+since=$(( $(date +%s) - 86400 ))000000000
+echo
+echo "logql> $query"
+curl -sS --get http://loki:3100/loki/api/v1/query_range \
+  --data-urlencode "query=$query" --data-urlencode "start=$since" --data-urlencode limit=1 \
+  | jq -r '.data.result[0].values[0][1] | fromjson | "api: \(.Message), Scopes: \(.Scopes)"'

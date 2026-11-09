@@ -1,0 +1,16 @@
+$ kind create cluster --name donhang-nocni --config deploy/k8s/kind-no-cni-config.yaml --kubeconfig secrets/donhang-nocni.kubeconfig
+$ kubectl --kubeconfig secrets/donhang-nocni.kubeconfig get nodes
+NAME                          STATUS     ROLES           AGE   VERSION
+donhang-nocni-control-plane   NotReady   control-plane   ...   v1.34.11
+donhang-nocni-worker          NotReady   <none>          ...   v1.34.11
+why donhang-nocni-worker is not Ready: container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized
+$ kubectl --kubeconfig secrets/donhang-nocni.kubeconfig get pods -n kube-system -l k8s-app=kube-dns
+POD               STATUS    IP
+coredns-...-...   Pending   <none>
+coredns-...-...   Pending   <none>
+
+$ docker exec donhang-nocni-worker ip route | grep via
+default via 172.22.0.1 dev eth0 
+
+$ kind delete cluster --name donhang-nocni
+Deleting cluster "donhang-nocni" ...

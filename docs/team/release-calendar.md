@@ -49,6 +49,6 @@ ghi chú phát hành của cả hai chuyến đó.
 
 ### Cái giá
 
-Chuyến đổi tốc độ lấy sự dễ đoán: một thay đổi đã xong có thể chờ tới hai tuần
-mới được bật. Cái giá đó hợp với thay đổi mà 1.000 cửa hàng (giả định) phải biết trước,
+Chuyến đổi tốc độ lấy sự dễ đoán: một thay đổi đã xong có thể chờ gần ba tuần
+mới được bật, nếu nó xong ngay sau khi ghi chú đã gửi. Cái giá đó hợp với thay đổi mà 1.000 cửa hàng (giả định) phải biết trước,
 không hợp với thay đổi bên trong, nên thay đổi bên trong không đi theo chuyến.

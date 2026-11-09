@@ -2,7 +2,7 @@ $ docker pause donhang-control-plane
 $ kubectl get nodes --request-timeout=10s
 failed
 $ docker exec donhang-lb-client wget -qO- http://<donhang-worker's address>:<echo-nodeport's node port>
-echo-ip-...-... saw 172.22.0.3
+echo-ip-...-... saw ...
 $ docker unpause donhang-control-plane
 
 $ kind create cluster --name donhang-ha --config deploy/k8s/kind-ha-config.yaml --kubeconfig secrets/donhang-ha.kubeconfig
@@ -17,6 +17,8 @@ donhang-ha-control-plane2
 donhang-ha-control-plane3
 donhang-ha-external-load-balancer
 the kubeconfig's API server: https://127.0.0.1:...
+$ docker port donhang-ha-external-load-balancer
+6443/tcp -> 127.0.0.1:...
 
 $ docker pause donhang-ha-control-plane2
 $ kubectl --kubeconfig secrets/donhang-ha.kubeconfig get nodes

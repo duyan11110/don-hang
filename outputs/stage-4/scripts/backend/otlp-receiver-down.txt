@@ -1,0 +1,12 @@
+== Alloy running
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+$ docker compose stop alloy
+== Alloy stopped
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+  GET /api/v1/products -> 200, under 2 s: yes
+$ docker compose start alloy

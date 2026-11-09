@@ -13,9 +13,9 @@ cấu hình sai) cũng làm SLI xấu đi, nên alert theo SLI bắt được c�
 nhân không ai liệt kê trước. Nguyên nhân không chạm tới khách thì alert im.
 
 Không alert theo CPU, bộ nhớ hay Pod khởi động lại. Những số đó lên xuống mà
-khách không thấy gì, và alert theo chúng dạy người trực bỏ qua alert. Chúng
-nằm trên dashboard (`deploy/monitoring/grafana/dashboards/donhang-api.json`):
-người nhận alert theo triệu chứng mở dashboard để tìm vì sao.
+khách không thấy gì, và alert theo chúng dạy người trực bỏ qua alert. Dấu vết
+của một số nguyên nhân (email chờ trong RabbitMQ, message vào dead-letter) nằm trên
+dashboard (`deploy/monitoring/grafana/dashboards/donhang-api.json`), nơi người nhận alert tìm vì sao.
 
 Rule nằm trong `deploy/gitops/config-repo/platform/monitoring/rules/slo.rules.yml`,
 Prometheus của staging đánh giá chúng. Đội không dùng alert của Grafana: rule

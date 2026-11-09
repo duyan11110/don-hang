@@ -55,10 +55,10 @@ lb_node_ip() {
   done
 }
 # MetalLB with its pool, and the client container, if an earlier script of
-# k8s/bare-metal has not set them up yet.
+# k8s/bare-metal has not set them up yet, or the client stopped (Docker restarted).
 metallb_up() {
   if ! kubectl get ipaddresspool lab-pool -n metallb-system >/dev/null 2>&1 \
-     || ! docker inspect donhang-lb-client >/dev/null 2>&1; then
+     || [ "$(docker inspect -f '{{.State.Running}}' donhang-lb-client 2>/dev/null)" != true ]; then
     scripts/k8s/metallb-pool.sh >/dev/null
   fi
 }

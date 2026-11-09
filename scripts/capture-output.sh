@@ -157,7 +157,7 @@ k8s_host_scripts=(
   pvc storage-class reclaim-policy statefulset-db headless-dns stateful-staging db-backup
   api-request-checks rbac-role service-accounts cluster-roles security-context pod-security
   network-policy egress-policy admission-policy
-  pod-network cni kube-proxy service-types coredns dns-search network-debug
+  pod-network cni cni-off kube-proxy service-types coredns dns-search network-debug
   metallb-install metallb-pool metallb-l2 external-traffic-policy traefik-ha csi control-plane-ha
   custom-resources cert-manager-install cert-manager operator kubeadm etcd-snapshot encryption-at-rest drain version-skew
   # Stage-4: multi-cluster-and-mesh, then managed-vs-selfhosted. The region

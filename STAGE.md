@@ -222,9 +222,9 @@ order of the lessons:
 - `--all`: every script except `scripts/k8s/`, the host scripts of
   `--devops-host` and `--release-host`, `verify-image.sh` and
   `change-hotspots.sh`, against the running lab started with
-  `COMPOSE_PROFILES=monitoring`. From stage-4 it includes the eight new
+  `COMPOSE_PROFILES=monitoring`. From stage-4 it includes the nine new
   scripts of `scripts/backend/` (`db-unreachable`, `drop-old-notifications`,
-  `load-steps`, `message-shapes`, `migration-locks`, `promote-replica`,
+  `load-steps`, `message-shapes`, `migration-locks`, `otlp-receiver-down`, `promote-replica`,
   `shared-credentials`, `slo-report`), the three new or changed ones of
   `scripts/frontend/` (`package-reach`, `web-bundle`,
   `what-the-server-sends`) and four of `scripts/devops/` that need no
@@ -294,6 +294,7 @@ names the lessons that use a file at this tag.
 | `docs/team/product-search-requirements.md`, `reporting-requirements.md`, `docs/design/product-search-design-review.md`, `reporting-design-review.md`, `docs/adr/0030-tim-san-pham-bang-full-text-search-cua-postgresql.md`, `0031-bao-cao-tu-database-bao-cao-rieng.md` | sysdesign/search-and-analytics | search inside the database, reports from a database of their own |
 | `docs/team/support-chat-requirements.md`, `saas-platform-requirements.md`, `docs/design/support-chat-design-review.md`, `saas-platform-design-review.md`, `cost-per-shop.md`, `docs/adr/0032-chat-ho-tro-qua-websocket-trong-service-rieng.md`, `0033-cua-hang-tu-dang-ky-goi-la-du-lieu.md` | sysdesign/chat-and-saas | a chat over long-lived connections, self-service shops, cost per shop |
 | `docs/team/architect-week.md`, `docs/design/architecture-health-review.md`, `docs/team/architecture-skills-checklist.md` | sysdesign/architect-daily | an architect's week, a quarterly check that decisions still hold, what to practise next |
+| `scripts/k8s/cni-off.sh`, `deploy/k8s/kind-no-cni-config.yaml`, `scripts/k8s/pod-network.sh`, `metallb-l2.sh`, `control-plane-ha.sh`, `scripts/backend/otlp-receiver-down.sh`, `logs-for-trace.sh` | k8s/networking-deep, k8s/bare-metal, backend/observability (stage-3 lessons, evidence added at stage-4) | a cluster with no network plugin; checks printed beside masked addresses; requests answered while the span receiver is down; a log line with no trace id |
 | `scripts/capture-output.sh`, `.github/workflows/ci.yml`, `release.yml`, `update-goldens.yml`, `Directory.Packages.props`, `**/packages.lock.json`, `scripts/backend/auth-and-orders.sh`, `trace-refund.sh`, `scripts/lib/tempo.sh` | (plumbing) | capture modes, pinned actions and packages, a trace counted complete only when it stops growing |
 | `STAGE.md`, `README.md`, `outputs/stage-4/` | sysdesign/architect-daily | this table: a file leads back to the topic it was used for |
 
