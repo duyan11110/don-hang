@@ -34,7 +34,7 @@ COPY .config/dotnet-tools.json .config/
 RUN dotnet tool restore \
     && dotnet ef migrations bundle --project DonHang.Infrastructure --configuration Release --output /bundle/efbundle
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:a3f9f81954b9c810af2ed18849716c8dc74a4707bd0907fdbd69be81554c0f30 AS migrate
+FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:4f1f30cf0bb4ab0c8b2daa84613051683456f8df4a9bf7c812e20d74962992ac AS migrate
 # The same Kerberos library as the api image below, for the same reason.
 RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
@@ -45,7 +45,7 @@ USER $APP_UID
 ENTRYPOINT ["./efbundle"]
 
 # The api's image: the default target, because it is the last stage.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:de0ee358cdd672f7017a003bed21e9ac9ed48a27c922a59b18175b6e82fa7fee AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:1a48394b6f29d3a32c79d9edecd4abda0ecbe8776d567dbfc4590ed6979c740c AS final
 WORKDIR /app
 # Npgsql probes for Kerberos/GSSAPI support at startup; without this library
 # present that probe logs a scary but harmless "cannot open shared object" line.

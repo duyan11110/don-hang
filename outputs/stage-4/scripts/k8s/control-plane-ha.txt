@@ -19,6 +19,7 @@ donhang-ha-external-load-balancer
 the kubeconfig's API server: https://127.0.0.1:...
 $ docker port donhang-ha-external-load-balancer
 6443/tcp -> 127.0.0.1:...
+same port as the kubeconfig's API server: yes
 
 $ docker pause donhang-ha-control-plane2
 $ kubectl --kubeconfig secrets/donhang-ha.kubeconfig get nodes

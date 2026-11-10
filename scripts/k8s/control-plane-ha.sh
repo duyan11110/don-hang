@@ -54,6 +54,9 @@ echo "the kubeconfig's API server: $(ha config view -o jsonpath='{.clusters[0].c
 # The same host port, published by the load balancer container to its 6443.
 echo "\$ docker port donhang-ha-external-load-balancer"
 docker port donhang-ha-external-load-balancer
+lb_port=$(docker port donhang-ha-external-load-balancer 6443/tcp | sed 's/.*://')
+kubeconfig_port=$(ha config view -o jsonpath='{.clusters[0].cluster.server}' | sed 's/.*://')
+echo "same port as the kubeconfig's API server: $(if [ "$lb_port" = "$kubeconfig_port" ]; then echo yes; else echo no; fi)"
 echo
 
 # lesson: k8s.l3.control-plane-ha
