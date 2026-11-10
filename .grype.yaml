@@ -9,3 +9,8 @@ ignore:
   # Đơn Hàng's images run one dotnet process (or one migration bundle) and
   # no login, so nothing in them authenticates a user through PAM.
   - vulnerability: CVE-2024-10041
+  # apt (High, fixed in 2.8.4ubuntu0.1, not yet in any mcr.microsoft.com/dotnet
+  # 10.0 image: the 2026-11-05 rebuild still ships 2.8.3). Đơn Hàng's images
+  # run one dotnet process; nothing in them runs apt after the build. Remove
+  # this entry once the base image digest moves to one with apt 2.8.4.
+  - vulnerability: CVE-2026-109518
