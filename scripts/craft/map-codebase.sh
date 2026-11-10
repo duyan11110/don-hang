@@ -19,7 +19,7 @@ find samples -name '*.cs' -not -path '*/obj/*' -not -path '*/bin/*' | wc -l
 
 echo
 echo "4. from a word you saw on screen to the line that produced it:"
-grep -rn 'Chuột không dây' db samples | head -3
+grep -rn 'Chuột không dây' db samples | sort | head -3
 
 echo
 echo "5. what the folders are named after:"
