@@ -34,7 +34,7 @@ COPY .config/dotnet-tools.json .config/
 RUN dotnet tool restore \
     && dotnet ef migrations bundle --project DonHang.Infrastructure --configuration Release --output /bundle/efbundle
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0@sha256:4f1f30cf0bb4ab0c8b2daa84613051683456f8df4a9bf7c812e20d74962992ac AS migrate
+FROM mcr.microsoft.com/dotnet/runtime:11.0@sha256:3fe5f5495141c97986a49d3a4e76061f6225c3f93f94e8a7e522781376193863 AS migrate
 # The same Kerberos library as the api image below, for the same reason.
 RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
