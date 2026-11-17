@@ -40,13 +40,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   # From stage-2: app state (frontend/state-and-routing) and URLs per screen.
-  flutter_riverpod: 3.4.3
-  go_router: 18.0.2
+  flutter_riverpod: 3.5.0
+  go_router: 18.1.4
   # From stage-2: number formats in translated messages (frontend/forms-i18n-theming).
   intl: any
   # From stage-2: sign-in with Keycloak (PKCE hash; the browser's sessionStorage and address bar).
-  crypto: ^3.0.7
-  web: ^1.1.1
+  crypto: ^3.0.8
+  web: ^1.1.2
 
 dev_dependencies:
   flutter_test:
