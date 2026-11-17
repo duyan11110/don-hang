@@ -23,7 +23,7 @@ RUN dotnet tool restore \
 
 # aspnet, not runtime as for the api's bundle: this is a web project, and
 # its bundle asks for the ASP.NET Core framework even though it never serves.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:1a48394b6f29d3a32c79d9edecd4abda0ecbe8776d567dbfc4590ed6979c740c AS migrate
+FROM mcr.microsoft.com/dotnet/aspnet:11.0@sha256:bc0d6653979efba491ab3d6f589d691f96c309c3c3ef81325efa6978e7b7f242 AS migrate
 RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /migrate
@@ -32,7 +32,7 @@ COPY --from=bundle /bundle/efbundle .
 USER $APP_UID
 ENTRYPOINT ["./efbundle"]
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:1a48394b6f29d3a32c79d9edecd4abda0ecbe8776d567dbfc4590ed6979c740c AS final
+FROM mcr.microsoft.com/dotnet/aspnet:11.0@sha256:bc0d6653979efba491ab3d6f589d691f96c309c3c3ef81325efa6978e7b7f242 AS final
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
